@@ -1,5 +1,5 @@
-const db = require("../../config/db.config");
-const { hashPassword, comparePassword } = require("../Utils/hash");
+const db = require("../../../config/db.config");
+const { hashPassword } = require("../../Utils/hash");
 
 // function to handle user registration
 const registerUser = async (req, res) => {

@@ -1,5 +1,3 @@
-
-
 import express from "express";
 import cors from "cors";
 import helmet from "helmet";
@@ -13,8 +11,10 @@ app.use(helmet());
 app.use(cors({ origin: "*" })); //ACCEPT ALL ORIGIN FOR NOW
 app.use(express.json());
 
-// server.js
+// Use centralized router
+app.use("/api", router);
 
+// server.js
 const main = async () => {
   try {
     const result = await pool.query("SELECT NOW()");
