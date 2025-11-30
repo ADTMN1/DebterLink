@@ -12,3 +12,7 @@ routes.use('/parent',()=>{console.log("parent")})
 routes.use('/admin',()=>{console.log("admin")})  
 routes.use('/teacher',()=>{console.log("teacher")})  
 routes.use('/student',()=>{console.log("student")})  
+
+
+
+export default routes
