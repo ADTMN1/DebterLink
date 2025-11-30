@@ -11,8 +11,7 @@ const Port = process.env.PORT || 1212
 
 app.use(helmet())
 app.use(cors({origin:"*"}))  //ACCEPT ALL ORIGIN FOR NOW
-app.use(express.json())
-
+// app.use(express.json())
 
 
 
