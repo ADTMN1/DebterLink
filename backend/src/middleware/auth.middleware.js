@@ -19,3 +19,19 @@ export const authMiddleware = (req, res, next) => {
     next();
   });
 };
+
+ 
+export  const verifyRole=(role) =>{
+console.log(role)
+   return (req, res, next) => {
+    // console.log("is there role",req.user)
+    if (req.user.role !== role) { 
+
+      return res.status(403).json({ error: "Forbidden: Insufficient role" });
+    }
+  next();
+  }}
+
+
+
+  // export default {verifyRole, authMiddleware};

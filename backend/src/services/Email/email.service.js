@@ -1,16 +1,16 @@
 
 import { Resend } from "resend";
 
-import("dotenv/config");
+import dotenv from "dotenv";
+dotenv.config();
 
-const resend = new Resend(process.env.RESEND_API_KEY);
+const resend = new Resend(process.env.RESET_TOKEN_EXPIRY_MINUTES);
 
-/**
- * sendResetEmail(toEmail, resetUrl, userName)
- * - toEmail: recipient email
- * - resetUrl: complete link user clicks
- * - userName: optional
- */
+console.log("first")
+if (!process.env.RESET_TOKEN_EXPIRY_MINUTES) {
+  console.error("Resend API key is missing!");
+}
+
 export const sendResetEmail = async (toEmail, resetUrl, userName = "") => {
   const subject = "DebterLink — Password reset request";
   const html = `
