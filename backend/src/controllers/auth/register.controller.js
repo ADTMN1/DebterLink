@@ -1,34 +1,18 @@
-<<<<<<< HEAD
-import { hashPassword } from "../../Utils/hash.js";
-import {
-  generateAccessToken,
-  generateRefreshToken,
-} from "../../Utils/generateTokens.js";
-import {
-  checkUserExists,
-  createUser,
-} from "../../services/Query/Authquery/register.query.js";
-
-export const registerUser = async (req, res) => {
-  try {
-    const { full_name, email, password, confirmPassword, phone_number } =
-=======
 
 import { hashPassword } from "../../Utils/hash.js";
 import {
   generateAccessToken,
   generateRefreshToken,
 } from "../../Utils/generateTokens.js";
-import {
-  checkUserExists,
-  createUser,
-} from "../../services/Query/Authquery/register.query.js";
+import registerQuery from "../../services/authService/register.query.js";
 
 export const registerController = async (req, res) => {
   try {
     const { full_name, email, password, confirmPassword, phone_number,role_id } =
->>>>>>> 1594b481534e49b961058fb1a227eed645c92093
       req.body;
+if(!full_name || !email || !password || !confirmPassword || !phone_number || !role_id){
+  return res.status(400).json({error:"All fields are required"})
+}
 
     // Basic constraints for password validation
     if (!password) {
@@ -55,7 +39,7 @@ export const registerController = async (req, res) => {
     }
 
     // check if user already exists using query
-    const userExists = await checkUserExists(email);
+    const userExists = await registerQuery.checkUserExists(email);
     if (userExists) {
       return res.status(400).json({ message: "User already exists" });
     }
@@ -63,11 +47,12 @@ export const registerController = async (req, res) => {
     const hashedpassword = await hashPassword(password);
 
     // insert new user into database using query
-    const user = await createUser(
+    const user = await registerQuery.createUser(
       full_name,
       email,
       hashedpassword,
-      phone_number
+      phone_number,
+      role_id
     );
 
     const AccessToken = generateAccessToken(user);
@@ -84,8 +69,4 @@ export const registerController = async (req, res) => {
   }
 };
 
-<<<<<<< HEAD
-export default registerUser;
-=======
 export default registerController;
->>>>>>> 1594b481534e49b961058fb1a227eed645c92093

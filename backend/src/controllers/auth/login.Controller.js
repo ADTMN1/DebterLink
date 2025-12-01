@@ -4,7 +4,7 @@ import {
   generateRefreshToken,
 } from "../../Utils/generateTokens.js";
 
-import { findUserByEmail } from "../../services/Query/Authquery/login.query.js";
+import { findUserByEmail } from "../../services/authService/login.query.js";
 
 export const loginController = async (req, res) => {
   try {
@@ -35,7 +35,16 @@ export const loginController = async (req, res) => {
 
     // Respond with tokens
     res.status(200).json({
+      status:true,
+    
       message: "Login successful",
+data:{
+        id: user.id,
+        full_name: user.full_name,
+        email: user.email,
+        phone_number: user.phone_number,
+        role_id: user.role_id,
+},
       accessToken,
       refreshToken,
     });
