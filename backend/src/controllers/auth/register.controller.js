@@ -1,3 +1,4 @@
+
 import { hashPassword } from "../../Utils/hash.js";
 import {
   generateAccessToken,
@@ -8,9 +9,9 @@ import {
   createUser,
 } from "../../services/Query/Authquery/register.query.js";
 
-export const registerUser = async (req, res) => {
+export const registerController = async (req, res) => {
   try {
-    const { full_name, email, password, confirmPassword, phone_number } =
+    const { full_name, email, password, confirmPassword, phone_number,role_id } =
       req.body;
 
     // Basic constraints for password validation
@@ -23,7 +24,9 @@ export const registerUser = async (req, res) => {
         .json({ error: "Password must be at least 8 characters long" });
     }
     if (password !== confirmPassword) {
+     
       return res.status(400).json({ error: "Passwords do not match" });
+      
     }
 
     // Regex for complexity
@@ -65,4 +68,4 @@ export const registerUser = async (req, res) => {
   }
 };
 
-export default registerUser;
+export default registerController;
