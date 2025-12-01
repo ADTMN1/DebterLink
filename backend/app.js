@@ -1,4 +1,4 @@
-import "dotenv/config"; 
+import "dotenv/config";
 import express from "express";
 import cors from "cors";
 import helmet from "helmet";
@@ -6,7 +6,7 @@ import pool from "./config/db.config.js";
 import routes from "./src/routes/index.js";
 
 const app = express();
-const PORT = process.env.PORT || 3000; 
+const PORT = process.env.PORT || 3000;
 
 app.use(helmet());
 app.use(cors({ origin: "*" }));

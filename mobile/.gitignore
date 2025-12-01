@@ -1,0 +1,20 @@
+# Node modules
+node_modules/
+
+# Expo / React Native
+.expo/
+.expo-shared/
+android/
+ios/
+
+# Logs
+*.log
+
+# Build outputs
+dist/
+build/
+
+# Env files
+.env
+# IDE / local tool state
+.local/
