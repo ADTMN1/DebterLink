@@ -15,32 +15,3 @@ router.get("/teacher",  authMiddleware,  verifyRole(2) , (req, res) => res.send(
 router.get("/student",  authMiddleware,  verifyRole(4) , (req, res) => res.send("student route"));
 
 export default router;
-/*
-
-bacckend folder structure
-
-backend
-│
-├── config
-│   ├── db.config.js
-│   ├── install.js
-│   └── schema.sql
-│
-├── src
-│   ├── controllers
-│   │   └── auth.controller.js and other controllers
-│   ├── middlewares
-│   │   └── auth.middleware.js and other middlewares
-│   ├──routes
-│   │   └── auth.routes.js and other routes
-       -services
-│   │   └── query
-            -auth.service.js and other services
-        api// example Ai integration    
-│   └── index.js// all routes combined to export for app.js
-│
-├── app.js// main server file
-├── package.json
-└── .env
-         
-*/
