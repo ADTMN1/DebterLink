@@ -1,13 +1,20 @@
-const db = require("../../../config/db.config");
-const { hashPassword } = require("../../Utils/hash");
 
-// function to handle user registration
-const registerUser = async (req, res) => {
+import { hashPassword } from "../../Utils/hash.js";
+import {
+  generateAccessToken,
+  generateRefreshToken,
+} from "../../Utils/generateTokens.js";
+import registerQuery from "../../services/authService/register.query.js";
+
+export const registerController = async (req, res) => {
   try {
-    const { username, email, password } = req.body;
+    const { full_name, email, password, confirmPassword, phone_number,role_id } =
+      req.body;
+if(!full_name || !email || !password || !confirmPassword || !phone_number || !role_id){
+  return res.status(400).json({error:"All fields are required"})
+}
 
     // Basic constraints for password validation
-    const confirmPassword = req.body.confirmPassword;
     if (!password) {
       return res.status(400).json({ error: "Password is required" });
     }
@@ -17,7 +24,9 @@ const registerUser = async (req, res) => {
         .json({ error: "Password must be at least 8 characters long" });
     }
     if (password !== confirmPassword) {
+     
       return res.status(400).json({ error: "Passwords do not match" });
+      
     }
 
     // Regex for complexity
@@ -28,23 +37,23 @@ const registerUser = async (req, res) => {
           "Password must include uppercase, lowercase, number, and special character",
       });
     }
-    // check if user already exists
-    const existingUser = await db.query(
-      "SELECT * FROM users WHERE email = $1 [email]"
-    );
-    if (existingUser.rows.length > 0) {
+
+    // check if user already exists using query
+    const userExists = await registerQuery.checkUserExists(email);
+    if (userExists) {
       return res.status(400).json({ message: "User already exists" });
     }
 
     const hashedpassword = await hashPassword(password);
 
-    // insert new user into database
-    const newUser = await db.query(
-      "INSERT INTO user (username,email,password) VALUES ($1,$2,$3) RETURNING *",
-      [username, email, hashedpassword]
+    // insert new user into database using query
+    const user = await registerQuery.createUser(
+      full_name,
+      email,
+      hashedpassword,
+      phone_number,
+      role_id
     );
-
-    const user = newUser.rows[0];
 
     const AccessToken = generateAccessToken(user);
     const RefreshToken = generateRefreshToken(user);
@@ -59,4 +68,5 @@ const registerUser = async (req, res) => {
     res.status(500).json({ message: "something went wrong try again later" });
   }
 };
-module.exports = { registerUser };
+
+export default registerController;
