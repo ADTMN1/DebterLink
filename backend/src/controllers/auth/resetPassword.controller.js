@@ -1,5 +1,5 @@
-// src/controllers/auth/resetPassword.controller.js
-import { resetPasswordForRecord } from "../../services/Email/passwordReset.service.js";
+
+import { resetPasswordForRecord } from "../../services/authService/passwordReset.service.js";
 
 export const resetPasswordController = async (req, res) => {
   try {

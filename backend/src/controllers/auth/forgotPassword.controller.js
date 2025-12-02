@@ -1,7 +1,7 @@
 // src/controllers/auth/forgotPassword.controller.js
 import("dotenv/config");
-import { findUserByEmail } from "../../services/Query/Authquery/passwordReset.queries.js";
-import { createPasswordResetForUser } from "../../services/Email/passwordReset.service.js";
+import { findUserByEmail } from "../../services/authService/passwordReset.queries.js";
+import { createPasswordResetForUser } from "../../services/authService/passwordReset.service.js";
 
 export const forgotPasswordController = async (req, res) => {
   try {
