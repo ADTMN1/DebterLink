@@ -26,15 +26,18 @@ export const refreshController = async (req, res) => {
 
    
     const accessToken = generateAccessToken({
+
       id: user.id,
       email: user.email,
       full_name: user.full_name,
+      user_role: user.user_role,
     });
 
     const newRefreshToken = generateRefreshToken({
       id: user.id,
       email: user.email,
       full_name: user.full_name,
+      user_role: user.user_role,
     });
 
     return res.status(200).json({

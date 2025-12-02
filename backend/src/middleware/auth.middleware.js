@@ -15,6 +15,7 @@ export const authMiddleware = (req, res, next) => {
     }
 
     // Attach decoded payload to request
+    // console.log(decoded)
     req.user = decoded;
     next();
   });
@@ -22,10 +23,9 @@ export const authMiddleware = (req, res, next) => {
 
  
 export  const verifyRole=(role) =>{
-console.log(role)
-   return (req, res, next) => {
-    // console.log("is there role",req.user)
-    if (req.user.role !== role) { 
+  return (req, res, next) => {
+    
+    if (req.user.role_id !== role) { 
 
       return res.status(403).json({ error: "Forbidden: Insufficient role" });
     }
