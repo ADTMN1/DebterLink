@@ -1,6 +1,6 @@
 import express from "express";
 import authRoutes from "./routes/auth.routes.js";
-import attendanceRoutes from "./routes/attendance.route.js"; 
+import attendanceRoute from "../src/routes/student.attendance.route.js"; 
 import { authMiddleware, verifyRole } from "./middleware/auth.middleware.js";
 
 const router = express.Router();
@@ -30,6 +30,7 @@ router.use("/student", authMiddleware, verifyRole(4), (req, res) =>
 
 // Attendance routes
  
-router.use("/attendance", attendanceRoutes);
+router.use("/attendance/student", attendanceRoute);
+
 
 export default router;
