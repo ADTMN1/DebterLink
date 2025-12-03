@@ -26,6 +26,14 @@ const main = async () => {
 
 main();
 
-app.listen(PORT, () => {
+// const router = express.Router()
+// route.get(
+app.listen(PORT, (req,res) => {
   console.log(`Server running on port ${PORT}`);
+  res.status(200).json({
+    status:true,
+    msg:"DEBTER LINK IS LIVE NOW."
+  })
+
+  
 });
