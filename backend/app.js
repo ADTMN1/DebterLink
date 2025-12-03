@@ -7,7 +7,7 @@ import routes from "./src/index.js";
 import dotenv from "dotenv";
 dotenv.config();
 const app = express();
-const PORT = process.env.PORT || 1212;
+const PORT = process.env.PORT ;
 
 app.use(helmet());
 app.use(cors({ origin: "*" }));
@@ -36,10 +36,7 @@ app.get("/", async (req, res) => {
 // route.get(
 app.listen(PORT, (req,res) => {
   console.log(`Server running on port ${PORT}`);
-  res.status(200).json({
-    status:true,
-    msg:"DEBTER LINK IS LIVE NOW."
-  })
+
 
   
 });
