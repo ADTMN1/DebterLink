@@ -25,7 +25,12 @@ const main = async () => {
 };
 
 main();
-
+app.get("/", (req, res) => {
+  res.status(200).json({
+    status: true,
+    msg: "DEBTER LINK IS LIVE NOW."
+  });
+});
 // const router = express.Router()
 // route.get(
 app.listen(PORT, (req,res) => {
