@@ -3,7 +3,7 @@
 import attendanceService from "../../services/attendanceService/attendance.service.js";
 
 // ──────────────────────────────────────────────────────────────
-// All handlers as proper async functions (not object methods!)
+// All handlers as proper async functions 
 // ──────────────────────────────────────────────────────────────
 
 export const markAttendance = async (req, res) => {

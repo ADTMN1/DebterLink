@@ -1,9 +1,9 @@
 // src/Utils/student.attendance.validator.js
 import Joi from "joi";
-
-// Global Joi options — this is the KEY FIX
+const statusEnum = ["present", "absent", "late", "excused"];
+// Global Joi options 
 const joiOptions = {
-  convert: true, // Crucial: convert "2025-04-01" → Date, "123" → number
+  convert: true, //  convert "2025-04-01" → Date, "123" → number
   abortEarly: false, // Return all errors
   stripUnknown: false, // Keep unknown keys (safe)
   errors: {
@@ -19,38 +19,19 @@ export const markAttendanceSchema = Joi.object({
   records: Joi.array()
     .items(
       Joi.object({
-        student_id: Joi.string()
-          .trim()
-          .guid({ version: ["uuidv4"] })
-          .required()
-          .messages({ "string.guid": "Invalid student_id format" }),
+        student_id: Joi.string().required(),
         status: Joi.string()
+          .insensitive()
           .valid("present", "absent", "late", "excused")
           .required(),
-      }).unknown(false) // reject extra fields
+      })
     )
-    .min(1)
     .required(),
-
-  classId: Joi.string()
-    .trim()
-    .guid({ version: ["uuidv4"] })
-    .required()
-    .messages({ "string.guid": "Invalid classId format" }),
-
-  date: Joi.date()
-    .iso()
-    .required()
-    .messages({ "date.format": "Date must be in ISO format (YYYY-MM-DD)" }),
-
-  shift: Joi.string().valid("morning", "afternoon", "evening").required(),
-
-  recordedByUserId: Joi.string()
-    .trim()
-    .guid({ version: ["uuidv4"] })
-    .required()
-    .messages({ "string.guid": "Invalid recordedByUserId format" }),
-}).options(joiOptions);
+  classId: Joi.string().required(),
+  date: Joi.date().required(),
+  shift: Joi.string().required(),
+  recordedByUserId: Joi.string().required(),
+});
 
 export const updateAttendanceSchema = Joi.object({
   status: Joi.string().valid("present", "absent", "late", "excused"),

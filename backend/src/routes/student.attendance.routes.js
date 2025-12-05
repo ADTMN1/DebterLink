@@ -1,19 +1,19 @@
 // src/routes/attendance/student.attendance.routes.js
-// (or wherever you keep it – just make sure the import path below is correct)
 
 import { Router } from "express";
 const router = Router();
+import { authMiddleware, verifyRole } from "../middleware/auth.middleware.js";
 
-// ── IMPORT ALL SCHEMAS (this was missing or wrong path) ─────────────────────
+// ── IMPORT ALL SCHEMAS ───────────────────────────────────────────────
 import {
   markAttendanceSchema,
   updateAttendanceSchema,
   bulkSyncSchema,
   summarySchema,
   listAttendanceSchema,
-} from "../Utils/student.attendance.validator.js"; // ← double-check this path!
+} from "../Utils/student.attendance.validator.js";
 
-// ── IMPORT ALL CONTROLLERS (named exports – this is the correct way) ───────
+// ── IMPORT ALL CONTROLLERS ───────────────────────────────────────────
 import {
   markAttendance,
   updateAttendance,
@@ -23,7 +23,7 @@ import {
   bulkSync,
 } from "../controllers/attendance/student.attendance.controller.js";
 
-// ── VALIDATION MIDDLEWARE ───────────────────────────────────────────────────
+// ── VALIDATION MIDDLEWARE ────────────────────────────────────────────
 import Joi from "joi";
 
 const validate =
@@ -44,14 +44,13 @@ const validate =
       return res.status(400).json({ success: false, message: messages });
     }
 
-    // put cleaned data back
     if (source === "body") req.body = value;
     if (source === "query") req.query = value;
 
     next();
   };
 
-// ── PARAM VALIDATOR FOR :attendance_id ─────────────────────────────────────
+// ── PARAM VALIDATOR FOR :attendance_id ───────────────────────────────
 const validateAttendanceId = (req, res, next) => {
   const { error, value } = Joi.string()
     .trim()
@@ -60,34 +59,47 @@ const validateAttendanceId = (req, res, next) => {
     .validate(req.params.attendance_id);
 
   if (error) {
-    return res
-      .status(400)
-      .json({
-        success: false,
-        message: "Invalid attendance_id – must be a valid UUID",
-      });
+    return res.status(400).json({
+      success: false,
+      message: "Invalid attendance_id – must be a valid UUID",
+    });
   }
   req.params.attendance_id = value;
   next();
 };
 
-// ── ROUTES ──────────────────────────────────────────────────────────────────
-router.post("/mark", validate(markAttendanceSchema), markAttendance);
+// ── ROUTES ──────────────────────────────────────────────────────────
+// Teacher-only routes
+router.post(
+  "/mark",
+  authMiddleware,
+  verifyRole(2), //  Teacher role
+  validate(markAttendanceSchema),
+  markAttendance
+);
 
 router.patch(
   "/update/:attendance_id",
+  authMiddleware,
+  verifyRole(2), // Teacher role
   validateAttendanceId,
   validate(updateAttendanceSchema),
   updateAttendance
 );
 
+// Public/student accessible routes
 router.get("/summary", validate(summarySchema, "query"), getDailySummary);
-
 router.get("/list", validate(listAttendanceSchema, "query"), list);
-
 router.get("/:attendance_id", validateAttendanceId, getOne);
 
-router.post("/sync", validate(bulkSyncSchema), bulkSync);
+// Bulk sync (teacher-only)
+router.post(
+  "/sync",
+  authMiddleware,
+  verifyRole(2), //  Teacher role
+  validate(bulkSyncSchema),
+  bulkSync
+);
 
 // Optional health check
 router.get("/health", (req, res) =>

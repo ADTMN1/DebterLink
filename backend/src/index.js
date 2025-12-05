@@ -1,6 +1,6 @@
 import express from "express";
 import authRoutes from "./routes/auth.routes.js";
-import attendanceRoutes from "../src/routes/student.attendance.routes.js"; 
+import attendanceRoutes from "../src/routes/student.attendance.routes.js";
 import { authMiddleware, verifyRole } from "./middleware/auth.middleware.js";
 
 const router = express.Router();
@@ -24,13 +24,16 @@ router.use("/parent", authMiddleware, verifyRole(3), (req, res) =>
 router.use("/teacher", authMiddleware, verifyRole(2), (req, res) =>
   res.send("teacher route")
 );
-router.use("/student", authMiddleware, verifyRole(4), (req, res) =>
+router.use("/student", authMiddleware, verifyRole(2), (req, res) =>
   res.send("student route")
 );
 
-// Attendance routes
- 
-router.use("/attendance/student", attendanceRoutes);
-
+// Attendance routes – restricted to teachers
+router.use(
+  "/attendance",
+  authMiddleware,
+  verifyRole(2), // ✅ Teacher role only
+  attendanceRoutes
+);
 
 export default router;
