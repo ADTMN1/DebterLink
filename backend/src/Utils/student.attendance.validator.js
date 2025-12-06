@@ -1,4 +1,4 @@
-// src/Utils/student.attendance.validator.js
+
 import Joi from "joi";
 const statusEnum = ["present", "absent", "late", "excused"];
 // Global Joi options 
@@ -7,7 +7,7 @@ const joiOptions = {
   abortEarly: false, // Return all errors
   stripUnknown: false, // Keep unknown keys (safe)
   errors: {
-    // Better error messages
+    
     wrap: { label: false },
   },
 };

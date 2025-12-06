@@ -1,4 +1,4 @@
-// src/services/attendance.service.js
+
 import db from "../../../config/db.config.js";
 
 const COLUMNS_PER_ROW = 6;
@@ -216,7 +216,7 @@ export const bulkUpsert = async (records = []) => {
   }
 };
 
-// Export all service functions
+
  export default {
    createAttendance,
    updateAttendance,

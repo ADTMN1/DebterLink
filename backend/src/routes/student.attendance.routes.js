@@ -1,4 +1,4 @@
-// src/routes/attendance/student.attendance.routes.js
+
 
 import { Router } from "express";
 const router = Router();

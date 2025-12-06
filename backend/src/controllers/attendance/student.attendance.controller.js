@@ -1,4 +1,4 @@
-// src/controllers/attendance/student.attendance.controller.js
+
 
 import attendanceService from "../../services/attendanceService/attendance.service.js";
 
@@ -95,3 +95,4 @@ export const bulkSync = async (req, res) => {
     return res.status(500).json({ message: err.message || "Server error" });
   }
 };
+
