@@ -1,0 +1,42 @@
+{
+  "app": {
+    "name": "ደብተርLink",
+    "tagline": "ዘመናዊ የትምህርት ማዕከል"
+  },
+  "common": {
+    "login": "ግባ",
+    "logout": "ውጣ",
+    "dashboard": "ዳሽቦርድ",
+    "profile": "መገለጫ",
+    "settings": "ቅንብሮች",
+    "welcome": "እንኳን ደህና መጡ",
+    "language": "ቋንቋ",
+    "theme": "ጭብጥ",
+    "loading": "በመጫን ላይ..."
+  },
+  "roles": {
+    "student": "ተማሪ",
+    "parent": "ወላጅ",
+    "teacher": "መምህር",
+    "director": "ዳይሬክተር",
+    "admin": "አስተዳዳሪ",
+    "super_admin": "ዋና አስተዳዳሪ"
+  },
+  "menu": {
+    "attendance": "វត្ត መዝገብ",
+    "assignments": "የቤት ሥራ",
+    "exams": "ፈተናዎች እና ውጤቶች",
+    "messaging": "መልዕክት",
+    "appeals": "ቅሬታዎች",
+    "behavior": "ባህሪ",
+    "resources": "ግብዓቶች",
+    "calendar": "ቀን መቁጠሪያ",
+    "timetable": "የጊዜ ሰሌዳ",
+    "users": "ተጠቃሚዎች",
+    "reports": "ሪፖርቶች",
+    "behavior": "ባህሪ",
+    "gradebook": "የውጤት መዝገብ",
+    "schools": "ትምህርት ቤቶች",
+    "salary": "ደመወዝ"
+  }
+}
