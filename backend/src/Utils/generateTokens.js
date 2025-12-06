@@ -5,7 +5,7 @@ dotenv.config();
 export const generateAccessToken = (user) => {
   // console.log("from generate",user)
   return jwt.sign(
-    { id: user.id, email: user.email, full_name: user.full_name,role_id:user.role_id },
+    { id: user.user_id, email: user.email, full_name: user.full_name,role_id:user.role_id },
     process.env.JWT_ACCESS_SECRET, 
     { expiresIn: process.env.ACCESS_TOKEN_EXPIRY || "15m" }
   );
@@ -13,7 +13,7 @@ export const generateAccessToken = (user) => {
 
 export const generateRefreshToken = (user) => {
   return jwt.sign(
-    { id: user.id, email: user.email, full_name: user.full_name ,role_id:user.role_id},
+    { id: user.user_id, email: user.email, full_name: user.full_name ,role_id:user.role_id},
     process.env.JWT_REFRESH_SECRET, 
     { expiresIn: process.env.REFRESH_TOKEN_EXPIRY || "7d" }
   );
