@@ -29,6 +29,9 @@ export  const verifyRole=(role) =>{
 
       return res.status(403).json({ error: "Forbidden: Insufficient role" });
     }
+    // req.user=req.user
+//        const user = req.user
+// console.log("IN TEACHER MIDDLWARE",user)
   next();
   }}
 

@@ -38,7 +38,7 @@ export const loginController = async (req, res) => {
       status:true,
     
       message: "Login successful",
-data:{
+    data:{
         id: user.id,
         full_name: user.full_name,
         email: user.email,
