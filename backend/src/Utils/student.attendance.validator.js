@@ -5,7 +5,7 @@ const statusEnum = ["present", "absent", "late", "excused"];
 const joiOptions = {
   convert: true, //  convert "2025-04-01" → Date, "123" → number
   abortEarly: false, // Return all errors
-  stripUnknown: false, // Keep unknown keys (safe)
+  stripUnknown: true, // don't keep unknown keys (safe)
   errors: {
     
     wrap: { label: false },

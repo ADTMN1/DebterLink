@@ -10,10 +10,11 @@ import { resetPasswordController } from "../controllers/auth/resetPassword.contr
 const router = express.Router();
 
 // Public routes
-router.post("/register", registerController);
+
 router.post("/login", loginController);
 router.post("/refresh", refreshController);  
 // Protected route
+router.post("/register", authMiddleware,verifyRole(2),registerController);
 router.post("/logout", authMiddleware, logoutController);
 // Password reset routes
 router.post("/forgot-password", forgotPasswordController);

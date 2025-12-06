@@ -1,18 +1,30 @@
-
-import { hashPassword } from "../../Utils/hash.js";
-import {
-  generateAccessToken,
-  generateRefreshToken,
-} from "../../Utils/generateTokens.js";
-import registerQuery from "../../services/authService/register.query.js";
-
 export const registerController = async (req, res) => {
   try {
-    const { full_name, email, password, confirmPassword, phone_number,role_id } =
-      req.body;
-if(!full_name || !email || !password || !confirmPassword || !phone_number || !role_id){
-  return res.status(400).json({error:"All fields are required"})
-}
+    const {
+      full_name,
+      email,
+      password,
+      confirmPassword,
+      phone_number,
+      role_id,
+    } = req.body;
+
+    if (
+      !full_name ||
+      !email ||
+      !password ||
+      !confirmPassword ||
+      !phone_number ||
+      !role_id
+    ) {
+      return res.status(400).json({ error: "All fields are required" });
+    }
+
+    // Email format validation
+    const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+    if (!emailRegex.test(email)) {
+      return res.status(400).json({ error: "Invalid email format" });
+    }
 
     // Basic constraints for password validation
     if (!password) {
@@ -24,9 +36,7 @@ if(!full_name || !email || !password || !confirmPassword || !phone_number || !ro
         .json({ error: "Password must be at least 8 characters long" });
     }
     if (password !== confirmPassword) {
-     
       return res.status(400).json({ error: "Passwords do not match" });
-      
     }
 
     // Regex for complexity
@@ -68,5 +78,3 @@ if(!full_name || !email || !password || !confirmPassword || !phone_number || !ro
     res.status(500).json({ message: "something went wrong try again later" });
   }
 };
-
-export default registerController;
