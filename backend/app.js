@@ -4,9 +4,13 @@ import helmet from "helmet";
 import pool from "./config/db.config.js";
 import routes from "./src/index.js";
 import dotenv from "dotenv";
+import http from 'http'
+import { initSocket } from "./src/controllers/socket.io/socket.io.js";
+import "./events/event.listner.js"; // Import event listeners
 dotenv.config();
+
 const app = express();
-const PORT = process.env.PORT ;
+const PORT = process.env.PORT || 2000;
 
 app.use(helmet());
 app.use(cors({ origin: "*" }));
@@ -19,6 +23,10 @@ app.use(express.json());app.use((req, res, next) => {
 // Parse URL-encoded request bodies (optional)
 app.use(express.urlencoded({ extended: true }));
 
+
+// Create HTTP server and attach Socket.IO
+const server = http.createServer(app);
+initSocket(server);
 
 app.use("/api", routes);
 
@@ -41,11 +49,7 @@ app.get("/", async (req, res) => {
   });
 });
 
-// const router = express.Router()
-// route.get(
-app.listen(PORT, (req,res) => {
+// Listen on the server (not app.listen)
+server.listen(PORT, () => {
   console.log(`Server running on port ${PORT}`);
-
-
-  
 });
