@@ -1,4 +1,3 @@
-
 import express from "express";
 import cors from "cors";
 import helmet from "helmet";
@@ -11,9 +10,18 @@ const PORT = process.env.PORT ;
 
 app.use(helmet());
 app.use(cors({ origin: "*" }));
-app.use(express.json());
+app.use(express.json());app.use((req, res, next) => {
+  req.url = req.url.trim();
+  next();
+});
+
+
+// Parse URL-encoded request bodies (optional)
+app.use(express.urlencoded({ extended: true }));
+
 
 app.use("/api", routes);
+
 
 const main = async () => {
   try {
@@ -25,6 +33,7 @@ const main = async () => {
 };
 
 main();
+app.get("/ping", (req, res) => res.send("pong"));
 app.get("/", async (req, res) => {
   res.status(200).json({
     status: true,
