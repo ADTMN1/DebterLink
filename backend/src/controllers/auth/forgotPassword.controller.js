@@ -1,4 +1,4 @@
-// src/controllers/auth/forgotPassword.controller.js
+
 import("dotenv/config");
 import { findUserByEmail } from "../../services/authService/passwordReset.queries.js";
 import { createPasswordResetForUser } from "../../services/authService/passwordReset.service.js";

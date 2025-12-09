@@ -20,7 +20,7 @@ export const loginController = async (req, res) => {
     // Check if user exists using query
     const user = await findUserByEmail(email);
     if (!user) {
-      return res.status(401).json({ message: "Invalid email or password" });
+      return res.status(401).json({ message: "user don't exist check your email or password" });
     }
 
     // Validate password
