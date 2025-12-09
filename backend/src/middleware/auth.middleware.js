@@ -33,3 +33,10 @@ export const verifyRole = (role) => {
     next();
   };
 };
+    // req.user=req.user
+//        const user = req.user
+
+
+
+
+  // export default {verifyRole, authMiddleware};

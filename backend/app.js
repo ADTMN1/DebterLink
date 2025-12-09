@@ -6,7 +6,7 @@ import routes from "./src/index.js";
 import dotenv from "dotenv";
 dotenv.config();
 const app = express();
-const PORT = process.env.PORT || 1212;
+const PORT = process.env.PORT ;
 
 app.use(helmet());
 app.use(cors({ origin: "*" }));
@@ -34,7 +34,18 @@ const main = async () => {
 
 main();
 app.get("/ping", (req, res) => res.send("pong"));
+app.get("/", async (req, res) => {
+  res.status(200).json({
+    status: true,
+    msg: "DEBTER LINK IS LIVE NOW."
+  });
+});
 
-app.listen(PORT, () => {
+// const router = express.Router()
+// route.get(
+app.listen(PORT, (req,res) => {
   console.log(`Server running on port ${PORT}`);
+
+
+  
 });
