@@ -7,6 +7,12 @@ const submitExam =async(req,res)=>{
        const user = req.user
 // console.log("IN TEACHER CONTROLLER",user)
 const isAssigned = await verifyAssignedTeacher(user);
+if (!isAssigned){
+    return res.status(statusCode.FORBIDDEN).json({
+        status:false,
+        msg:"You are not assigned to this class."
+    })
+}
     try {
         const {
 subject_id,
@@ -56,13 +62,20 @@ const updateExam =async(req ,res)=>{
     const user = req.user
 // console.log("IN TEACHER CONTROLLER",user)
 const isAssigned = await verifyAssignedTeacher(user);
+if (!isAssigned){
+    return res.status(statusCode.FORBIDDEN).json({
+        status:false,
+        msg:"You are not assigned to this class."
+    })
+}
     try {
-        const {subject_id,
+    const {subject_id,
     class_id,
     teacher_id,
     student_id,
     exam_type_id,
-    total_marks,} = req.body
+    total_marks,
+	} = req.body
 if(!teacher_id ||!student_id || !subject_id){
     return res.status(statusCode.BAD_REQUEST).json({
         status:false,
@@ -140,9 +153,14 @@ const getSumExamMarks =async(req,res)=>{
         const user = req.user
 // console.log("IN TEACHER CONTROLLER",user)
 const isAssigned = await verifyAssignedTeacher(user);
+if (!isAssigned){
+    return res.status(statusCode.FORBIDDEN).json({
+        status:false,
+        msg:"You are not assigned to this class."
+    })
+}
     try {   
         
-        console.log(req)
         const { student_id } = req.body
  
       const totalMarks = await examService.totalExamService(student_id);

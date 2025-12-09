@@ -1,6 +1,6 @@
 import e from "express";
 import pool from "../../config/db.config.js"
-
+import eventBus from "../../events/event.bus.js";
 
 const submitExamService =async(payload)=>{
 try {
@@ -32,6 +32,16 @@ const values = [
 const result = await pool.query(sql, values);
 
 // console.log(result.rows[0])
+if (result.rows[0]) {
+  eventBus.emit("examSubmitted", {
+    student_id: result.rows[0].student_id,
+    total_marks: result.rows[0].total_marksc,
+    exam_type_id: result.rows[0].exam_type_id,
+    subject_id: result.rows[0].subject_id,
+    teacher_id: result.rows[0].teacher_id
+  });
+  console.log("sent to emmitter")
+}
 
 
 return result.rows[0]
