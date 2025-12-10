@@ -28,11 +28,20 @@ console.log("parentQuery",parentQuery.rows[0])
 
     // 2. Prepare email message
     const message = `
-      Hello Parent,
-      The teacher has submitted the exam for your child ${studentName}.
-      Marks: ${total_marks}
-      Subject ID: ${subject_id}
-    `;
+  <h1>Hello Parent</h1>
+
+  <p>The teacher has submitted the exam for your child <strong>${studentName}</strong>.</p>
+
+  <p><strong>Here are the details:</strong></p>
+
+  <p><strong>Student ID:</strong> ${student_id}</p>
+  <p><strong>Marks:</strong> ${total_marks}</p>
+  <p><strong>Subject ID:</strong> ${subject_id}</p>
+
+  <br />
+  <p>Thank you!</p>
+`;
+
 // const parentEmail =`melkiasapo@gmail.com`
     // 3. Send email
     await sendEmail(parentEmail, "Exam Submitted Notification", message);
