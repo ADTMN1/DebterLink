@@ -14,7 +14,15 @@ const PORT = process.env.PORT || 2000;
 
 app.use(helmet());
 app.use(cors({ origin: "*" }));
-app.use(express.json());
+app.use(express.json());app.use((req, res, next) => {
+  req.url = req.url.trim();
+  next();
+});
+
+
+// Parse URL-encoded request bodies (optional)
+app.use(express.urlencoded({ extended: true }));
+
 
 // Create HTTP server and attach Socket.IO
 const server = http.createServer(app);
@@ -22,14 +30,7 @@ initSocket(server);
 
 app.use("/api", routes);
 
-app.get("/", async (req, res) => {
-  res.status(200).json({
-    status: true,
-    msg: "DEBTER LINK IS LIVE NOW."
-  });
-});
 
-// Test PostgreSQL connection
 const main = async () => {
   try {
     const result = await pool.query("SELECT NOW()");
@@ -40,6 +41,13 @@ const main = async () => {
 };
 
 main();
+app.get("/ping", (req, res) => res.send("pong"));
+app.get("/", async (req, res) => {
+  res.status(200).json({
+    status: true,
+    msg: "DEBTER LINK IS LIVE NOW."
+  });
+});
 
 // Listen on the server (not app.listen)
 server.listen(PORT, () => {
