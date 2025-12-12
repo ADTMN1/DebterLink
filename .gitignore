@@ -6,3 +6,5 @@
 # Root level ignores
 .expo/
 # package-lock.json  # Uncomment if you don't want to track it
+.vercel
+.env*.local
