@@ -5,7 +5,7 @@ import pool from "./config/db.config.js";
 import routes from "./src/index.js";
 import dotenv from "dotenv";
 import http from 'http'
-import { initSocket } from "./src/controllers/socket.io/socket.io.js";
+import { initSocket } from "./src/controllers/socket.controller/socketIo.js";
 import "./events/event.listner.js"; // Import event listeners
 dotenv.config();
 
@@ -23,10 +23,11 @@ app.use(express.json());app.use((req, res, next) => {
 // Parse URL-encoded request bodies (optional)
 app.use(express.urlencoded({ extended: true }));
 
+app.use("/uploads", express.static("uploads"));
 
-// Create HTTP server and attach Socket.IO
 const server = http.createServer(app);
-initSocket(server);
+initSocket(server)
+
 
 app.use("/api", routes);
 
@@ -41,7 +42,6 @@ const main = async () => {
 };
 
 main();
-app.get("/ping", (req, res) => res.send("pong"));
 app.get("/", async (req, res) => {
   res.status(200).json({
     status: true,
