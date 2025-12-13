@@ -9,6 +9,28 @@ export const RoleColors = {
   superAdmin: "#0EA5E9",
 };
 
+// Define theme type
+export type Theme = {
+  text: string;
+  textSecondary: string;
+  textTertiary: string;
+  buttonText: string;
+  tabIconDefault: string;
+  tabIconSelected: string;
+  link: string;
+  backgroundRoot: string;
+  backgroundDefault: string;
+  backgroundSecondary: string;
+  backgroundTertiary: string;
+  border: string;
+  success: string;
+  warning: string;
+  error: string;
+  info: string;
+  primary: string;
+  primaryLight: string;
+};
+
 export const Colors = {
   light: {
     text: "#111827",
@@ -26,7 +48,9 @@ export const Colors = {
     success: "#10B981",
     warning: "#F59E0B",
     error: "#EF4444",
-    info: "#3B82F6",
+    info: "#60A5FA",
+    primary: "#3B82F6",
+    primaryLight: "#BFDBFE",
   },
   dark: {
     text: "#F9FAFB",
@@ -45,6 +69,8 @@ export const Colors = {
     warning: "#F59E0B",
     error: "#EF4444",
     info: "#3B82F6",
+    primary: "#2563EB",
+    primaryLight: "#93C5FD",
   },
 };
 
