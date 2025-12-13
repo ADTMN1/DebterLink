@@ -22,6 +22,8 @@ interface AuthContextType {
   setLanguage: (lang: 'en' | 'am' | 'or') => void;
   isAuthenticated: boolean;
   isLoading: boolean;
+  error: Error | null;
+  clearError: () => void;
 }
 
 const AuthContext = createContext<AuthContextType | undefined>(undefined);
@@ -96,26 +98,18 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   const [user, setUser] = useState<User | null>(null);
   const [language, setLanguage] = useState<'en' | 'am' | 'or'>('en');
   const [isLoading, setIsLoading] = useState(false);
+  const [error, setError] = useState<Error | null>(null);
 
   const login = async (email: string, password: string) => {
-    setIsLoading(true);
     try {
-      // Call your actual backend API here
+      setError(null);
+      setIsLoading(true);
+      // In a real app, you would make an API call here
       const userData = await mockLoginAPI(email, password);
-      
-      // Store user data
       setUser(userData);
-      
-      // In a real app, you might want to store the token securely
-      // await SecureStore.setItemAsync('userToken', userData.token || '');
-      
-    } catch (error: any) {
-      console.error('Login error:', error);
-      Alert.alert(
-        'Login Failed',
-        error.message || 'Invalid email or password. Please try again.',
-        [{ text: 'OK' }]
-      );
+    } catch (err) {
+      const error = err instanceof Error ? err : new Error('Login failed');
+      setError(error);
       throw error;
     } finally {
       setIsLoading(false);
@@ -135,16 +129,23 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     }
   };
 
+  const clearError = () => {
+    setError(null);
+  };
+
   return (
-    <AuthContext.Provider value={{
-      user,
-      login,
-      logout,
-      language,
-      setLanguage,
-      isAuthenticated: !!user,
-      isLoading,
-    }}>
+    <AuthContext.Provider
+      value={{
+        user,
+        login,
+        logout,
+        language,
+        setLanguage,
+        isAuthenticated: !!user,
+        isLoading,
+        error,
+        clearError,
+      }}>
       {children}
     </AuthContext.Provider>
   );

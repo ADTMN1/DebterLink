@@ -1,375 +1,356 @@
-import { View, StyleSheet, Pressable, TextInput, Alert } from 'react-native';
+import {
+  View,
+  StyleSheet,
+  TouchableOpacity,
+  Dimensions,
+} from 'react-native';
 import { ThemedText } from '../components/ThemedText';
 import { ScreenScrollView } from '../components/ScreenScrollView';
 import { useAuth } from '../contexts/AuthContext';
 import { useTheme } from '../hooks/useTheme';
-import { Spacing, BorderRadius, RoleColors, Colors } from '../constants/theme';
-import { Feather } from '@expo/vector-icons';
+import {
+  Spacing,
+  BorderRadius,
+  Colors,
+} from '../constants/theme';
+import {
+  Feather,
+  MaterialCommunityIcons,
+  MaterialIcons,
+  Ionicons,
+} from '@expo/vector-icons';
+
+const { width } = Dimensions.get('window');
+const CARD_WIDTH = (width - Spacing.xl * 3) / 2;
 
 export default function TeacherDashboardScreen() {
-  const themeResult = useTheme();
-  const theme = (themeResult && themeResult.theme) ? themeResult.theme : Colors.light;
-  const { user, logout } = useAuth();
+  const { user, isLoading, error } = useAuth();
+  const { theme } = useTheme();
 
-  const handleLogout = () => {
-    Alert.alert(
-      'Logout',
-      'Are you sure you want to logout?',
-      [
-        {
-          text: 'Cancel',
-          style: 'cancel',
-        },
-        {
-          text: 'Logout',
-          style: 'destructive',
-          onPress: () => {
-            logout().catch((error) => {
-              console.error('Logout error:', error);
-              Alert.alert('Error', 'Failed to logout. Please try again.');
-            });
-          },
-        },
-      ],
-      { cancelable: true }
-    );
+  const stats = [
+    {
+      id: '1',
+      title: 'Students',
+      value: '156',
+      icon: 'account-multiple',
+      color: '#4CAF50',
+      iconType: 'material-community',
+      onPress: () => {},
+    },
+    {
+      id: '2',
+      title: 'Assignments',
+      value: '24',
+      icon: 'assignment',
+      color: '#2196F3',
+      iconType: 'material',
+      onPress: () => {},
+    },
+    {
+      id: '3',
+      title: 'Attendance',
+      value: '92%',
+      icon: 'calendar-check',
+      color: '#FF9800',
+      iconType: 'material-community',
+      onPress: () => {},
+    },
+    {
+      id: '4',
+      title: 'Messages',
+      value: '5',
+      icon: 'message-text',
+      color: '#9C27B0',
+      iconType: 'material-community',
+      onPress: () => {},
+    },
+  ];
+
+  const renderIcon = (
+    iconType: string,
+    icon: string,
+    color: string,
+    size: number
+  ) => {
+    switch (iconType) {
+      case 'material':
+        return <MaterialIcons name={icon as any} size={size} color={color} />;
+      case 'material-community':
+        return (
+          <MaterialCommunityIcons
+            name={icon as any}
+            size={size}
+            color={color}
+          />
+        );
+      default:
+        return <Ionicons name={icon as any} size={size} color={color} />;
+    }
   };
 
+  if (isLoading) {
+    return (
+      <View
+        style={[
+          styles.center,
+          { backgroundColor: theme.backgroundRoot },
+        ]}
+      >
+        <ThemedText>Loading dashboard…</ThemedText>
+      </View>
+    );
+  }
+
+  if (error) {
+    return (
+      <View
+        style={[
+          styles.center,
+          { backgroundColor: theme.backgroundRoot },
+        ]}
+      >
+        <Ionicons
+          name="warning-outline"
+          size={48}
+          color={theme.error}
+        />
+        <ThemedText style={styles.errorTitle}>
+          Something went wrong
+        </ThemedText>
+        <ThemedText style={styles.errorMessage}>
+          {error.message}
+        </ThemedText>
+      </View>
+    );
+  }
+
   return (
-    <ScreenScrollView>
-      <View style={styles.container}>
-        <View style={styles.header}>
-          <View style={styles.greeting}>
-            <ThemedText style={styles.greetingText}>Good morning,</ThemedText>
-            <ThemedText style={styles.nameText}>Teacher {user?.name || 'User'}</ThemedText>
-          </View>
-          <View style={styles.headerButtons}>
-            <Pressable 
-              style={styles.notificationButton}
-              onPress={() => {
-                Alert.alert('Notifications', 'Open notifications (not implemented)');
-              }}
+    <View style={{ flex: 1 }}>
+      {/* Fixed Header */}
+      <View
+        style={[
+          styles.header,
+          { 
+            // backgroundColor: theme.primary,
+            // position: 'absolute',
+            // top: 0,
+            // left: 0,
+            // right: 0,
+            // zIndex: 1000,
+          },
+        ]}
+      >
+        <View style={styles.headerRow}>
+          <View style={styles.headerLeft}>
+            <View
+              style={[
+                styles.avatar,
+                { backgroundColor: theme.primaryLight },
+              ]}
             >
-              <Feather name="bell" size={22} color={theme.text} />
-              <View style={[styles.notificationBadge, { backgroundColor: theme.error }]}>
-                <ThemedText style={styles.notificationBadgeText}>3</ThemedText>
-              </View>
-            </Pressable>
-            <Pressable onPress={handleLogout} style={styles.logoutButton}>
-              <Feather name="log-out" size={18} color={theme.error} />
-            </Pressable>
-          </View>
-        </View>
-
-        <View style={[styles.card, { backgroundColor: theme.backgroundDefault }]}>
-          <ThemedText style={styles.cardTitle}>Today's Schedule</ThemedText>
-          <View style={styles.scheduleItem}>
-            <View style={[styles.scheduleTime, { backgroundColor: RoleColors.teacher }]}>
-              <ThemedText style={styles.timeText}>8:00 AM</ThemedText>
+              <Feather
+                name="user"
+                size={28}
+                color={theme.text}
+              />
             </View>
-            <View style={styles.scheduleDetails}>
-              <ThemedText style={styles.scheduleClass}>Mathematics - Grade 10A</ThemedText>
-              <ThemedText style={[styles.scheduleRoom, { color: theme.textSecondary }]}>Room 204</ThemedText>
-            </View>
-          </View>
-          <View style={styles.scheduleItem}>
-            <View style={[styles.scheduleTime, { backgroundColor: RoleColors.teacher }]}>
-              <ThemedText style={styles.timeText}>10:00 AM</ThemedText>
-            </View>
-            <View style={styles.scheduleDetails}>
-              <ThemedText style={styles.scheduleClass}>Physics - Grade 11B</ThemedText>
-              <ThemedText style={[styles.scheduleRoom, { color: theme.textSecondary }]}>Room 308</ThemedText>
-            </View>
-          </View>
-        </View>
-
-        <View style={[styles.card, { backgroundColor: theme.backgroundDefault }]}>
-          <ThemedText style={styles.cardTitle}>Pending Assignments</ThemedText>
-          <View style={styles.statGrid}>
-            <View style={[styles.statCard, { backgroundColor: theme.warning + '20' }]}>
-              <ThemedText style={styles.statNumber}>12</ThemedText>
-              <ThemedText style={[styles.statLabel, { color: theme.textSecondary }]}>To Grade</ThemedText>
-            </View>
-            <View style={[styles.statCard, { backgroundColor: theme.success + '20' }]}>
-              <ThemedText style={styles.statNumber}>8</ThemedText>
-              <ThemedText style={[styles.statLabel, { color: theme.textSecondary }]}>Published</ThemedText>
-            </View>
-          </View>
-        </View>
-
-        <View style={[styles.card, { backgroundColor: theme.backgroundDefault }]}>
-          <ThemedText style={styles.cardTitle}>Recent Messages</ThemedText>
-          <View style={styles.messageItem}>
-            <View style={[styles.avatar, { backgroundColor: RoleColors.parent }]}>
-              <ThemedText style={styles.avatarText}>AK</ThemedText>
-            </View>
-            <View style={styles.messageContent}>
-              <ThemedText style={styles.messageName}>Almaz Kebede (Parent)</ThemedText>
-              <ThemedText style={[styles.messagePreview, { color: theme.textSecondary }]}>
-                Regarding student performance...
+            <View>
+              <ThemedText style={[styles.welcome, { color: theme.text }]}>
+                Welcome back
+              </ThemedText>
+              <ThemedText style={[styles.name, { color: theme.text }]}>
+                {user?.name || 'Teacher'}
               </ThemedText>
             </View>
-            <View style={[styles.badge, { backgroundColor: RoleColors.teacher }]}>
-              <ThemedText style={styles.badgeText}>3</ThemedText>
-            </View>
           </View>
-        </View>
 
-        <View style={[styles.card, { backgroundColor: theme.backgroundDefault }]}>
-          <ThemedText style={styles.cardTitle}>Quick Actions</ThemedText>
-          <View style={styles.actionGrid}>
-            <Pressable
-              style={({ pressed }: { pressed: boolean }) => [
-                styles.actionButton,
-                { backgroundColor: RoleColors.teacher, opacity: pressed ? 0.8 : 1 }
+          <TouchableOpacity style={styles.notification}>
+            <Ionicons
+              name="notifications-outline"
+              size={24}
+              color={theme.text}
+            />
+            <View
+              style={[
+                styles.notificationDot,
+                { backgroundColor: theme.error },
               ]}
-              onPress={() => {
-                Alert.alert('Take Attendance', 'Opening attendance (not implemented)');
-              }}
-            >
-              <Feather name="check-circle" size={24} color="#FFFFFF" />
-              <ThemedText style={styles.actionText}>Take Attendance</ThemedText>
-            </Pressable>
-            <Pressable
-              style={({ pressed }: { pressed: boolean }) => [
-                styles.actionButton,
-                { backgroundColor: RoleColors.teacher, opacity: pressed ? 0.8 : 1 }
-              ]}
-              onPress={() => {
-                Alert.alert('Create Assignment', 'Taking you to assignment creation (not implemented)');
-              }}
-            >
-              <Feather name="file-text" size={24} color="#FFFFFF" />
-              <ThemedText style={styles.actionText}>Create Assignment</ThemedText>
-            </Pressable>
-          </View>
+            />
+          </TouchableOpacity>
         </View>
       </View>
-    </ScreenScrollView>
+
+      {/* Scrollable Content */}
+      <ScreenScrollView
+        contentContainerStyle={{
+          paddingTop: 120, // Adjust this value based on your header height
+          paddingBottom: Spacing.lg,
+        }}
+      >
+        {/* STATS */}
+        <View style={styles.section}>
+          <ThemedText style={styles.sectionTitle}>
+            Overview
+          </ThemedText>
+
+          <View style={styles.grid}>
+            {stats.map((stat) => (
+              <TouchableOpacity
+                key={stat.id}
+                style={[
+                  styles.statCard,
+                  { backgroundColor: theme.backgroundSecondary },
+                ]}
+                onPress={stat.onPress}
+                activeOpacity={0.85}
+              >
+                <View
+                  style={[
+                    styles.statIcon,
+                    { backgroundColor: `${stat.color}22` },
+                  ]}
+                >
+                  {renderIcon(stat.iconType, stat.icon, stat.color, 22)}
+                </View>
+                <ThemedText style={styles.statValue}>
+                  {stat.value}
+                </ThemedText>
+                <ThemedText style={styles.statLabel}>
+                  {stat.title}
+                </ThemedText>
+              </TouchableOpacity>
+            ))}
+          </View>
+        </View>
+      </ScreenScrollView>
+    </View>
   );
 }
 
+/* =======================
+   STYLES
+======================= */
+
 const styles = StyleSheet.create({
-  container: {
-    paddingHorizontal: Spacing.lg,
-    paddingTop: Spacing.xs,
-    paddingBottom: Spacing.xxl,
-    gap: Spacing.md,
-  },
-  header: {
-    flexDirection: 'row',
-    justifyContent: 'space-between',
-    alignItems: 'flex-start',
-    marginBottom: Spacing.sm,
-    paddingTop: Spacing.xs,
-  },
-  greeting: {
+  center: {
     flex: 1,
-    gap: Spacing.xs,
+    alignItems: 'center',
+    justifyContent: 'center',
+    padding: Spacing.lg,
   },
-  greetingText: {
-    fontSize: 15,
-    fontWeight: '500',
-    color: '#6B7280',
-    letterSpacing: 0.3,
+
+  errorTitle: {
+    fontSize: 18,
+    fontWeight: '600',
+    marginTop: Spacing.md,
   },
-  nameText: {
-    fontSize: 26,
-    fontWeight: '700',
-    letterSpacing: -0.3,
-    lineHeight: 32,
+
+  errorMessage: {
+    fontSize: 14,
+    opacity: 0.7,
+    marginTop: Spacing.sm,
+    textAlign: 'center',
   },
-  headerButtons: {
+
+  header: {
+    paddingTop: Spacing.sm,
+    paddingBottom: Spacing.sm,
+    paddingHorizontal: Spacing.lg,
+    // borderBottomLeftRadius: BorderRadius.xl,
+    // borderBottomRightRadius: BorderRadius.xl,
+    marginVertical: Spacing.lg,
+  },
+
+  headerRow: {
     flexDirection: 'row',
     alignItems: 'center',
-    gap: Spacing.sm,
+    justifyContent: 'space-between',
   },
-  notificationButton: {
-    width: 44,
-    height: 44,
-    borderRadius: BorderRadius.full,
-    justifyContent: 'center',
+
+  headerLeft: {
+    flexDirection: 'row',
     alignItems: 'center',
-    position: 'relative',
-    backgroundColor: 'transparent',
   },
-  logoutButton: {
-    width: 40,
-    height: 40,
-    borderRadius: BorderRadius.full,
-    justifyContent: 'center',
+
+  avatar: {
+    width: 52,
+    height: 52,
+    borderRadius: 26,
     alignItems: 'center',
-    backgroundColor: '#EF444415',
+    justifyContent: 'center',
+    marginRight: Spacing.md,
   },
-  notificationBadge: {
+
+  welcome: {
+    fontSize: 13,
+    opacity: 0.85,
+  },
+
+  name: {
+    fontSize: 20,
+    fontWeight: '700',
+    marginTop: 2,
+  },
+
+  notification: {
+    padding: Spacing.sm,
+  },
+
+  notificationDot: {
     position: 'absolute',
     top: 6,
     right: 6,
-    minWidth: 18,
-    height: 18,
-    borderRadius: BorderRadius.full,
-    justifyContent: 'center',
-    alignItems: 'center',
-    paddingHorizontal: 4,
-    borderWidth: 2,
-    borderColor: '#FFFFFF',
+    width: 8,
+    height: 8,
+    borderRadius: 4,
   },
-  notificationBadgeText: {
-    fontSize: 10,
-    fontWeight: '700',
-    color: '#FFFFFF',
+
+  section: {
+    paddingHorizontal: Spacing.lg,
+    marginBottom: Spacing.xl,
   },
-  card: {
-    borderRadius: BorderRadius.xl,
-    padding: Spacing.lg,
-    gap: Spacing.md,
+
+  sectionTitle: {
+    fontSize: 18,
+    fontWeight: '600',
+    marginBottom: Spacing.md,
+  },
+
+  grid: {
+    flexDirection: 'row',
+    flexWrap: 'wrap',
+    justifyContent: 'space-between',
+  },
+
+  statCard: {
+    width: CARD_WIDTH,
+    padding: Spacing.md,
+    borderRadius: BorderRadius.lg,
+    marginBottom: Spacing.md,
     shadowColor: '#000',
-    shadowOffset: { width: 0, height: 2 },
     shadowOpacity: 0.08,
     shadowRadius: 8,
-    elevation: 3,
-    marginTop: Spacing.xs,
-  },
-  cardTitle: {
-    fontSize: 18,
-    fontWeight: '700',
-    marginBottom: Spacing.sm,
-    letterSpacing: -0.2,
-  },
-  scheduleItem: {
-    flexDirection: 'row',
-    gap: Spacing.md,
-    paddingVertical: Spacing.md,
-    borderBottomWidth: 1,
-    borderBottomColor: '#F3F4F6',
-  },
-  scheduleTime: {
-    width: 75,
-    height: 56,
-    borderRadius: BorderRadius.lg,
-    justifyContent: 'center',
-    alignItems: 'center',
-    shadowColor: RoleColors.teacher,
-    shadowOffset: { width: 0, height: 2 },
-    shadowOpacity: 0.2,
-    shadowRadius: 4,
-    elevation: 3,
-  },
-  timeText: {
-    fontSize: 11,
-    fontWeight: '700',
-    color: '#FFFFFF',
-    letterSpacing: 0.5,
-  },
-  scheduleDetails: {
-    flex: 1,
-    justifyContent: 'center',
-    gap: 4,
-    paddingLeft: Spacing.xs,
-  },
-  scheduleClass: {
-    fontSize: 15,
-    fontWeight: '600',
-    lineHeight: 20,
-  },
-  scheduleRoom: {
-    fontSize: 13,
-    lineHeight: 18,
-  },
-  statGrid: {
-    flexDirection: 'row',
-    gap: Spacing.md,
-  },
-  statCard: {
-    flex: 1,
-    padding: Spacing.lg,
-    borderRadius: BorderRadius.lg,
-    alignItems: 'center',
-    gap: Spacing.xs,
-    shadowColor: '#000',
-    shadowOffset: { width: 0, height: 1 },
-    shadowOpacity: 0.05,
-    shadowRadius: 3,
-    elevation: 2,
-  },
-  statNumber: {
-    fontSize: 36,
-    fontWeight: '700',
-    letterSpacing: -0.5,
-  },
-  statLabel: {
-    fontSize: 13,
-    fontWeight: '500',
-    textAlign: 'center',
-  },
-  messageItem: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    gap: Spacing.md,
-    paddingVertical: Spacing.xs,
-    paddingTop: Spacing.sm,
-  },
-  avatar: {
-    width: Spacing.avatarMd,
-    height: Spacing.avatarMd,
-    borderRadius: BorderRadius.full,
-    justifyContent: 'center',
-    alignItems: 'center',
-    shadowColor: '#000',
-    shadowOffset: { width: 0, height: 1 },
-    shadowOpacity: 0.1,
-    shadowRadius: 2,
-    elevation: 2,
-  },
-  avatarText: {
-    fontSize: 16,
-    fontWeight: '700',
-    color: '#FFFFFF',
-  },
-  messageContent: {
-    flex: 1,
-    gap: Spacing.xs,
-  },
-  messageName: {
-    fontSize: 16,
-    fontWeight: '600',
-  },
-  messagePreview: {
-    fontSize: 14,
-    lineHeight: 20,
-  },
-  badge: {
-    minWidth: 24,
-    height: 24,
-    borderRadius: BorderRadius.full,
-    justifyContent: 'center',
-    alignItems: 'center',
-    paddingHorizontal: Spacing.xs,
-  },
-  badgeText: {
-    fontSize: 11,
-    fontWeight: '700',
-    color: '#FFFFFF',
-  },
-  actionGrid: {
-    flexDirection: 'row',
-    gap: Spacing.md,
-  },
-  actionButton: {
-    flex: 1,
-    padding: Spacing.lg,
-    borderRadius: BorderRadius.lg,
-    alignItems: 'center',
-    gap: Spacing.sm,
-    shadowColor: RoleColors.teacher,
     shadowOffset: { width: 0, height: 4 },
-    shadowOpacity: 0.3,
-    shadowRadius: 6,
     elevation: 4,
   },
-  actionText: {
-    fontSize: 14,
+
+  statIcon: {
+    width: 38,
+    height: 38,
+    borderRadius: 19,
+    alignItems: 'center',
+    justifyContent: 'center',
+    marginBottom: Spacing.sm,
+  },
+
+  statValue: {
+    fontSize: 22,
     fontWeight: '700',
-    color: '#FFFFFF',
+  },
+
+  statLabel: {
+    fontSize: 13,
+    opacity: 0.7,
+    marginTop: 2,
   },
 });

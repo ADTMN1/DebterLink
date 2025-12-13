@@ -2,8 +2,16 @@
 import React, { useState, useEffect } from "react";
 import { createNativeStackNavigator } from "@react-navigation/native-stack";
 import { createBottomTabNavigator } from "@react-navigation/bottom-tabs";
-import { createDrawerNavigator } from "@react-navigation/drawer";
+import { 
+  createDrawerNavigator, 
+  DrawerNavigationProp,
+  DrawerContentScrollView,
+  DrawerItemList,
+  DrawerItem
+} from "@react-navigation/drawer";
+import { CompositeNavigationProp } from "@react-navigation/native";
 import { Feather } from "@expo/vector-icons";
+import { View, TouchableOpacity } from 'react-native';
 import { useAuth } from "../contexts/AuthContext";
 import { useTheme } from "../hooks/useTheme";
 import { RoleColors, Colors } from "../constants/theme";
@@ -28,6 +36,39 @@ const Stack = createNativeStackNavigator();
 const Tab = createBottomTabNavigator();
 const Drawer = createDrawerNavigator();
 
+// Custom Drawer Content with Logout Button
+function CustomDrawerContent(props: any) {
+  const { logout } = useAuth();
+  const theme = useTheme()?.theme || Colors.light;
+  
+  return (
+    <DrawerContentScrollView 
+      {...props} 
+      contentContainerStyle={{ flex: 1, justifyContent: 'space-between' }}
+    >
+      <View>
+        <DrawerItemList {...props} />
+      </View>
+      <View>
+        <DrawerItem
+          label="Logout"
+          onPress={async () => {
+            try {
+              await logout();
+            } catch (error) {
+              console.error('Logout error:', error);
+            }
+          }}
+          icon={({ color, size }) => (
+            <Feather name="log-out" size={size} color={color} />
+          )}
+          labelStyle={{ marginLeft: -8, color: theme.text }}
+        />
+      </View>
+    </DrawerContentScrollView>
+  );
+}
+
 function createRoleDrawer(Main: React.ComponentType<any>, drawerTintColor?: string) {
   return function RoleDrawer() {
     const themeResult = useTheme();
@@ -37,10 +78,29 @@ function createRoleDrawer(Main: React.ComponentType<any>, drawerTintColor?: stri
       <KeyboardProvider>
         <Drawer.Navigator
           screenOptions={{
-            headerShown: false,
-            drawerActiveTintColor: drawerTintColor || undefined,
-            drawerStyle: { backgroundColor: theme.backgroundRoot },
+            headerShown: true,
+            drawerActiveTintColor: drawerTintColor,
+            drawerInactiveTintColor: theme.text,
+            drawerStyle: { 
+              backgroundColor: theme.backgroundRoot,
+              width: '70%'
+            },
+            drawerLabelStyle: { 
+              marginLeft: 20,  // Increased from -15 to create space after the icon
+              fontSize: 16,
+              fontWeight: '500',  // Make text slightly bolder
+            },
+            drawerItemStyle: {
+              marginVertical: 4,  // Add vertical spacing between items
+              borderRadius: 8,    // Rounded corners for items
+              paddingVertical: 8,  // Vertical padding for better touch targets
+            },
+            headerStyle: {
+              backgroundColor: theme.backgroundRoot,
+            },
+            headerTintColor: theme.text,
           }}
+          drawerContent={(props) => <CustomDrawerContent {...props} />}
         >
           <Drawer.Screen
             name="HomeDrawer"
@@ -72,182 +132,169 @@ function createRoleDrawer(Main: React.ComponentType<any>, drawerTintColor?: stri
   };
 }
 
-function TeacherTabs() {
-  const themeResult = useTheme();
-  const theme = themeResult?.theme || Colors.light;
-
+// Tab Navigator for Teachers
+const TeacherTabs = () => {
   return (
     <Tab.Navigator
-      screenOptions={{
+      screenOptions={({ route }) => ({
+        tabBarIcon: ({ focused, color, size }) => {
+          let iconName: keyof typeof Feather.glyphMap = 'home';
+          
+          if (route.name === 'Dashboard') {
+            iconName = 'home';
+          } else if (route.name === 'Attendance') {
+            iconName = 'check-square';
+          } else if (route.name === 'Assignments') {
+            iconName = 'book';
+          } else if (route.name === 'Messages') {
+            iconName = 'message-square';
+          } else if (route.name === 'Resources') {
+            iconName = 'folder';
+          }
+
+          return <Feather name={iconName} size={size} color={color} />;
+        },
         tabBarActiveTintColor: RoleColors.teacher,
-        tabBarInactiveTintColor: theme.tabIconDefault,
-        tabBarStyle: { backgroundColor: theme.backgroundRoot, borderTopColor: theme.border },
-        headerStyle: { backgroundColor: theme.backgroundRoot },
-        headerTintColor: theme.text,
-      }}
+        tabBarInactiveTintColor: 'gray',
+      })}
     >
-      <Tab.Screen
-        name="TeacherDashboard"
-        component={TeacherDashboardScreen}
-        options={{ tabBarIcon: ({ color, size }) => <Feather name="home" size={size} color={color} />, title: "ደብተርLink" }}
+      <Tab.Screen 
+        name="Dashboard" 
+        component={TeacherDashboardScreen} 
+        options={{ headerShown: false }}
       />
-      <Tab.Screen
-        name="TeacherAttendance"
-        component={AttendanceScreen}
-        options={{ tabBarIcon: ({ color, size }) => <Feather name="check-circle" size={size} color={color} /> }}
+      <Tab.Screen 
+        name="Attendance" 
+        component={AttendanceScreen} 
+        options={{ headerShown: false }}
       />
-      <Tab.Screen
-        name="TeacherMessages"
-        component={MessagesScreen}
-        options={{ tabBarIcon: ({ color, size }) => <Feather name="message-circle" size={size} color={color} /> }}
+      <Tab.Screen 
+        name="Assignments" 
+        component={AssignmentsScreen} 
+        options={{ headerShown: false }}
       />
-      <Tab.Screen
-        name="TeacherResources"
-        component={ResourcesScreen}
-        options={{ tabBarIcon: ({ color, size }) => <Feather name="book" size={size} color={color} /> }}
+      <Tab.Screen 
+        name="Messages" 
+        component={MessagesScreen} 
+        options={{ headerShown: false }}
       />
-      <Tab.Screen
-        name="TeacherProfile"
-        component={ProfileScreen}
-        options={{ tabBarIcon: ({ color, size }) => <Feather name="user" size={size} color={color} /> }}
+      <Tab.Screen 
+        name="Resources" 
+        component={ResourcesScreen} 
+        options={{ headerShown: false }}
       />
     </Tab.Navigator>
   );
-}
+};
 
-function StudentTabs() {
-  const themeResult = useTheme();
-  const theme = themeResult?.theme || Colors.light;
-
+// Tab Navigator for Students
+const StudentTabs = () => {
   return (
     <Tab.Navigator
-      screenOptions={{
+      screenOptions={({ route }) => ({
+        tabBarIcon: ({ focused, color, size }) => {
+          let iconName: keyof typeof Feather.glyphMap = 'home';
+          
+          if (route.name === 'Dashboard') {
+            iconName = 'home';
+          } else if (route.name === 'Assignments') {
+            iconName = 'book';
+          } else if (route.name === 'Messages') {
+            iconName = 'message-square';
+          } else if (route.name === 'Resources') {
+            iconName = 'folder';
+          }
+
+          return <Feather name={iconName} size={size} color={color} />;
+        },
         tabBarActiveTintColor: RoleColors.student,
-        tabBarInactiveTintColor: theme.tabIconDefault,
-        tabBarStyle: { backgroundColor: theme.backgroundRoot, borderTopColor: theme.border },
-        headerStyle: { backgroundColor: theme.backgroundRoot },
-        headerTintColor: theme.text,
-      }}
+        tabBarInactiveTintColor: 'gray',
+      })}
     >
-      <Tab.Screen
-        name="StudentHome"
-        component={StudentDashboardScreen}
-        options={{ tabBarIcon: ({ color, size }) => <Feather name="home" size={size} color={color} />, title: "ደብተርLink" }}
+      <Tab.Screen 
+        name="Dashboard" 
+        component={StudentDashboardScreen} 
+        options={{ headerShown: false }}
       />
-      <Tab.Screen
-        name="StudentAssignments"
-        component={AssignmentsScreen}
-        options={{ tabBarIcon: ({ color, size }) => <Feather name="file-text" size={size} color={color} /> }}
+      <Tab.Screen 
+        name="Assignments" 
+        component={AssignmentsScreen} 
+        options={{ headerShown: false }}
       />
-      <Tab.Screen
-        name="StudentResults"
-        component={AssignmentsScreen}
-        options={{ tabBarIcon: ({ color, size }) => <Feather name="award" size={size} color={color} /> }}
+      <Tab.Screen 
+        name="Messages" 
+        component={MessagesScreen} 
+        options={{ headerShown: false }}
       />
-      <Tab.Screen
-        name="StudentResources"
-        component={ResourcesScreen}
-        options={{ tabBarIcon: ({ color, size }) => <Feather name="book" size={size} color={color} /> }}
-      />
-      <Tab.Screen
-        name="StudentProfile"
-        component={ProfileScreen}
-        options={{ tabBarIcon: ({ color, size }) => <Feather name="user" size={size} color={color} /> }}
+      <Tab.Screen 
+        name="Resources" 
+        component={ResourcesScreen} 
+        options={{ headerShown: false }}
       />
     </Tab.Navigator>
   );
-}
+};
 
-function ParentTabs() {
-  const themeResult = useTheme();
-  const theme = themeResult?.theme || Colors.light;
-
+// Tab Navigator for Parents
+const ParentTabs = () => {
   return (
     <Tab.Navigator
-      screenOptions={{
+      screenOptions={({ route }) => ({
+        tabBarIcon: ({ focused, color, size }) => {
+          let iconName: keyof typeof Feather.glyphMap = 'home';
+          
+          if (route.name === 'Dashboard') {
+            iconName = 'home';
+          } else if (route.name === 'Attendance') {
+            iconName = 'check-square';
+          } else if (route.name === 'Messages') {
+            iconName = 'message-square';
+          }
+
+          return <Feather name={iconName} size={size} color={color} />;
+        },
         tabBarActiveTintColor: RoleColors.parent,
-        tabBarInactiveTintColor: theme.tabIconDefault,
-        tabBarStyle: { backgroundColor: theme.backgroundRoot, borderTopColor: theme.border },
-        headerStyle: { backgroundColor: theme.backgroundRoot },
-        headerTintColor: theme.text,
-      }}
+        tabBarInactiveTintColor: 'gray',
+      })}
     >
-      <Tab.Screen
-        name="ParentOverview"
-        component={ParentDashboardScreen}
-        options={{ tabBarIcon: ({ color, size }) => <Feather name="home" size={size} color={color} />, title: "ደብተርLink" }}
+      <Tab.Screen 
+        name="Dashboard" 
+        component={ParentDashboardScreen} 
+        options={{ headerShown: false }}
       />
-      <Tab.Screen
-        name="ParentMessages"
-        component={MessagesScreen}
-        options={{ tabBarIcon: ({ color, size }) => <Feather name="message-circle" size={size} color={color} /> }}
+      <Tab.Screen 
+        name="Attendance" 
+        component={AttendanceScreen} 
+        options={{ headerShown: false }}
       />
-      <Tab.Screen
-        name="ParentReports"
-        component={AssignmentsScreen}
-        options={{ tabBarIcon: ({ color, size }) => <Feather name="bar-chart-2" size={size} color={color} /> }}
-      />
-      <Tab.Screen
-        name="ParentCalendar"
-        component={ResourcesScreen}
-        options={{ tabBarIcon: ({ color, size }) => <Feather name="calendar" size={size} color={color} /> }}
-      />
-      <Tab.Screen
-        name="ParentProfile"
-        component={ProfileScreen}
-        options={{ tabBarIcon: ({ color, size }) => <Feather name="user" size={size} color={color} /> }}
+      <Tab.Screen 
+        name="Messages" 
+        component={MessagesScreen} 
+        options={{ headerShown: false }}
       />
     </Tab.Navigator>
   );
-}
+};
 
-function DirectorNavigator() {
-  const themeResult = useTheme();
-  const theme = themeResult?.theme || Colors.light;
-
+// Stack Navigator for Director/Admin
+const DirectorNavigator = () => {
   return (
-    <Stack.Navigator
-      screenOptions={{
-        headerStyle: { backgroundColor: theme.backgroundRoot },
-        headerTintColor: theme.text,
-      }}
-    >
-      <Stack.Screen
-        name="DirectorDashboard"
-        component={DirectorDashboardScreen}
-        options={{ title: "ደብተርLink - Director" }}
-      />
+    <Stack.Navigator screenOptions={{ headerShown: false }}>
+      <Stack.Screen name="DirectorDashboard" component={DirectorDashboardScreen} />
     </Stack.Navigator>
   );
-}
+};
 
-function SuperAdminNavigator() {
-  const themeResult = useTheme();
-  const theme = themeResult?.theme || Colors.light;
-
+// Stack Navigator for Super Admin
+const SuperAdminNavigator = () => {
   return (
-    <Stack.Navigator
-      screenOptions={{
-        headerStyle: { backgroundColor: theme.backgroundRoot },
-        headerTintColor: theme.text,
-      }}
-    >
-      <Stack.Screen
-        name="SuperAdmin"
-        component={SuperAdminScreen}
-        options={{ title: "ደብተርLink – National Command" }}
-      />
+    <Stack.Navigator screenOptions={{ headerShown: false }}>
+      <Stack.Screen name="SuperAdminDashboard" component={SuperAdminScreen} />
     </Stack.Navigator>
   );
-}
+};
 
-// Drawer wrappers
-const TeacherDrawer = createRoleDrawer(TeacherTabs, RoleColors.teacher);
-const StudentDrawer = createRoleDrawer(StudentTabs, RoleColors.student);
-const ParentDrawer = createRoleDrawer(ParentTabs, RoleColors.parent);
-const DirectorDrawer = createRoleDrawer(DirectorNavigator, RoleColors.director);
-const SuperAdminDrawer = createRoleDrawer(SuperAdminNavigator, RoleColors.superAdmin);
-
+// Export the AppNavigator component
 export default function AppNavigator() {
   const { user } = useAuth();
   const [showSplash, setShowSplash] = useState(true);
@@ -275,6 +322,13 @@ export default function AppNavigator() {
       </Stack.Navigator>
     );
   }
+
+  // Create drawer navigators with proper typing
+  const TeacherDrawer = createRoleDrawer(TeacherTabs, RoleColors.teacher);
+  const StudentDrawer = createRoleDrawer(StudentTabs, RoleColors.student);
+  const ParentDrawer = createRoleDrawer(ParentTabs, RoleColors.parent);
+  const DirectorDrawer = createRoleDrawer(DirectorNavigator, RoleColors.director);
+  const SuperAdminDrawer = createRoleDrawer(SuperAdminNavigator, RoleColors.superAdmin);
 
   switch (user.role) {
     case "teacher":
