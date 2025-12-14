@@ -1,33 +1,35 @@
+// src/controllers/auth/resetPassword.controller.js
 
 import { resetPasswordForRecord } from "../../services/authService/passwordReset.service.js";
 
 export const resetPasswordController = async (req, res) => {
   try {
-    const { token, newPassword } = req.body;
-    if (!token || !newPassword) {
-      return res
-        .status(400)
-        .json({ message: "token and newPassword are required" });
+    const { token, id, newPassword } = req.body;
+
+    if (!token || !id || !newPassword) {
+      return res.status(400).json({ message: "token, id, and newPassword are required" });
     }
 
-    // optional: enforce password policy (same as registration)
     if (newPassword.length < 8) {
-      return res
-        .status(400)
-        .json({ message: "Password must be at least 8 characters" });
+      return res.status(400).json({ message: "Password must be at least 8 characters" });
+    }
+    const strongRegex = /^(?=.*[A-Z])(?=.*[a-z])(?=.*\d)(?=.*[@$!%*?&])/;
+    if (!strongRegex.test(newPassword)) {
+      return res.status(400).json({
+        message: "Password must include uppercase, lowercase, number, and special character",
+      });
     }
 
     const result = await resetPasswordForRecord({
       tokenRaw: token,
+      userId: id,
       newPassword,
     });
 
     if (!result.ok) {
       switch (result.reason) {
         case "invalid_token":
-          return res
-            .status(400)
-            .json({ message: "Invalid password reset token" });
+          return res.status(400).json({ message: "Invalid password reset token" });
         case "token_expired":
           return res.status(400).json({ message: "Token expired" });
         case "token_already_used":
@@ -37,9 +39,8 @@ export const resetPasswordController = async (req, res) => {
       }
     }
 
-    return res
-      .status(200)
-      .json({ message: "Password has been reset successfully" });
+    return res.status(200).json({ message: "Password has been reset successfully" });
+
   } catch (error) {
     console.error("resetPasswordController error:", error);
     return res.status(500).json({ message: "Internal server error" });

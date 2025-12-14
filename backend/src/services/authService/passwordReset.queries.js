@@ -1,4 +1,4 @@
-// src/queries/passwordReset.queries.js
+
 import db from "../../../config/db.config.js";
 
 export const findUserByEmail = async (email) => {
@@ -13,7 +13,6 @@ export const findUserByEmail = async (email) => {
 };
 
 
-// Insert a new reset token record
 export const insertPasswordReset = async ({
   id,
   user_id,
@@ -42,7 +41,6 @@ export const insertPasswordReset = async ({
   return rows[0];
 };
 
-// Find a token record by token_hash
 export const findPasswordResetByHash = async (token_hash) => {
   const q = `
     SELECT * FROM password_reset_tokens
@@ -53,20 +51,17 @@ export const findPasswordResetByHash = async (token_hash) => {
   return rows[0] || null;
 };
 
-// Mark token as used
 export const markTokenUsed = async (id) => {
   const q = `UPDATE password_reset_tokens SET is_used = true WHERE id = $1 RETURNING *;`;
   const { rows } = await db.query(q, [id]);
   return rows[0];
 };
 
-// Delete token (optional cleanup)
 export const deleteTokenById = async (id) => {
   const q = `DELETE FROM password_reset_tokens WHERE id = $1;`;
   await db.query(q, [id]);
 };
 
-// Optional: delete expired tokens (cron or manual)
 export const deleteExpiredTokens = async () => {
   const q = `DELETE FROM password_reset_tokens WHERE expires_at < now();`;
   await db.query(q);
