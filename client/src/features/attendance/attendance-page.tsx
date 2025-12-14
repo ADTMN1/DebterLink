@@ -15,14 +15,7 @@ export default function AttendancePage() {
   const isTeacher = user?.role === 'teacher';
 
   const today = new Date().toISOString().slice(0, 10); // YYYY-MM-DD
-  
-  // Get teacher's assigned classes only
-  const teacherClasses = [
-    { id: 'grade-11A-physics', name: 'Grade 11A - Physics' },
-    { id: 'grade-12B-physics', name: 'Grade 12B - Physics' }
-  ]; // In real app: filter classes where teacherId === user.id
-  
-  const [selectedClass, setSelectedClass] = useState(teacherClasses[0]?.id || '');
+  const defaultClassId = 'grade-11A-physics';
 
   // Mock Data
   const [students, setStudents] = useState([
@@ -41,10 +34,9 @@ export default function AttendancePage() {
 
   const saveAttendanceMutation = useMutation({
     mutationFn: async () => {
-      const selectedClassData = teacherClasses.find(c => c.id === selectedClass);
       await apiRequest('POST', '/api/attendance', {
-        classId: selectedClass,
-        className: selectedClassData?.name || '',
+        classId: defaultClassId,
+        className: 'Grade 11A - Physics',
         date: today,
         records: students.map((s) => ({
           studentId: s.id,
@@ -62,22 +54,20 @@ export default function AttendancePage() {
           <div>
             <h2 className="text-3xl font-bold tracking-tight">Attendance</h2>
             <p className="text-muted-foreground">
-              {isTeacher ? 'Mark attendance for today' : 'View your attendance record'}
+              {isTeacher ? 'Mark attendance for your class' : 'View your attendance record'}
             </p>
           </div>
           
           {isTeacher && (
             <div className="flex items-center gap-2">
-              <Select value={selectedClass} onValueChange={setSelectedClass}>
-                <SelectTrigger className="w-[200px]">
-                  <SelectValue placeholder="Select Your Class" />
+              <Select defaultValue="11A">
+                <SelectTrigger className="w-[180px]">
+                  <SelectValue placeholder="Select Class" />
                 </SelectTrigger>
                 <SelectContent>
-                  {teacherClasses.map((cls) => (
-                    <SelectItem key={cls.id} value={cls.id}>
-                      {cls.name}
-                    </SelectItem>
-                  ))}
+                  <SelectItem value="11A">Grade 11A</SelectItem>
+                  <SelectItem value="11B">Grade 11B</SelectItem>
+                  <SelectItem value="12A">Grade 12A</SelectItem>
                 </SelectContent>
               </Select>
               <Button
@@ -93,9 +83,7 @@ export default function AttendancePage() {
         {isTeacher ? (
           <Card>
             <CardHeader>
-              <CardTitle>
-                {teacherClasses.find(c => c.id === selectedClass)?.name || 'Select Class'} (Today)
-              </CardTitle>
+              <CardTitle>Grade 11A - Physics (Today)</CardTitle>
             </CardHeader>
             <CardContent>
               <Table>

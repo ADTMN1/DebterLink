@@ -33,31 +33,13 @@ import {
 import { Badge } from '@/components/ui/badge';
 
 export function Navbar() {
-  const { theme, setTheme, language, setLanguage, toggleSidebar, calendarType, setCalendarType } = useUIStore();
+  const { theme, setTheme, language, setLanguage, toggleSidebar } = useUIStore();
   const { user, logout } = useAuthStore();
   const { t, i18n } = useTranslation();
-  const [location, setLocation] = useLocation();
+  const [location] = useLocation();
   const [searchOpen, setSearchOpen] = useState(false);
-  const [searchQuery, setSearchQuery] = useState('');
+  const [calendarType, setCalendarType] = useState<'gregorian' | 'ethiopian'>('gregorian');
   const notificationCount = 3; // Mock notification count
-
-  const searchItems = [
-    { type: 'page', label: 'Dashboard', href: '/dashboard' },
-    { type: 'page', label: 'Attendance', href: '/dashboard/attendance' },
-    { type: 'page', label: 'Assignments', href: '/dashboard/assignments' },
-    { type: 'page', label: 'Grades', href: '/dashboard/grades' },
-    { type: 'page', label: 'Calendar', href: '/dashboard/calendar' },
-    { type: 'page', label: 'Resources', href: '/dashboard/resources' },
-    { type: 'page', label: 'Behavior', href: '/dashboard/behavior' },
-    { type: 'page', label: 'Messages', href: '/dashboard/messages' },
-    { type: 'action', label: 'Create Assignment', action: () => setLocation('/dashboard/assignments') },
-    { type: 'action', label: 'Send Message', action: () => setLocation('/dashboard/messages') },
-    { type: 'action', label: 'View Attendance', action: () => setLocation('/dashboard/attendance') },
-  ];
-
-  const filteredItems = searchItems.filter(item => 
-    item.label.toLowerCase().includes(searchQuery.toLowerCase())
-  );
 
   useEffect(() => {
     // Apply theme class
@@ -248,53 +230,29 @@ export function Navbar() {
       </header>
 
       {/* Global Search Dialog */}
-      <CommandDialog open={searchOpen} onOpenChange={(open) => {
-        setSearchOpen(open);
-        if (!open) setSearchQuery('');
-      }}>
-        <CommandInput 
-          placeholder={t('common.search') || 'Search...'} 
-          value={searchQuery}
-          onValueChange={setSearchQuery}
-        />
+      <CommandDialog open={searchOpen} onOpenChange={setSearchOpen}>
+        <CommandInput placeholder={t('common.search') || 'Search...'} />
         <CommandList>
           <CommandEmpty>{t('common.noResults') || 'No results found.'}</CommandEmpty>
-          {filteredItems.filter(item => item.type === 'page').length > 0 && (
-            <CommandGroup heading={t('common.pages') || 'Pages'}>
-              {filteredItems
-                .filter(item => item.type === 'page')
-                .map((item) => (
-                  <CommandItem
-                    key={item.label}
-                    onSelect={() => {
-                      setLocation(item.href!);
-                      setSearchOpen(false);
-                      setSearchQuery('');
-                    }}
-                  >
-                    <span>{item.label}</span>
-                  </CommandItem>
-                ))}
-            </CommandGroup>
-          )}
-          {filteredItems.filter(item => item.type === 'action').length > 0 && (
-            <CommandGroup heading={t('common.actions') || 'Actions'}>
-              {filteredItems
-                .filter(item => item.type === 'action')
-                .map((item) => (
-                  <CommandItem
-                    key={item.label}
-                    onSelect={() => {
-                      item.action?.();
-                      setSearchOpen(false);
-                      setSearchQuery('');
-                    }}
-                  >
-                    <span>{item.label}</span>
-                  </CommandItem>
-                ))}
-            </CommandGroup>
-          )}
+          <CommandGroup heading={t('common.pages') || 'Pages'}>
+            <CommandItem>
+              <span>Dashboard</span>
+            </CommandItem>
+            <CommandItem>
+              <span>Attendance</span>
+            </CommandItem>
+            <CommandItem>
+              <span>Assignments</span>
+            </CommandItem>
+          </CommandGroup>
+          <CommandGroup heading={t('common.actions') || 'Actions'}>
+            <CommandItem>
+              <span>Create Assignment</span>
+            </CommandItem>
+            <CommandItem>
+              <span>Send Message</span>
+            </CommandItem>
+          </CommandGroup>
         </CommandList>
       </CommandDialog>
     </>

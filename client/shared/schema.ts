@@ -194,31 +194,6 @@ export const insertExamScheduleSchema = examScheduleSchema.omit({ id: true, crea
 export type ExamSchedule = z.infer<typeof examScheduleSchema>;
 export type InsertExamSchedule = z.infer<typeof insertExamScheduleSchema>;
 
-// ---------- Assignments (Teacher) ----------
-
-export const assignmentSchema = z.object({
-  id: z.string(),
-  title: z.string(),
-  description: z.string(),
-  subject: z.string(),
-  classId: z.string(),
-  className: z.string(),
-  teacherId: z.string(),
-  teacherName: z.string(),
-  dueDate: z.string(), // ISO date string (YYYY-MM-DD)
-  maxScore: z.number().min(1),
-  instructions: z.string().optional(),
-  attachments: z.array(z.string()).optional(), // file URLs or base64
-  status: z.enum(["draft", "published", "closed"]),
-  createdAt: z.string(), // ISO timestamp
-  academicYear: z.string(),
-});
-
-export const insertAssignmentSchema = assignmentSchema.omit({ id: true, createdAt: true });
-
-export type Assignment = z.infer<typeof assignmentSchema>;
-export type InsertAssignment = z.infer<typeof insertAssignmentSchema>;
-
 // ---------- Assignment Submissions (Student) ----------
 
 export const assignmentSubmissionSchema = z.object({

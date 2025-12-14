@@ -273,7 +273,7 @@ export default function BehaviorPage() {
                   </Select>
                 </div>
                 <Button onClick={handleViewBehavior}>
-                  View Behavior Analytics
+                  View Behavior
                 </Button>
               </div>
             </CardContent>

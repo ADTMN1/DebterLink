@@ -8,16 +8,9 @@ import { Label } from '@/components/ui/label';
 import { Input } from '@/components/ui/input';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { useState } from 'react';
-import { Calendar, User, FileText, MessageSquare, Clock, History } from 'lucide-react';
+import { Calendar, User, FileText, MessageSquare, Clock } from 'lucide-react';
 import { useToast } from '@/hooks/use-toast';
 import { useAuthStore } from '@/store/useAuthStore';
-
-type TimelineEvent = {
-  date: string;
-  action: string;
-  by: string;
-  details?: string;
-};
 
 type Appeal = {
   id: string;
@@ -31,7 +24,6 @@ type Appeal = {
   response?: string;
   respondedBy?: string;
   responseDate?: string;
-  timeline?: TimelineEvent[];
 };
 
 const initialAppeals: Appeal[] = [
@@ -44,10 +36,6 @@ const initialAppeals: Appeal[] = [
     submittedBy: 'Abebe Kebede',
     category: 'Grade Appeal',
     priority: 'High',
-    timeline: [
-      { date: '2 days ago', action: 'Appeal Submitted', by: 'Abebe Kebede' },
-      { date: '1 day ago', action: 'Under Review', by: 'Dr. Yohannes', details: 'Case assigned to academic committee' },
-    ],
   },
   {
     id: 'AP-2024-002',
@@ -61,10 +49,6 @@ const initialAppeals: Appeal[] = [
     response: 'Your leave request has been approved. Please coordinate with the administration office for substitute arrangements.',
     respondedBy: 'Dr. Yohannes',
     responseDate: '6 days ago',
-    timeline: [
-      { date: '1 week ago', action: 'Request Submitted', by: 'Tigist Alemu' },
-      { date: '6 days ago', action: 'Approved', by: 'Dr. Yohannes', details: 'Leave approved for Dec 15-17' },
-    ],
   },
   {
     id: 'AP-2024-003',
@@ -78,11 +62,6 @@ const initialAppeals: Appeal[] = [
     response: 'Your request for exam reschedule has been reviewed. Unfortunately, we cannot accommodate rescheduling as the exam period has ended. You may apply for a make-up exam in the next semester.',
     respondedBy: 'Dr. Yohannes',
     responseDate: '1 week ago',
-    timeline: [
-      { date: '2 weeks ago', action: 'Appeal Submitted', by: 'Sara Tadesse' },
-      { date: '10 days ago', action: 'Documents Verified', by: 'Admin Office', details: 'Medical certificate validated' },
-      { date: '1 week ago', action: 'Rejected', by: 'Dr. Yohannes', details: 'Exam period ended' },
-    ],
   },
 ];
 
@@ -133,9 +112,6 @@ export default function AppealsPage() {
       submittedBy: user?.name || 'Unknown',
       category: 'General',
       priority: 'Medium',
-      timeline: [
-        { date: 'Just now', action: 'Appeal Submitted', by: user?.name || 'Unknown' },
-      ],
     };
 
     setAppeals([newAppeal, ...appeals]);
@@ -159,11 +135,6 @@ export default function AppealsPage() {
   const handleSubmitComment = () => {
     if (!comment.trim() || !selectedAppeal) return;
 
-    const newTimeline = [
-      ...(selectedAppeal.timeline || []),
-      { date: 'Just now', action: 'Comment Added', by: user?.name || 'Current User', details: comment.trim() },
-    ];
-
     // Update the appeal with the comment
     const updatedAppeals = appeals.map((appeal) => {
       if (appeal.id === selectedAppeal.id) {
@@ -172,7 +143,6 @@ export default function AppealsPage() {
           response: comment.trim(),
           respondedBy: user?.name || 'Current User',
           responseDate: 'Just now',
-          timeline: newTimeline,
         };
       }
       return appeal;
@@ -184,7 +154,6 @@ export default function AppealsPage() {
       response: comment.trim(),
       respondedBy: user?.name || 'Current User',
       responseDate: 'Just now',
-      timeline: newTimeline,
     });
     
     setComment('');
@@ -206,11 +175,6 @@ export default function AppealsPage() {
   const handleSubmitStatusUpdate = () => {
     if (!selectedAppeal) return;
 
-    const newTimeline = [
-      ...(selectedAppeal.timeline || []),
-      { date: 'Just now', action: `Status Changed to ${newStatus}`, by: user?.name || 'Current User', details: statusResponse.trim() },
-    ];
-
     const updatedAppeals = appeals.map((appeal) => {
       if (appeal.id === selectedAppeal.id) {
         return {
@@ -219,7 +183,6 @@ export default function AppealsPage() {
           response: statusResponse.trim() || appeal.response,
           respondedBy: user?.name || 'Current User',
           responseDate: 'Just now',
-          timeline: newTimeline,
         };
       }
       return appeal;
@@ -232,7 +195,6 @@ export default function AppealsPage() {
       response: statusResponse.trim() || selectedAppeal.response,
       respondedBy: user?.name || 'Current User',
       responseDate: 'Just now',
-      timeline: newTimeline,
     });
     
     setStatusResponse('');
@@ -430,6 +392,22 @@ export default function AppealsPage() {
                     <span className="text-muted-foreground">Date:</span>
                     <span className="font-medium">{selectedAppeal.date}</span>
                   </div>
+                  {selectedAppeal.category && (
+                    <div className="flex items-center gap-2 text-sm">
+                      <FileText className="h-4 w-4 text-muted-foreground" />
+                      <span className="text-muted-foreground">Category:</span>
+                      <span className="font-medium">{selectedAppeal.category}</span>
+                    </div>
+                  )}
+                  {selectedAppeal.priority && (
+                    <div className="flex items-center gap-2 text-sm">
+                      <Clock className="h-4 w-4 text-muted-foreground" />
+                      <span className="text-muted-foreground">Priority:</span>
+                      <Badge variant={selectedAppeal.priority === 'High' ? 'destructive' : 'secondary'} className="text-xs">
+                        {selectedAppeal.priority}
+                      </Badge>
+                    </div>
+                  )}
                 </div>
 
                 {/* Description */}
@@ -455,38 +433,6 @@ export default function AppealsPage() {
                           <span>Date: <span className="font-medium">{selectedAppeal.responseDate}</span></span>
                         )}
                       </div>
-                    </div>
-                  </div>
-                )}
-
-                {/* Timeline Section */}
-                {selectedAppeal.timeline && selectedAppeal.timeline.length > 0 && (
-                  <div className="space-y-3 border-t pt-4">
-                    <h4 className="font-semibold flex items-center gap-2">
-                      <History className="h-4 w-4" />
-                      Case Timeline
-                    </h4>
-                    <div className="space-y-3">
-                      {selectedAppeal.timeline.map((event, index) => (
-                        <div key={index} className="flex gap-3">
-                          <div className="flex flex-col items-center">
-                            <div className="h-2 w-2 rounded-full bg-primary" />
-                            {index < selectedAppeal.timeline!.length - 1 && (
-                              <div className="w-px h-full bg-border mt-1" />
-                            )}
-                          </div>
-                          <div className="flex-1 pb-4">
-                            <div className="flex items-center gap-2 mb-1">
-                              <span className="font-medium text-sm">{event.action}</span>
-                              <span className="text-xs text-muted-foreground">{event.date}</span>
-                            </div>
-                            <p className="text-xs text-muted-foreground">By {event.by}</p>
-                            {event.details && (
-                              <p className="text-xs text-muted-foreground mt-1">{event.details}</p>
-                            )}
-                          </div>
-                        </div>
-                      ))}
                     </div>
                   </div>
                 )}

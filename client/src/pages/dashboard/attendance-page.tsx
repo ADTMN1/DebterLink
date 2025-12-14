@@ -96,6 +96,16 @@ export const AttendancePage = () => {
     const targetGrade = gradeParam || grade;
     const targetSection = sectionParam || section;
     
+    if (isTeacher) {
+      const isAssigned = teacherAssignedClasses.some(
+        cls => cls.grade === targetGrade && cls.section === targetSection
+      );
+      if (!isAssigned) {
+        alert('You can only record attendance for your assigned classes');
+        return;
+      }
+    }
+    
     console.log('Loading attendance for:', { grade: targetGrade, section: targetSection, date });
     
     const dummyAttendance = [

@@ -12,9 +12,7 @@ import { Plus, Edit, Trash2, Eye, EyeOff, Calendar as CalendarIcon } from 'lucid
 import { useState } from 'react';
 import { useAuthStore } from '@/store/useAuthStore';
 import { useCalendarStore } from '@/store/useCalendarStore';
-import { useUIStore } from '@/store/useUIStore';
 import { toast } from 'sonner';
-import { gregorianToEthiopian, formatEthiopianDate } from '@/lib/ethiopianCalendar';
 
 export default function CalendarPage() {
   const { user } = useAuthStore();
@@ -32,14 +30,11 @@ export default function CalendarPage() {
     date: '',
     endDate: '',
     type: 'event' as 'holiday' | 'exam' | 'event' | 'meeting' | 'other',
-    classFilter: 'all' as string,
   });
-  const [filterClass, setFilterClass] = useState('all');
-  const { calendarType } = useUIStore();
 
   const handleOpenCreate = () => {
     setEditingEvent(null);
-    setForm({ title: '', description: '', date: '', endDate: '', type: 'event', classFilter: 'all' });
+    setForm({ title: '', description: '', date: '', endDate: '', type: 'event' });
     setIsDialogOpen(true);
   };
 
@@ -51,7 +46,6 @@ export default function CalendarPage() {
       date: event.date,
       endDate: event.endDate || '',
       type: event.type,
-      classFilter: event.classFilter || 'all',
     });
     setIsDialogOpen(true);
   };
@@ -130,21 +124,7 @@ export default function CalendarPage() {
 
           <Card>
             <CardHeader>
-              <div className="flex items-center justify-between">
-                <CardTitle>{isDirector ? 'All Events' : 'Upcoming Events'}</CardTitle>
-                <Select value={filterClass} onValueChange={setFilterClass}>
-                  <SelectTrigger className="w-[150px]">
-                    <SelectValue />
-                  </SelectTrigger>
-                  <SelectContent>
-                    <SelectItem value="all">All Classes</SelectItem>
-                    <SelectItem value="Grade 9A">Grade 9A</SelectItem>
-                    <SelectItem value="Grade 10A">Grade 10A</SelectItem>
-                    <SelectItem value="Grade 11A">Grade 11A</SelectItem>
-                    <SelectItem value="Grade 12A">Grade 12A</SelectItem>
-                  </SelectContent>
-                </Select>
-              </div>
+              <CardTitle>{isDirector ? 'All Events' : 'Upcoming Events'}</CardTitle>
             </CardHeader>
             <CardContent>
               <div className="space-y-4">
@@ -152,7 +132,6 @@ export default function CalendarPage() {
                   <p className="text-muted-foreground text-center py-8">No events yet</p>
                 ) : (
                   displayEvents
-                    .filter(event => filterClass === 'all' || event.classFilter === filterClass || event.classFilter === 'all')
                     .sort((a, b) => new Date(a.date).getTime() - new Date(b.date).getTime())
                     .map((event) => (
                       <div key={event.id} className="p-4 border rounded-lg space-y-2">
@@ -162,17 +141,8 @@ export default function CalendarPage() {
                             <p className="text-sm text-muted-foreground">{event.description}</p>
                             <p className="text-sm text-muted-foreground mt-1">
                               <CalendarIcon className="inline h-3 w-3 mr-1" />
-                              {calendarType === 'gregorian' 
-                                ? new Date(event.date).toLocaleDateString()
-                                : formatEthiopianDate(gregorianToEthiopian(new Date(event.date)))}
-                              {event.endDate && (calendarType === 'gregorian'
-                                ? ` - ${new Date(event.endDate).toLocaleDateString()}`
-                                : ` - ${formatEthiopianDate(gregorianToEthiopian(new Date(event.endDate)))}`)}
-                            </p>
-                            <p className="text-xs text-muted-foreground">
-                              {calendarType === 'gregorian'
-                                ? `Ethiopian: ${formatEthiopianDate(gregorianToEthiopian(new Date(event.date)))}`
-                                : `Gregorian: ${new Date(event.date).toLocaleDateString()}`}
+                              {new Date(event.date).toLocaleDateString()}
+                              {event.endDate && ` - ${new Date(event.endDate).toLocaleDateString()}`}
                             </p>
                           </div>
                           <Badge className={getTypeColor(event.type)}>
@@ -247,37 +217,20 @@ export default function CalendarPage() {
                   />
                 </div>
               </div>
-              <div className="grid grid-cols-2 gap-4">
-                <div className="space-y-2">
-                  <Label>Type</Label>
-                  <Select value={form.type} onValueChange={(v: any) => setForm({ ...form, type: v })}>
-                    <SelectTrigger>
-                      <SelectValue />
-                    </SelectTrigger>
-                    <SelectContent>
-                      <SelectItem value="event">Event</SelectItem>
-                      <SelectItem value="holiday">Holiday</SelectItem>
-                      <SelectItem value="exam">Exam</SelectItem>
-                      <SelectItem value="meeting">Meeting</SelectItem>
-                      <SelectItem value="other">Other</SelectItem>
-                    </SelectContent>
-                  </Select>
-                </div>
-                <div className="space-y-2">
-                  <Label>Class</Label>
-                  <Select value={form.classFilter} onValueChange={(v) => setForm({ ...form, classFilter: v })}>
-                    <SelectTrigger>
-                      <SelectValue />
-                    </SelectTrigger>
-                    <SelectContent>
-                      <SelectItem value="all">All Classes</SelectItem>
-                      <SelectItem value="Grade 9A">Grade 9A</SelectItem>
-                      <SelectItem value="Grade 10A">Grade 10A</SelectItem>
-                      <SelectItem value="Grade 11A">Grade 11A</SelectItem>
-                      <SelectItem value="Grade 12A">Grade 12A</SelectItem>
-                    </SelectContent>
-                  </Select>
-                </div>
+              <div className="space-y-2">
+                <Label>Type</Label>
+                <Select value={form.type} onValueChange={(v: any) => setForm({ ...form, type: v })}>
+                  <SelectTrigger>
+                    <SelectValue />
+                  </SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="event">Event</SelectItem>
+                    <SelectItem value="holiday">Holiday</SelectItem>
+                    <SelectItem value="exam">Exam</SelectItem>
+                    <SelectItem value="meeting">Meeting</SelectItem>
+                    <SelectItem value="other">Other</SelectItem>
+                  </SelectContent>
+                </Select>
               </div>
             </div>
             <DialogFooter>

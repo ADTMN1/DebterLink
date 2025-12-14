@@ -134,9 +134,9 @@ export default function LandingPage() {
 
             {/* Mobile Menu Button */}
             <div className="md:hidden">
-              <Button variant="ghost" size="icon" onClick={() => setMobileMenuOpen(!mobileMenuOpen)}>
+              <button onClick={() => setMobileMenuOpen(!mobileMenuOpen)} className="text-muted-foreground">
                 {mobileMenuOpen ? <X /> : <Menu />}
-              </Button>
+              </button>
             </div>
           </div>
         </div>

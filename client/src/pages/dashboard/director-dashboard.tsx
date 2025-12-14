@@ -1,6 +1,6 @@
 import DashboardLayout from '@/layouts/dashboard-layout';
 import { DashboardStatsCard } from '@/components/dashboard/stats-card';
-import { Users, DollarSign, AlertTriangle, Activity } from 'lucide-react';
+import { Users, DollarSign, AlertTriangle, Activity, FileText } from 'lucide-react';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { ResponsiveContainer, BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, Legend } from 'recharts';
@@ -12,14 +12,6 @@ const attendanceData = [
   { name: 'Wed', present: 460, absent: 10 },
   { name: 'Thu', present: 455, absent: 15 },
   { name: 'Fri', present: 440, absent: 30 },
-];
-
-const gradeDistributionData = [
-  { grade: 'A', count: 180 },
-  { grade: 'B', count: 320 },
-  { grade: 'C', count: 450 },
-  { grade: 'D', count: 220 },
-  { grade: 'F', count: 80 },
 ];
 
 export default function DirectorDashboard() {
@@ -104,34 +96,8 @@ export default function DirectorDashboard() {
               <CardTitle className="text-card-title">Grade Distribution</CardTitle>
             </CardHeader>
             <CardContent>
-              <div className="h-[300px]">
-                <ResponsiveContainer width="100%" height="100%">
-                  <BarChart data={gradeDistributionData}>
-                    <CartesianGrid strokeDasharray="3 3" vertical={false} className="stroke-muted" />
-                    <XAxis 
-                      dataKey="grade" 
-                      axisLine={false} 
-                      tickLine={false}
-                      tick={{ fontSize: 12 }}
-                    />
-                    <YAxis 
-                      axisLine={false} 
-                      tickLine={false}
-                      tick={{ fontSize: 12 }}
-                    />
-                    <Tooltip 
-                      contentStyle={{ 
-                        backgroundColor: 'hsl(var(--card))', 
-                        borderColor: 'hsl(var(--border))', 
-                        borderRadius: '8px',
-                        fontSize: '12px'
-                      }}
-                      cursor={{fill: 'transparent'}}
-                    />
-                    <Legend wrapperStyle={{ fontSize: '12px' }} />
-                    <Bar dataKey="count" name="Students" fill="hsl(var(--primary))" radius={[4, 4, 0, 0]} />
-                  </BarChart>
-                </ResponsiveContainer>
+              <div className="h-[300px] flex items-center justify-center text-muted-foreground">
+                <p className="text-sm">Chart placeholder</p>
               </div>
             </CardContent>
           </Card>
