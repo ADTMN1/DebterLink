@@ -1,6 +1,7 @@
 import e from "express";
 import pool from "../../config/db.config.js"
 import eventBus from "../../events/event.bus.js";
+import { sendNotification } from "../controllers/notification.controller.js";
 
 const submitExamService =async(payload)=>{
 try {
@@ -11,36 +12,67 @@ try {
     subject_id,
     class_id,
     teacher_id,
-    exam_type_id,
     student_id,
-    total_marks,
+    quiz_marks,
+    assignment_marks,
+    final_test_marks,
+    mid_test_marks,
     exam_date
-  ) VALUES ($1, $2, $3, $4, $5,$6,$7)
-  RETURNING *;
+) VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9)
+RETURNING *;
+
 `;
+let {
+    quiz_marks,
+    assignment_marks,
+    final_test_marks,
+    mid_test_marks
+} = payload;
+
+quiz_marks = quiz_marks ?? null;
+assignment_marks = assignment_marks ?? null;
+final_test_marks = final_test_marks ?? null;
+mid_test_marks = mid_test_marks ?? null;
+
 // console.log(exam_date)
-const values = [
-  payload.subject_id,
-  payload.class_id,
-  payload.teacher_id,
-  payload.exam_type_id,
-  payload.student_id,
-  payload.total_marks,
-  exam_date,
-]
+    const values = [
+      payload.subject_id,
+      payload.class_id,
+      payload.teacher_id,
+      payload.student_id,
+      quiz_marks,
+      assignment_marks,
+      mid_test_marks,
+      final_test_marks,
+      exam_date,
+    ]
 
 const result = await pool.query(sql, values);
 
 // console.log(result.rows[0])
 if (result.rows[0]) {
-  eventBus.emit("examSubmitted", {
-    student_id: result.rows[0].student_id,
-    total_marks: result.rows[0].total_marksc,
-    exam_type_id: result.rows[0].exam_type_id,
-    subject_id: result.rows[0].subject_id,
-    teacher_id: result.rows[0].teacher_id
-  });
-  console.log("sent to emmitter")
+  const sql = `
+SELECT *
+FROM exam
+JOIN student ON exam.student_id = student.student_id
+JOIN parent ON student.parent_id = parent.parent_id
+WHERE exam.student_id =$1;
+`;
+
+
+    // 1. Find parent email based on student_id
+    const parentQuery = await pool.query(
+      sql,
+      [student_id]
+    );
+    console.log("parentQuery",parentQuery.rows[0])
+    if (parentQuery.rows.length === 0) return;
+
+    // const parentEmail = parentQuery.rows[0].email;
+    const studentName = parentQuery.rows[0].student_name;
+const parent_id = parentQuery.rows[0].parent_id
+const message = "Exam is submitted"
+await sendNotification(parent_id,payload.teacher_id,"Exam",message )
 }
 
 
@@ -54,34 +86,44 @@ return result.rows[0]
 
 const updateExamService =async(payload)=>{
     try {
-
-     const sql = `
+const sql = `
   UPDATE exam
-  SET total_marks = COALESCE($1, total_marks)
-  WHERE subject_id   = COALESCE($2, subject_id)
-    AND class_id     = COALESCE($3, class_id)
-    AND teacher_id   = COALESCE($4, teacher_id)
-    AND exam_type_id = COALESCE($5, exam_type_id)
-    AND student_id   = $6
+  SET 
+    subject_id        = COALESCE($2, subject_id),
+    class_id          = COALESCE($3, class_id),
+    teacher_id        = COALESCE($4, teacher_id),
+    quiz_marks        = COALESCE($5, quiz_marks),
+    assignment_marks  = COALESCE($6, assignment_marks),
+    final_test_marks  = COALESCE($7, final_test_marks),
+    mid_test_marks    = COALESCE($8, mid_test_marks),
+    exam_date         = COALESCE($9, exam_date)
+  WHERE 
+    student_id = $1
   RETURNING *;
 `;
 
 
+const exam_date = new Date
   
   const values = [
-    payload.total_marks,
     payload.subject_id,
     payload.class_id,
     payload.teacher_id,
-    payload.exam_type_id,
     payload.student_id,
+    payload.quiz_marks,
+    payload.assignment_marks,
+    payload.mid_test_marks,
+    payload.final_test_marks,
+    exam_date
+    
   ]
 
   const result = await pool.query(sql, values);
-
+console.log(result.rows)
   // console.log(result.rows[0])
   return result.rows[0]
     } catch (error) {
+          // console.error("Update Exam Error:", error);
         console.log(error)
         throw error
     }}
@@ -111,12 +153,18 @@ try {
 const sqlSum = `
 SELECT
     student_id,
-    SUM(total_marks) AS total_marks_all_exams
+    SUM(
+        COALESCE(quiz_marks, 0) +
+        COALESCE(assignment_marks, 0) +
+        COALESCE(mid_test_marks, 0) +
+        COALESCE(final_test_marks, 0)
+    ) AS total_marks_all_exams
 FROM
     exam
-WHERE student_id = $1
+WHERE
+    student_id = $1
 GROUP BY
-    student_id
+    student_id;
 `;
 
 const totalResult = await pool.query(sqlSum, [student_id]);
@@ -130,5 +178,36 @@ return totalResult.rows;
 
 }
 
+const getSingleExamResultService = async (student_id) => {
+  try {
+    const sql = `SELECT * FROM exam WHERE student_id = $1`;
+    const values = [student_id];
 
-    export default {submitExamService,updateExamService,getAllExamService, totalExamService}
+    const result = await pool.query(sql, values);
+
+    if (!result.rows.length) {
+      return null; // or handle "no exam found" case
+    }
+
+    const exam = result.rows[0];
+
+    // Compute total marks, treating NULL as 0
+    const total_marks =
+      (exam.quiz_marks ?? 0) +
+      (exam.assignment_marks ?? 0) +
+      (exam.mid_test_marks ?? 0) +
+      (exam.final_test_marks ?? 0);
+
+    console.log("To calculate exam result", exam.student_id, total_marks);
+
+    return {
+      ...exam,
+      total_marks, // include computed total
+    };
+  } catch (error) {
+    console.log(error);
+    throw error;
+  }
+};
+ 
+export default {submitExamService,updateExamService,getAllExamService, totalExamService , getSingleExamResultService}

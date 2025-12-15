@@ -260,6 +260,4 @@ export function Navbar() {
       </CommandDialog>
     </>
   );
-}
-
-export default memo(Navbar);
+});

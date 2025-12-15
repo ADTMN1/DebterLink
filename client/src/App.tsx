@@ -7,6 +7,11 @@ import { Toaster } from "@/components/ui/sonner";
 import { Announcer } from "@/components/ui/announcer";
 import { ProtectedRoute } from "./router/protected-route";
 import { useAuthStore } from "@/store/useAuthStore";
+import { PageTransition } from "@/components/ui/page-transition";
+import { initializeGlobalSanitization } from "@/lib/sanitization-middleware";
+import { ErrorBoundary } from "@/components/error-boundary";
+import { FullPageLoader } from "@/components/ui/loading-states";
+import { useNetworkStatus } from "@/hooks/use-network-status";
 
 // Critical pages - load immediately
 import LandingPage from "@/pages/landing-page";
@@ -77,7 +82,7 @@ function Router() {
 
       {/* Protected Routes with Role-Based Access */}
       <Route path="/dashboard">
-        {() => <ProtectedRoute component={getDashboard()} />}
+        {() => <PageTransition><ProtectedRoute component={getDashboard()} /></PageTransition>}
       </Route>
 
       <Route path="/profile">
@@ -204,6 +209,13 @@ function Router() {
 }
 
 function App() {
+  useNetworkStatus(); // Monitor network status
+  
+  useEffect(() => {
+    // Initialize global input sanitization
+    initializeGlobalSanitization();
+  }, []);
+
   return (
     <QueryClientProvider client={queryClient}>
       <Suspense fallback={<LoadingSpinner />}>

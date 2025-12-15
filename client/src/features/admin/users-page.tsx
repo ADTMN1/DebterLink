@@ -31,25 +31,6 @@ export default function UsersPage() {
   const [isDialogOpen, setIsDialogOpen] = useState(false);
   const [isEditDialogOpen, setIsEditDialogOpen] = useState(false);
   const [isPasswordDialogOpen, setIsPasswordDialogOpen] = useState(false);
-<<<<<<< HEAD
-  const [selectedUser, setSelectedUser] = useState<any>(null);
-  const [searchTerm, setSearchTerm] = useState('');
-  const [roleFilter, setRoleFilter] = useState('all');
-  const [newPassword, setNewPassword] = useState('');
-  const [form, setForm] = useState({
-    name: '',
-    username: '',
-    email: '',
-    password: '',
-    role: 'Student' as 'Student' | 'Teacher' | 'Parent' | 'Director' | 'Admin' | 'Super Admin',
-    status: 'Active' as 'Active' | 'Suspended',
-  });
-  const [editForm, setEditForm] = useState({
-    name: '',
-    email: '',
-    role: 'Student' as 'Student' | 'Teacher' | 'Parent' | 'Director' | 'Admin' | 'Super Admin',
-    status: 'Active' as 'Active' | 'Suspended',
-=======
   const [editingUser, setEditingUser] = useState<any>(null);
   // Create user form
   const createForm = useSanitizedForm<CreateUserFormData>({
@@ -90,7 +71,6 @@ export default function UsersPage() {
       newPassword: 'text',
       confirmPassword: 'text'
     },
->>>>>>> 945d7c3 (Error solved)
   });
 
   // Determine which roles can be assigned
@@ -152,16 +132,8 @@ export default function UsersPage() {
     },
     onSuccess: async (data) => {
       setIsDialogOpen(false);
-<<<<<<< HEAD
-      setForm({ name: '', username: '', email: '', password: '', role: 'Student', status: 'Active' });
-      toast({
-        title: 'User created (Demo)',
-        description: `Successfully registered ${data.name} with username: ${data.username}`,
-      });
-=======
       createForm.reset();
       toast.success(`Successfully created user: ${data.name}`);
->>>>>>> 945d7c3 (Error solved)
     },
     onError: (error: Error) => {
       handleError(error, 'user creation');
@@ -172,15 +144,6 @@ export default function UsersPage() {
     createUserMutation.mutate(data);
   });
 
-<<<<<<< HEAD
-  const handleEditUser = (user: any) => {
-    setSelectedUser(user);
-    setEditForm({
-      name: user.name,
-      email: user.email,
-      role: user.role,
-      status: user.status,
-=======
   const handleToggleSuspend = (userId: string, currentStatus: string) => {
     const newStatus = currentStatus === 'Active' ? 'Suspended' : 'Active';
     setLocalUsers(prev => prev.map(u => 
@@ -199,63 +162,10 @@ export default function UsersPage() {
       email: userData.email,
       role: userData.role,
       status: userData.status,
->>>>>>> 945d7c3 (Error solved)
     });
     setIsEditDialogOpen(true);
   };
 
-<<<<<<< HEAD
-  const handleChangePassword = (user: any) => {
-    setSelectedUser(user);
-    setNewPassword('');
-    setIsPasswordDialogOpen(true);
-  };
-
-  const handleToggleStatus = (user: any) => {
-    const newStatus = user.status === 'Active' ? 'Suspended' : 'Active';
-    toast({
-      title: `User ${newStatus}`,
-      description: `${user.name} has been ${newStatus.toLowerCase()}.`,
-    });
-    console.log(`Demo: User ${user.name} status changed to ${newStatus}`);
-  };
-
-  const handleSaveEdit = () => {
-    if (!editForm.name.trim() || !editForm.email.trim()) {
-      toast({
-        title: 'Validation Error',
-        description: 'Please fill in all required fields.',
-        variant: 'destructive',
-      });
-      return;
-    }
-    
-    toast({
-      title: 'User Updated',
-      description: `${editForm.name} has been updated successfully.`,
-    });
-    console.log('Demo: User updated:', { ...selectedUser, ...editForm });
-    setIsEditDialogOpen(false);
-  };
-
-  const handleSavePassword = () => {
-    if (newPassword.length < 6) {
-      toast({
-        title: 'Validation Error',
-        description: 'Password must be at least 6 characters.',
-        variant: 'destructive',
-      });
-      return;
-    }
-    
-    toast({
-      title: 'Password Changed',
-      description: `Password for ${selectedUser?.name} has been updated.`,
-    });
-    console.log('Demo: Password changed for user:', selectedUser?.name);
-    setIsPasswordDialogOpen(false);
-  };
-=======
   const onEditSubmit = editForm.handleSanitizedSubmit((data: EditUserFormData) => {
     setLocalUsers(prev => prev.map(u => 
       u.id === editingUser.id ? { ...u, ...data } : u
@@ -274,7 +184,6 @@ export default function UsersPage() {
     setIsPasswordDialogOpen(false);
     toast.success(`Password updated for ${editingUser.name}`);
   });
->>>>>>> 945d7c3 (Error solved)
 
   return (
     <DashboardLayout>
@@ -347,69 +256,75 @@ export default function UsersPage() {
                     )}
                   />
                   <div className="grid grid-cols-2 gap-4">
-<<<<<<< HEAD
-                    <div className="space-y-2">
-                      <Label htmlFor="role">Role</Label>
-                      <select
-                        id="role"
-                        className="border rounded-md px-3 py-2 text-sm bg-background"
-                        value={form.role}
-                        onChange={(e) =>
-                          setForm((f) => ({
-                            ...f,
-                            role: e.target.value as typeof form.role,
-                          }))
-                        }
-                      >
-                        {availableRoles.map((role) => (
-                          <option key={role} value={role}>{role}</option>
-                        ))}
-                      </select>
-                      <p className="text-xs text-muted-foreground">
-                        {user?.role === 'super_admin' 
-                          ? 'You can assign Admin role' 
-                          : 'Only Super Admin can assign Admin role'}
-                      </p>
-                    </div>
-                    <div className="space-y-2">
-                      <Label htmlFor="status">Status</Label>
-                      <select
-                        id="status"
-                        className="border rounded-md px-3 py-2 text-sm bg-background"
-                        value={form.status}
-                        onChange={(e) =>
-                          setForm((f) => ({
-                            ...f,
-                            status: e.target.value as typeof form.status,
-                          }))
-                        }
-                      >
-                        <option value="Active">Active</option>
-                        <option value="Suspended">Suspended</option>
-                      </select>
-                    </div>
+                    <FormField
+                      control={createForm.control}
+                      name="role"
+                      render={({ field }) => (
+                        <FormItem>
+                          <FormLabel>Role</FormLabel>
+                          <Select onValueChange={field.onChange} defaultValue={field.value}>
+                            <FormControl>
+                              <SelectTrigger>
+                                <SelectValue />
+                              </SelectTrigger>
+                            </FormControl>
+                            <SelectContent>
+                              {availableRoles.map((role) => (
+                                <SelectItem key={role} value={role}>{role}</SelectItem>
+                              ))}
+                            </SelectContent>
+                          </Select>
+                          <FormMessage />
+                        </FormItem>
+                      )}
+                    />
+                    <FormField
+                      control={createForm.control}
+                      name="status"
+                      render={({ field }) => (
+                        <FormItem>
+                          <FormLabel>Status</FormLabel>
+                          <Select onValueChange={field.onChange} defaultValue={field.value}>
+                            <FormControl>
+                              <SelectTrigger>
+                                <SelectValue />
+                              </SelectTrigger>
+                            </FormControl>
+                            <SelectContent>
+                              <SelectItem value="Active">Active</SelectItem>
+                              <SelectItem value="Suspended">Suspended</SelectItem>
+                            </SelectContent>
+                          </Select>
+                          <FormMessage />
+                        </FormItem>
+                      )}
+                    />
                   </div>
-                </div>
-                <DialogFooter className="mt-6">
-                  <Button
-                    type="button"
-                    variant="outline"
-                    onClick={() => {
-                      setIsDialogOpen(false);
-                      setForm({ name: '', username: '', email: '', password: '', role: 'Student', status: 'Active' });
-                    }}
-                  >
-                    Cancel
-                  </Button>
-                  <Button
-                    type="submit"
-                    disabled={createUserMutation.isPending}
-                  >
-                    {createUserMutation.isPending ? 'Creating...' : 'Create User'}
-                  </Button>
-                </DialogFooter>
-              </form>
-=======
+                  <div className="space-y-2">
+                    <Label htmlFor="email">Email</Label>
+                    <Input
+                      id="email"
+                      type="email"
+                      value={form.email}
+                      onChange={(e) => setForm((f) => ({ ...f, email: e.target.value }))}
+                      placeholder="e.g. john@school.com"
+                      required
+                    />
+                  </div>
+                  <div className="space-y-2">
+                    <Label htmlFor="password">Password</Label>
+                    <Input
+                      id="password"
+                      type="password"
+                      value={form.password}
+                      onChange={(e) => setForm((f) => ({ ...f, password: e.target.value }))}
+                      placeholder="Minimum 6 characters"
+                      required
+                      minLength={6}
+                    />
+                    <p className="text-xs text-muted-foreground">Minimum 6 characters required</p>
+                  </div>
+                  <div className="grid grid-cols-2 gap-4">
                     <FormField
                       control={createForm.control}
                       name="role"
@@ -471,7 +386,6 @@ export default function UsersPage() {
                   </DialogFooter>
                 </form>
               </Form>
->>>>>>> 945d7c3 (Error solved)
               </DialogContent>
             </Dialog>
           )}
@@ -483,80 +397,6 @@ export default function UsersPage() {
             <DialogHeader>
               <DialogTitle>Edit User</DialogTitle>
             </DialogHeader>
-<<<<<<< HEAD
-            <div className="space-y-4 mt-2">
-              <div className="space-y-2">
-                <Label htmlFor="edit-name">Full Name</Label>
-                <Input
-                  id="edit-name"
-                  value={editForm.name}
-                  onChange={(e) => setEditForm((f) => ({ ...f, name: e.target.value }))}
-                  placeholder="e.g. John Doe"
-                  required
-                />
-              </div>
-              <div className="space-y-2">
-                <Label htmlFor="edit-email">Email</Label>
-                <Input
-                  id="edit-email"
-                  type="email"
-                  value={editForm.email}
-                  onChange={(e) => setEditForm((f) => ({ ...f, email: e.target.value }))}
-                  placeholder="e.g. john@school.com"
-                  required
-                />
-              </div>
-              <div className="grid grid-cols-2 gap-4">
-                <div className="space-y-2">
-                  <Label htmlFor="edit-role">Role</Label>
-                  <select
-                    id="edit-role"
-                    className="border rounded-md px-3 py-2 text-sm bg-background w-full"
-                    value={editForm.role}
-                    onChange={(e) =>
-                      setEditForm((f) => ({
-                        ...f,
-                        role: e.target.value as typeof editForm.role,
-                      }))
-                    }
-                  >
-                    {availableRoles.map((role) => (
-                      <option key={role} value={role}>{role}</option>
-                    ))}
-                  </select>
-                </div>
-                <div className="space-y-2">
-                  <Label htmlFor="edit-status">Status</Label>
-                  <select
-                    id="edit-status"
-                    className="border rounded-md px-3 py-2 text-sm bg-background w-full"
-                    value={editForm.status}
-                    onChange={(e) =>
-                      setEditForm((f) => ({
-                        ...f,
-                        status: e.target.value as typeof editForm.status,
-                      }))
-                    }
-                  >
-                    <option value="Active">Active</option>
-                    <option value="Suspended">Suspended</option>
-                  </select>
-                </div>
-              </div>
-            </div>
-            <DialogFooter className="mt-6">
-              <Button
-                type="button"
-                variant="outline"
-                onClick={() => setIsEditDialogOpen(false)}
-              >
-                Cancel
-              </Button>
-              <Button onClick={handleSaveEdit}>
-                Save Changes
-              </Button>
-            </DialogFooter>
-=======
             <Form {...editForm}>
               <form onSubmit={onEditSubmit} className="space-y-4 mt-2">
                 <FormField
@@ -634,7 +474,6 @@ export default function UsersPage() {
                 </DialogFooter>
               </form>
             </Form>
->>>>>>> 945d7c3 (Error solved)
           </DialogContent>
         </Dialog>
 
@@ -644,39 +483,6 @@ export default function UsersPage() {
             <DialogHeader>
               <DialogTitle>Change Password</DialogTitle>
             </DialogHeader>
-<<<<<<< HEAD
-            <div className="space-y-4 mt-2">
-              <div className="space-y-2">
-                <Label>User</Label>
-                <Input value={selectedUser?.name || ''} disabled />
-              </div>
-              <div className="space-y-2">
-                <Label htmlFor="new-password">New Password</Label>
-                <Input
-                  id="new-password"
-                  type="password"
-                  value={newPassword}
-                  onChange={(e) => setNewPassword(e.target.value)}
-                  placeholder="Enter new password"
-                  required
-                  minLength={6}
-                />
-                <p className="text-xs text-muted-foreground">Minimum 6 characters required</p>
-              </div>
-            </div>
-            <DialogFooter className="mt-6">
-              <Button
-                type="button"
-                variant="outline"
-                onClick={() => setIsPasswordDialogOpen(false)}
-              >
-                Cancel
-              </Button>
-              <Button onClick={handleSavePassword}>
-                Change Password
-              </Button>
-            </DialogFooter>
-=======
             <Form {...passwordForm}>
               <form onSubmit={onPasswordSubmit} className="space-y-4 mt-2">
                 <FormField
@@ -724,23 +530,13 @@ export default function UsersPage() {
                 </DialogFooter>
               </form>
             </Form>
->>>>>>> 945d7c3 (Error solved)
           </DialogContent>
         </Dialog>
 
         <div className="flex gap-4 items-center">
           <div className="relative flex-1 max-w-sm">
             <Search className="absolute left-2 top-2.5 h-4 w-4 text-muted-foreground" />
-<<<<<<< HEAD
-            <Input 
-              placeholder="Search users..." 
-              className="pl-8" 
-              value={searchTerm}
-              onChange={(e) => setSearchTerm(e.target.value)}
-            />
-=======
             <SanitizedInput sanitizer="text" placeholder="Search users..." className="pl-8" />
->>>>>>> 945d7c3 (Error solved)
           </div>
           <Select value={roleFilter} onValueChange={setRoleFilter}>
             <SelectTrigger className="w-[150px]">
@@ -755,11 +551,7 @@ export default function UsersPage() {
               <SelectItem value="admin">Admin</SelectItem>
             </SelectContent>
           </Select>
-<<<<<<< HEAD
-          <Button variant="outline" size="icon" onClick={() => { setSearchTerm(''); setRoleFilter('all'); }}>
-=======
           <Button variant="outline" size="icon" aria-label="Filter users">
->>>>>>> 945d7c3 (Error solved)
             <Filter className="h-4 w-4" />
           </Button>
         </div>
