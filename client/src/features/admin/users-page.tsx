@@ -2,28 +2,36 @@ import DashboardLayout from '@/layouts/dashboard-layout';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
-import { Input } from '@/components/ui/input';
-import { Label } from '@/components/ui/label';
+import { VirtualList } from '@/components/ui/virtual-list';
+import { SanitizedInput } from '@/components/ui/sanitized-input';
+import { useSanitizedForm, sanitizationMaps } from '@/hooks/use-sanitized-form';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Badge } from '@/components/ui/badge';
 import { Dialog, DialogContent, DialogFooter, DialogHeader, DialogTitle, DialogTrigger } from '@/components/ui/dialog';
-import { Search, MoreHorizontal, UserPlus, Filter } from 'lucide-react';
+import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage } from '@/components/ui/form';
+import { Search, MoreHorizontal, UserPlus, Filter, Loader2 } from 'lucide-react';
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from '@/components/ui/dropdown-menu';
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 import { apiRequest } from '@/lib/queryClient';
+import { TableSkeleton } from '@/components/ui/loading-states';
+import { ErrorState, EmptyState } from '@/components/ui/error-states';
+import { useErrorHandler } from '@/hooks/use-error-handler';
 import { AdminUser } from '@shared/schema';
 import { useState } from 'react';
-import { useToast } from '@/hooks/use-toast';
+
+import { zodResolver } from '@hookform/resolvers/zod';
+import { toast } from 'sonner';
 import { useAuthStore } from '@/store/useAuthStore';
+import { createUserSchema, editUserSchema, passwordChangeSchema, CreateUserFormData, EditUserFormData, PasswordChangeFormData } from '@/lib/validations';
 
 export default function UsersPage() {
   const queryClient = useQueryClient();
-  const { toast } = useToast();
   const { user } = useAuthStore();
   const canAddUser = user?.role === 'admin' || user?.role === 'super_admin';
   const [isDialogOpen, setIsDialogOpen] = useState(false);
   const [isEditDialogOpen, setIsEditDialogOpen] = useState(false);
   const [isPasswordDialogOpen, setIsPasswordDialogOpen] = useState(false);
+<<<<<<< HEAD
   const [selectedUser, setSelectedUser] = useState<any>(null);
   const [searchTerm, setSearchTerm] = useState('');
   const [roleFilter, setRoleFilter] = useState('all');
@@ -41,6 +49,48 @@ export default function UsersPage() {
     email: '',
     role: 'Student' as 'Student' | 'Teacher' | 'Parent' | 'Director' | 'Admin' | 'Super Admin',
     status: 'Active' as 'Active' | 'Suspended',
+=======
+  const [editingUser, setEditingUser] = useState<any>(null);
+  // Create user form
+  const createForm = useSanitizedForm<CreateUserFormData>({
+    resolver: zodResolver(createUserSchema),
+    defaultValues: {
+      name: '',
+      username: '',
+      email: '',
+      password: '',
+      role: user?.role === 'super_admin' ? 'Admin' : 'Student',
+      status: 'Active',
+    },
+    sanitizationMap: sanitizationMaps.user,
+  });
+
+  // Edit user form
+  const editForm = useSanitizedForm<EditUserFormData>({
+    resolver: zodResolver(editUserSchema),
+    defaultValues: {
+      name: '',
+      email: '',
+      role: 'Student',
+      status: 'Active',
+    },
+    sanitizationMap: { name: 'name', email: 'email' },
+  });
+
+  // Password change form
+  const passwordForm = useSanitizedForm<PasswordChangeFormData>({
+    resolver: zodResolver(passwordChangeSchema),
+    defaultValues: {
+      currentPassword: '',
+      newPassword: '',
+      confirmPassword: '',
+    },
+    sanitizationMap: {
+      currentPassword: 'text',
+      newPassword: 'text',
+      confirmPassword: 'text'
+    },
+>>>>>>> 945d7c3 (Error solved)
   });
 
   // Determine which roles can be assigned
@@ -48,9 +98,13 @@ export default function UsersPage() {
     ? ['Student', 'Teacher', 'Parent', 'Director', 'Admin'] 
     : ['Student', 'Teacher', 'Parent', 'Director'];
 
-  const { data: users = [], isLoading } = useQuery<AdminUser[]>({
+  const { data: users = [], isLoading, error, refetch } = useQuery<AdminUser[]>({
     queryKey: ['/api/admin/users'],
+    retry: 3,
+    retryDelay: (attemptIndex) => Math.min(1000 * 2 ** attemptIndex, 30000),
   });
+  
+  const { handleError } = useErrorHandler();
 
   // Demo data if no users from API
   const demoUsers = [
@@ -80,17 +134,16 @@ export default function UsersPage() {
   });
 
   const createUserMutation = useMutation({
-    mutationFn: async () => {
-      // Demo: Simulate API call
+    mutationFn: async (data: CreateUserFormData) => {
       await new Promise(resolve => setTimeout(resolve, 500));
       
       const userData = {
         id: Date.now().toString(),
-        name: form.name.trim(),
-        username: form.username.trim(),
-        email: form.email.trim(),
-        role: form.role,
-        status: form.status,
+        name: data.name,
+        username: data.username,
+        email: data.email,
+        role: data.role,
+        status: data.status,
         createdAt: new Date().toISOString(),
       };
       
@@ -99,43 +152,27 @@ export default function UsersPage() {
     },
     onSuccess: async (data) => {
       setIsDialogOpen(false);
+<<<<<<< HEAD
       setForm({ name: '', username: '', email: '', password: '', role: 'Student', status: 'Active' });
       toast({
         title: 'User created (Demo)',
         description: `Successfully registered ${data.name} with username: ${data.username}`,
       });
+=======
+      createForm.reset();
+      toast.success(`Successfully created user: ${data.name}`);
+>>>>>>> 945d7c3 (Error solved)
     },
     onError: (error: Error) => {
-      console.error('Error creating user:', error);
-      toast({
-        title: 'Error',
-        description: error.message || 'Failed to create user. Please try again.',
-        variant: 'destructive',
-      });
+      handleError(error, 'user creation');
     },
   });
 
-  const handleCreateUser = () => {
-    if (!form.name.trim() || !form.username.trim() || !form.email.trim() || !form.password.trim()) {
-      toast({
-        title: 'Validation Error',
-        description: 'Please fill in all required fields.',
-        variant: 'destructive',
-      });
-      return;
-    }
-    if (form.password.length < 6) {
-      toast({
-        title: 'Validation Error',
-        description: 'Password must be at least 6 characters.',
-        variant: 'destructive',
-      });
-      return;
-    }
-    
-    createUserMutation.mutate();
-  };
+  const onCreateSubmit = createForm.handleSanitizedSubmit((data: CreateUserFormData) => {
+    createUserMutation.mutate(data);
+  });
 
+<<<<<<< HEAD
   const handleEditUser = (user: any) => {
     setSelectedUser(user);
     setEditForm({
@@ -143,10 +180,31 @@ export default function UsersPage() {
       email: user.email,
       role: user.role,
       status: user.status,
+=======
+  const handleToggleSuspend = (userId: string, currentStatus: string) => {
+    const newStatus = currentStatus === 'Active' ? 'Suspended' : 'Active';
+    setLocalUsers(prev => prev.map(u => 
+      u.id === userId ? { ...u, status: newStatus } : u
+    ));
+    toast({
+      title: 'Status Updated',
+      description: `User ${newStatus === 'Suspended' ? 'suspended' : 'activated'} successfully`,
+    });
+  };
+
+  const handleOpenEdit = (userData: any) => {
+    setEditingUser(userData);
+    editForm.reset({
+      name: userData.name,
+      email: userData.email,
+      role: userData.role,
+      status: userData.status,
+>>>>>>> 945d7c3 (Error solved)
     });
     setIsEditDialogOpen(true);
   };
 
+<<<<<<< HEAD
   const handleChangePassword = (user: any) => {
     setSelectedUser(user);
     setNewPassword('');
@@ -197,6 +255,26 @@ export default function UsersPage() {
     console.log('Demo: Password changed for user:', selectedUser?.name);
     setIsPasswordDialogOpen(false);
   };
+=======
+  const onEditSubmit = editForm.handleSanitizedSubmit((data: EditUserFormData) => {
+    setLocalUsers(prev => prev.map(u => 
+      u.id === editingUser.id ? { ...u, ...data } : u
+    ));
+    setIsEditDialogOpen(false);
+    toast.success('User information updated successfully');
+  });
+
+  const handleOpenChangePassword = (userData: any) => {
+    setEditingUser(userData);
+    passwordForm.reset();
+    setIsPasswordDialogOpen(true);
+  };
+
+  const onPasswordSubmit = passwordForm.handleSanitizedSubmit((data: PasswordChangeFormData) => {
+    setIsPasswordDialogOpen(false);
+    toast.success(`Password updated for ${editingUser.name}`);
+  });
+>>>>>>> 945d7c3 (Error solved)
 
   return (
     <DashboardLayout>
@@ -214,59 +292,62 @@ export default function UsersPage() {
               <DialogHeader>
                 <DialogTitle>Add New User</DialogTitle>
               </DialogHeader>
-              <form
-                onSubmit={(e) => {
-                  e.preventDefault();
-                  handleCreateUser();
-                }}
-              >
-                <div className="space-y-4 mt-2">
-                  <div className="space-y-2">
-                    <Label htmlFor="name">Full Name</Label>
-                    <Input
-                      id="name"
-                      value={form.name}
-                      onChange={(e) => setForm((f) => ({ ...f, name: e.target.value }))}
-                      placeholder="e.g. John Doe"
-                      required
-                    />
-                  </div>
-                  <div className="space-y-2">
-                    <Label htmlFor="username">Username</Label>
-                    <Input
-                      id="username"
-                      value={form.username}
-                      onChange={(e) => setForm((f) => ({ ...f, username: e.target.value }))}
-                      placeholder="e.g. johndoe"
-                      required
-                    />
-                    <p className="text-xs text-muted-foreground">User will login with this username</p>
-                  </div>
-                  <div className="space-y-2">
-                    <Label htmlFor="email">Email</Label>
-                    <Input
-                      id="email"
-                      type="email"
-                      value={form.email}
-                      onChange={(e) => setForm((f) => ({ ...f, email: e.target.value }))}
-                      placeholder="e.g. john@school.com"
-                      required
-                    />
-                  </div>
-                  <div className="space-y-2">
-                    <Label htmlFor="password">Password</Label>
-                    <Input
-                      id="password"
-                      type="password"
-                      value={form.password}
-                      onChange={(e) => setForm((f) => ({ ...f, password: e.target.value }))}
-                      placeholder="Minimum 6 characters"
-                      required
-                      minLength={6}
-                    />
-                    <p className="text-xs text-muted-foreground">Minimum 6 characters required</p>
-                  </div>
+              <Form {...createForm}>
+                <form onSubmit={onCreateSubmit} className="space-y-4 mt-2">
+                  <FormField
+                    control={createForm.control}
+                    name="name"
+                    render={({ field }) => (
+                      <FormItem>
+                        <FormLabel>Full Name</FormLabel>
+                        <FormControl>
+                          <SanitizedInput sanitizer="name" placeholder="e.g. John Doe" {...field} />
+                        </FormControl>
+                        <FormMessage />
+                      </FormItem>
+                    )}
+                  />
+                  <FormField
+                    control={createForm.control}
+                    name="username"
+                    render={({ field }) => (
+                      <FormItem>
+                        <FormLabel>Username</FormLabel>
+                        <FormControl>
+                          <SanitizedInput sanitizer="username" placeholder="e.g. johndoe" {...field} />
+                        </FormControl>
+                        <FormMessage />
+                      </FormItem>
+                    )}
+                  />
+                  <FormField
+                    control={createForm.control}
+                    name="email"
+                    render={({ field }) => (
+                      <FormItem>
+                        <FormLabel>Email</FormLabel>
+                        <FormControl>
+                          <SanitizedInput sanitizer="email" type="email" placeholder="e.g. john@school.com" {...field} />
+                        </FormControl>
+                        <FormMessage />
+                      </FormItem>
+                    )}
+                  />
+                  <FormField
+                    control={createForm.control}
+                    name="password"
+                    render={({ field }) => (
+                      <FormItem>
+                        <FormLabel>Password</FormLabel>
+                        <FormControl>
+                          <SanitizedInput sanitizer="text" type="password" placeholder="Minimum 8 characters" {...field} />
+                        </FormControl>
+                        <FormMessage />
+                      </FormItem>
+                    )}
+                  />
                   <div className="grid grid-cols-2 gap-4">
+<<<<<<< HEAD
                     <div className="space-y-2">
                       <Label htmlFor="role">Role</Label>
                       <select
@@ -328,6 +409,69 @@ export default function UsersPage() {
                   </Button>
                 </DialogFooter>
               </form>
+=======
+                    <FormField
+                      control={createForm.control}
+                      name="role"
+                      render={({ field }) => (
+                        <FormItem>
+                          <FormLabel>Role</FormLabel>
+                          <Select onValueChange={field.onChange} defaultValue={field.value}>
+                            <FormControl>
+                              <SelectTrigger>
+                                <SelectValue />
+                              </SelectTrigger>
+                            </FormControl>
+                            <SelectContent>
+                              {availableRoles.map((role) => (
+                                <SelectItem key={role} value={role}>{role}</SelectItem>
+                              ))}
+                            </SelectContent>
+                          </Select>
+                          <FormMessage />
+                        </FormItem>
+                      )}
+                    />
+                    <FormField
+                      control={createForm.control}
+                      name="status"
+                      render={({ field }) => (
+                        <FormItem>
+                          <FormLabel>Status</FormLabel>
+                          <Select onValueChange={field.onChange} defaultValue={field.value}>
+                            <FormControl>
+                              <SelectTrigger>
+                                <SelectValue />
+                              </SelectTrigger>
+                            </FormControl>
+                            <SelectContent>
+                              <SelectItem value="Active">Active</SelectItem>
+                              <SelectItem value="Suspended">Suspended</SelectItem>
+                            </SelectContent>
+                          </Select>
+                          <FormMessage />
+                        </FormItem>
+                      )}
+                    />
+                  </div>
+                  <DialogFooter className="mt-6">
+                    <Button type="button" variant="outline" onClick={() => setIsDialogOpen(false)}>
+                      Cancel
+                    </Button>
+                    <Button type="submit" disabled={createUserMutation.isPending}>
+                      {createUserMutation.isPending ? (
+                        <>
+                          <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                          Creating...
+                        </>
+                      ) : (
+                        'Create User'
+                      )}
+                    </Button>
+                  </DialogFooter>
+                </form>
+              </Form>
+>>>>>>> 945d7c3 (Error solved)
               </DialogContent>
             </Dialog>
           )}
@@ -339,6 +483,7 @@ export default function UsersPage() {
             <DialogHeader>
               <DialogTitle>Edit User</DialogTitle>
             </DialogHeader>
+<<<<<<< HEAD
             <div className="space-y-4 mt-2">
               <div className="space-y-2">
                 <Label htmlFor="edit-name">Full Name</Label>
@@ -411,6 +556,85 @@ export default function UsersPage() {
                 Save Changes
               </Button>
             </DialogFooter>
+=======
+            <Form {...editForm}>
+              <form onSubmit={onEditSubmit} className="space-y-4 mt-2">
+                <FormField
+                  control={editForm.control}
+                  name="name"
+                  render={({ field }) => (
+                    <FormItem>
+                      <FormLabel>Full Name</FormLabel>
+                      <FormControl>
+                        <SanitizedInput sanitizer="name" {...field} />
+                      </FormControl>
+                      <FormMessage />
+                    </FormItem>
+                  )}
+                />
+                <FormField
+                  control={editForm.control}
+                  name="email"
+                  render={({ field }) => (
+                    <FormItem>
+                      <FormLabel>Email</FormLabel>
+                      <FormControl>
+                        <SanitizedInput sanitizer="email" type="email" {...field} />
+                      </FormControl>
+                      <FormMessage />
+                    </FormItem>
+                  )}
+                />
+                <div className="grid grid-cols-2 gap-4">
+                  <FormField
+                    control={editForm.control}
+                    name="role"
+                    render={({ field }) => (
+                      <FormItem>
+                        <FormLabel>Role</FormLabel>
+                        <Select onValueChange={field.onChange} value={field.value}>
+                          <FormControl>
+                            <SelectTrigger>
+                              <SelectValue />
+                            </SelectTrigger>
+                          </FormControl>
+                          <SelectContent>
+                            {availableRoles.map(role => <SelectItem key={role} value={role}>{role}</SelectItem>)}
+                          </SelectContent>
+                        </Select>
+                        <FormMessage />
+                      </FormItem>
+                    )}
+                  />
+                  <FormField
+                    control={editForm.control}
+                    name="status"
+                    render={({ field }) => (
+                      <FormItem>
+                        <FormLabel>Status</FormLabel>
+                        <Select onValueChange={field.onChange} value={field.value}>
+                          <FormControl>
+                            <SelectTrigger>
+                              <SelectValue />
+                            </SelectTrigger>
+                          </FormControl>
+                          <SelectContent>
+                            <SelectItem value="Active">Active</SelectItem>
+                            <SelectItem value="Suspended">Suspended</SelectItem>
+                          </SelectContent>
+                        </Select>
+                        <FormMessage />
+                      </FormItem>
+                    )}
+                  />
+                </div>
+                <DialogFooter className="mt-6">
+                  <Button type="button" variant="outline" onClick={() => setIsEditDialogOpen(false)}>Cancel</Button>
+                  <Button type="submit">Update User</Button>
+                </DialogFooter>
+              </form>
+            </Form>
+>>>>>>> 945d7c3 (Error solved)
           </DialogContent>
         </Dialog>
 
@@ -420,6 +644,7 @@ export default function UsersPage() {
             <DialogHeader>
               <DialogTitle>Change Password</DialogTitle>
             </DialogHeader>
+<<<<<<< HEAD
             <div className="space-y-4 mt-2">
               <div className="space-y-2">
                 <Label>User</Label>
@@ -451,18 +676,71 @@ export default function UsersPage() {
                 Change Password
               </Button>
             </DialogFooter>
+=======
+            <Form {...passwordForm}>
+              <form onSubmit={onPasswordSubmit} className="space-y-4 mt-2">
+                <FormField
+                  control={passwordForm.control}
+                  name="currentPassword"
+                  render={({ field }) => (
+                    <FormItem>
+                      <FormLabel>Current Password</FormLabel>
+                      <FormControl>
+                        <SanitizedInput sanitizer="text" type="password" placeholder="Enter current password" {...field} />
+                      </FormControl>
+                      <FormMessage />
+                    </FormItem>
+                  )}
+                />
+                <FormField
+                  control={passwordForm.control}
+                  name="newPassword"
+                  render={({ field }) => (
+                    <FormItem>
+                      <FormLabel>New Password</FormLabel>
+                      <FormControl>
+                        <SanitizedInput sanitizer="text" type="password" placeholder="Minimum 8 characters" {...field} />
+                      </FormControl>
+                      <FormMessage />
+                    </FormItem>
+                  )}
+                />
+                <FormField
+                  control={passwordForm.control}
+                  name="confirmPassword"
+                  render={({ field }) => (
+                    <FormItem>
+                      <FormLabel>Confirm Password</FormLabel>
+                      <FormControl>
+                        <SanitizedInput sanitizer="text" type="password" placeholder="Re-enter password" {...field} />
+                      </FormControl>
+                      <FormMessage />
+                    </FormItem>
+                  )}
+                />
+                <DialogFooter className="mt-6">
+                  <Button type="button" variant="outline" onClick={() => setIsPasswordDialogOpen(false)}>Cancel</Button>
+                  <Button type="submit">Change Password</Button>
+                </DialogFooter>
+              </form>
+            </Form>
+>>>>>>> 945d7c3 (Error solved)
           </DialogContent>
         </Dialog>
 
         <div className="flex gap-4 items-center">
           <div className="relative flex-1 max-w-sm">
             <Search className="absolute left-2 top-2.5 h-4 w-4 text-muted-foreground" />
+<<<<<<< HEAD
             <Input 
               placeholder="Search users..." 
               className="pl-8" 
               value={searchTerm}
               onChange={(e) => setSearchTerm(e.target.value)}
             />
+=======
+            <SanitizedInput sanitizer="text" placeholder="Search users..." className="pl-8" />
+>>>>>>> 945d7c3 (Error solved)
           </div>
           <Select value={roleFilter} onValueChange={setRoleFilter}>
             <SelectTrigger className="w-[150px]">
@@ -477,7 +755,11 @@ export default function UsersPage() {
               <SelectItem value="admin">Admin</SelectItem>
             </SelectContent>
           </Select>
+<<<<<<< HEAD
           <Button variant="outline" size="icon" onClick={() => { setSearchTerm(''); setRoleFilter('all'); }}>
+=======
+          <Button variant="outline" size="icon" aria-label="Filter users">
+>>>>>>> 945d7c3 (Error solved)
             <Filter className="h-4 w-4" />
           </Button>
         </div>
@@ -497,14 +779,76 @@ export default function UsersPage() {
               <TableBody>
                 {isLoading ? (
                   <TableRow>
-                    <TableCell colSpan={5} className="text-center py-8 text-muted-foreground">
-                      Loading users...
+                    <TableCell colSpan={5}>
+                      <TableSkeleton rows={5} cols={5} />
+                    </TableCell>
+                  </TableRow>
+                ) : error ? (
+                  <TableRow>
+                    <TableCell colSpan={5}>
+                      <ErrorState 
+                        title="Failed to load users"
+                        message="Unable to fetch user data. Please try again."
+                        onRetry={() => refetch()}
+                        type="server"
+                      />
                     </TableCell>
                   </TableRow>
                 ) : displayUsers.length === 0 ? (
                   <TableRow>
-                    <TableCell colSpan={5} className="text-center py-8 text-muted-foreground">
-                      No users found
+                    <TableCell colSpan={5}>
+                      <EmptyState 
+                        title="No users found"
+                        message="No users have been created yet."
+                        action={canAddUser ? (
+                          <Button onClick={() => setIsDialogOpen(true)}>
+                            <UserPlus className="mr-2 h-4 w-4" /> Add First User
+                          </Button>
+                        ) : undefined}
+                      />
+                    </TableCell>
+                  </TableRow>
+                ) : displayUsers.length > 50 ? (
+                  <TableRow>
+                    <TableCell colSpan={5} className="p-0">
+                      <VirtualList
+                        items={displayUsers}
+                        height={600}
+                        itemSize={60}
+                        renderItem={(user) => (
+                          <div className="flex items-center border-b h-[60px] px-4">
+                            <div className="flex-1 font-medium">{user.name}</div>
+                            <div className="flex-1">{user.email}</div>
+                            <div className="flex-1">
+                              <Badge variant="outline" className="capitalize">{user.role}</Badge>
+                            </div>
+                            <div className="flex-1">
+                              <Badge variant={user.status === 'Active' ? 'default' : 'destructive'}>
+                                {user.status}
+                              </Badge>
+                            </div>
+                            <div className="flex-1 text-right">
+                              <DropdownMenu>
+                                <DropdownMenuTrigger asChild>
+                                  <Button variant="ghost" size="icon" aria-label="User actions menu">
+                                    <MoreHorizontal className="h-4 w-4" />
+                                  </Button>
+                                </DropdownMenuTrigger>
+                                <DropdownMenuContent align="end">
+                                  <DropdownMenuItem onClick={() => handleOpenEdit(user)}>Edit</DropdownMenuItem>
+                                  <DropdownMenuItem onClick={() => handleOpenChangePassword(user)}>Change Password</DropdownMenuItem>
+                                  <DropdownMenuItem 
+                                    className="text-destructive"
+                                    onClick={() => handleToggleSuspend(user.id, user.status)}
+                                  >
+                                    {user.status === 'Active' ? 'Suspend' : 'Activate'}
+                                  </DropdownMenuItem>
+                                </DropdownMenuContent>
+                              </DropdownMenu>
+                            </div>
+                          </div>
+                        )}
+                      />
                     </TableCell>
                   </TableRow>
                 ) : (
@@ -523,7 +867,7 @@ export default function UsersPage() {
                     <TableCell className="text-right">
                       <DropdownMenu>
                         <DropdownMenuTrigger asChild>
-                          <Button variant="ghost" size="icon">
+                          <Button variant="ghost" size="icon" aria-label="User actions menu">
                             <MoreHorizontal className="h-4 w-4" />
                           </Button>
                         </DropdownMenuTrigger>

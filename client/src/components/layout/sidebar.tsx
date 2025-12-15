@@ -1,4 +1,6 @@
+import { memo } from 'react';
 import { Link, useLocation } from 'wouter';
+import { motion, AnimatePresence } from 'framer-motion';
 import { useAuthStore } from '@/store/useAuthStore';
 import { useUIStore } from '@/store/useUIStore';
 import { useTranslation } from 'react-i18next';
@@ -46,7 +48,7 @@ import {
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import { Role } from '@/types';
 
-export function Sidebar() {
+export const Sidebar = memo(function Sidebar() {
   const { user, logout } = useAuthStore();
   const { sidebarOpen, toggleSidebar } = useUIStore();
   const { t } = useTranslation();
@@ -70,9 +72,9 @@ export function Sidebar() {
     },
     {
       title: t('menu.assignments'),
-      href: '/assignments',
+      href: '/dashboard/assignments',
       icon: BookOpen,
-      roles: ['student', 'teacher'] as Role[]
+      roles: ['student', 'teacher', 'director'] as Role[]
     },
     {
       title: 'Grades & Results',
@@ -82,7 +84,7 @@ export function Sidebar() {
     },
     {
       title: t('menu.timetable'),
-      href: '/timetable',
+      href: '/dashboard/timetable',
       icon: Clock,
       roles: ['student', 'teacher', 'director'] as Role[]
     },
@@ -106,9 +108,9 @@ export function Sidebar() {
     },
     {
       title: t('menu.resources'),
-      href: '/resources',
+      href: '/dashboard/resources',
       icon: Library,
-      roles: ['student', 'teacher'] as Role[]
+      roles: ['student', 'teacher', 'director'] as Role[]
     },
     {
       title: t('menu.appeals'),
@@ -118,7 +120,7 @@ export function Sidebar() {
     },
     {
       title: t('menu.calendar'),
-      href: '/calendar',
+      href: '/dashboard/calendar',
       icon: Calendar,
       roles: ['student', 'parent', 'teacher', 'director', 'admin'] as Role[]
     },
@@ -130,7 +132,7 @@ export function Sidebar() {
     },
     {
       title: t('menu.gradebook'),
-      href: '/gradebook',
+      href: '/dashboard/gradebook',
       icon: FileEdit,
       roles: ['teacher'] as Role[]
     },
@@ -148,7 +150,7 @@ export function Sidebar() {
     },
     {
       title: t('menu.users'),
-      href: '/users',
+      href: '/dashboard/users',
       icon: Users,
       roles: ['admin', 'super_admin', 'director'] as Role[]
     },
@@ -200,30 +202,43 @@ export function Sidebar() {
   };
 
   return (
-    <aside 
-      className={cn(
-        "fixed left-0 top-0 z-40 h-screen border-r bg-card transition-all duration-300 ease-in-out",
-        sidebarOpen ? "w-64" : "w-20"
-      )}
+    <motion.aside 
+      animate={{ width: sidebarOpen ? 256 : 80 }}
+      transition={{ duration: 0.3, ease: "easeInOut" }}
+      className="fixed left-0 top-0 z-40 h-screen border-r bg-card"
     >
       {/* Logo Section - 80px height */}
       <div className="flex h-20 items-center justify-between border-b px-4">
         <Logo collapsed={!sidebarOpen} />
-        <Button variant="ghost" size="icon" onClick={toggleSidebar} className="hidden md:flex">
+        <Button 
+          variant="ghost" 
+          size="icon" 
+          onClick={toggleSidebar} 
+          className="hidden md:flex"
+          aria-label={sidebarOpen ? 'Collapse sidebar' : 'Expand sidebar'}
+        >
           <ChevronLeft className={cn("h-4 w-4 transition-transform duration-300", !sidebarOpen && "rotate-180")} />
         </Button>
       </div>
 
       {/* Role Badge */}
-      {sidebarOpen && (
-        <div className="border-b p-4">
-          <div className="flex items-center justify-between">
-            <Badge className={cn("text-xs px-3 py-1 rounded-full", roleColors[role])}>
-              {roleLabels[role]}
-            </Badge>
-          </div>
-        </div>
-      )}
+      <AnimatePresence>
+        {sidebarOpen && (
+          <motion.div 
+            initial={{ opacity: 0, height: 0 }}
+            animate={{ opacity: 1, height: "auto" }}
+            exit={{ opacity: 0, height: 0 }}
+            transition={{ duration: 0.2 }}
+            className="border-b p-4"
+          >
+            <div className="flex items-center justify-between">
+              <Badge className={cn("text-xs px-3 py-1 rounded-full", roleColors[role])}>
+                {roleLabels[role]}
+              </Badge>
+            </div>
+          </motion.div>
+        )}
+      </AnimatePresence>
 
       {/* Navigation */}
       <ScrollArea className="h-[calc(100vh-16rem)] py-4">
@@ -232,7 +247,9 @@ export function Sidebar() {
             const isActive = location === item.href;
             return (
               <Link key={index} href={item.href}>
-                <div
+                <motion.div
+                  whileHover={{ scale: 1.02 }}
+                  whileTap={{ scale: 0.98 }}
                   className={cn(
                     "flex items-center gap-3 rounded-lg px-3 py-2.5 text-sm font-medium transition-all duration-200 hover:bg-accent hover:text-accent-foreground cursor-pointer",
                     isActive ? "bg-primary/10 text-primary" : "text-muted-foreground",
@@ -240,8 +257,20 @@ export function Sidebar() {
                   )}
                 >
                   <item.icon className={cn("h-5 w-5 flex-shrink-0", isActive && "text-primary")} />
-                  {sidebarOpen && <span className="truncate">{item.title}</span>}
-                </div>
+                  <AnimatePresence>
+                    {sidebarOpen && (
+                      <motion.span 
+                        initial={{ opacity: 0, width: 0 }}
+                        animate={{ opacity: 1, width: "auto" }}
+                        exit={{ opacity: 0, width: 0 }}
+                        transition={{ duration: 0.2 }}
+                        className="truncate"
+                      >
+                        {item.title}
+                      </motion.span>
+                    )}
+                  </AnimatePresence>
+                </motion.div>
               </Link>
             );
           })}
@@ -250,18 +279,26 @@ export function Sidebar() {
 
       {/* User Profile at Bottom */}
       <div className="absolute bottom-0 w-full border-t bg-card p-4 space-y-2">
-        {sidebarOpen && user && (
-          <div className="flex items-center gap-3 px-2 py-2 rounded-lg hover:bg-accent transition-colors">
-            <Avatar className="h-8 w-8 border">
-              <AvatarImage src={user.avatar} alt={user.name} />
-              <AvatarFallback className="text-xs">{user.name.charAt(0)}</AvatarFallback>
-            </Avatar>
-            <div className="flex-1 min-w-0">
-              <p className="text-sm font-medium truncate">{user.name}</p>
-              <p className="text-xs text-muted-foreground truncate">{user.email}</p>
-            </div>
-          </div>
-        )}
+        <AnimatePresence>
+          {sidebarOpen && user && (
+            <motion.div 
+              initial={{ opacity: 0, y: 10 }}
+              animate={{ opacity: 1, y: 0 }}
+              exit={{ opacity: 0, y: 10 }}
+              transition={{ duration: 0.2 }}
+              className="flex items-center gap-3 px-2 py-2 rounded-lg hover:bg-accent transition-colors"
+            >
+              <Avatar className="h-8 w-8 border">
+                <AvatarImage src={user.avatar} alt={user.name} />
+                <AvatarFallback className="text-xs">{user.name.charAt(0)}</AvatarFallback>
+              </Avatar>
+              <div className="flex-1 min-w-0">
+                <p className="text-sm font-medium truncate">{user.name}</p>
+                <p className="text-xs text-muted-foreground truncate">{user.email}</p>
+              </div>
+            </motion.div>
+          )}
+        </AnimatePresence>
         <Button 
           variant="ghost" 
           className={cn("w-full justify-start gap-3 text-destructive hover:bg-destructive/10 hover:text-destructive", !sidebarOpen && "justify-center px-2")}
@@ -271,6 +308,6 @@ export function Sidebar() {
           {sidebarOpen && <span>{t('common.logout')}</span>}
         </Button>
       </div>
-    </aside>
+    </motion.aside>
   );
-}
+});

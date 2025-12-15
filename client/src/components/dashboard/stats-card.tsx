@@ -1,3 +1,4 @@
+import { memo } from 'react';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { LucideIcon } from 'lucide-react';
 import { cn } from '@/lib/utils';
@@ -12,7 +13,7 @@ interface DashboardStatsCardProps {
   className?: string;
 }
 
-export function DashboardStatsCard({
+export const DashboardStatsCard = memo(function DashboardStatsCard({
   title,
   value,
   description,
@@ -51,4 +52,4 @@ export function DashboardStatsCard({
       </div>
     </Card>
   );
-}
+});
