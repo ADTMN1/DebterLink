@@ -1,32 +1,10 @@
 import registerQuery from "../../services/authService/register.query.js";
-import jwt from "jsonwebtoken";
-import { hash } from "bcrypt";
+import bcrypt from "bcryptjs";
 
-// Helper function (NO default export)
-const hashPassword = async (password) => {
-  const saltRounds = 10;
-  return await hash(password, saltRounds);
-};
-
-// JWT token generators
-const generateAccessToken = (user) => {
-  return jwt.sign(
-    { id: user.id, email: user.email, role_id: user.role_id },
-    process.env.JWT_ACCESS_SECRET,
-    { expiresIn: process.env.ACCESS_TOKEN_EXPIRY || "15m" }
-  );
-};
-
-const generateRefreshToken = (user) => {
-  return jwt.sign(
-    { id: user.id, email: user.email, role_id: user.role_id },
-    process.env.JWT_REFRESH_SECRET,
-    { expiresIn: process.env.REFRESH_TOKEN_EXPIRY || "7d" }
-  );
-};
-
-
-// Controller
+/**
+ * ADMIN-ONLY USER REGISTRATION
+ * No tokens are issued here
+ */
 export const registerController = async (req, res) => {
   try {
     const {
@@ -38,76 +16,88 @@ export const registerController = async (req, res) => {
       role_id,
     } = req.body;
 
-    // Validate required fields
-    if (!full_name || !email || !password || !confirmPassword || !phone_number || !role_id) {
-      return res.status(400).json({ error: "All fields are required" });
+    /* ===============================
+       1. Required fields
+    =============================== */
+    if (!full_name || !email || !password || !confirmPassword || !role_id) {
+      return res.status(400).json({ error: "Invalid registration data" });
     }
 
-    // Validate email
+    /* ===============================
+       2. Normalize input
+    =============================== */
+    const normalizedEmail = email.toLowerCase().trim();
+    const normalizedName = full_name.trim();
+
+    /* ===============================
+       3. Email validation
+    =============================== */
     const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
-    if (!emailRegex.test(email)) {
-      return res.status(400).json({ error: "Invalid email format" });
+    if (!emailRegex.test(normalizedEmail)) {
+      return res.status(400).json({ error: "Invalid registration data" });
     }
 
-    // Validate password
+    /* ===============================
+       4. Password policy
+    =============================== */
     if (password !== confirmPassword) {
-      return res.status(400).json({ error: "Passwords do not match" });
-    }
-
-    if (password.length < 8) {
-      return res.status(400).json({
-        error: "Password must be at least 8 characters long",
-      });
+      return res.status(400).json({ error: "Invalid registration data" });
     }
 
     const strongRegex =
-      /^(?=.*[A-Z])(?=.*[a-z])(?=.*\d)(?=.*[@$!%*?&])/;
+      /^(?=.*[A-Z])(?=.*[a-z])(?=.*\d)(?=.*[@$!%*?&]).{8,}$/;
 
     if (!strongRegex.test(password)) {
-      return res.status(400).json({
-        error:
-          "Password must include uppercase, lowercase, number, and special character",
-      });
+      return res.status(400).json({ error: "Weak password" });
     }
 
-    // Check if user exists
-    const userExists = await registerQuery.checkUserExists(email);
+    /* ===============================
+       5. Role escalation prevention
+    =============================== */
+    const ALLOWED_ROLES = [2, 3, 4]; // example: teacher, student, parent
+    if (!ALLOWED_ROLES.includes(Number(role_id))) {
+      return res.status(403).json({ error: "Unauthorized role assignment" });
+    }
+
+    /* ===============================
+       6. Check user existence
+    =============================== */
+    const userExists = await registerQuery.checkUserExists(normalizedEmail);
     if (userExists) {
-      return res.status(400).json({ message: "User already exists" });
+      // Generic message to prevent email enumeration
+      return res.status(400).json({ error: "Invalid registration data" });
     }
 
-    // Hash password
-    const hashedpassword = await hashPassword(password);
+    /* ===============================
+       7. Secure password hashing
+    =============================== */
+    const hashedPassword = await bcrypt.hash(password, 12);
 
-    // Create user
+    /* ===============================
+       8. Create user
+    =============================== */
     const user = await registerQuery.createUser(
-      full_name,
-      email,
-      hashedpassword,
-      phone_number,
+      normalizedName,
+      normalizedEmail,
+      hashedPassword,
+      phone_number || null,
       role_id
     );
 
-    // Generate tokens
-    const accessToken = generateAccessToken(user);
-    const refreshToken = generateRefreshToken(user);
-
-    // Response
+    /* ===============================
+       9. Response (NO TOKENS)
+    =============================== */
     return res.status(201).json({
       message: "User registered successfully",
-      accessToken,
-      refreshToken,
       user: {
-        id: user.id,
+        user_id: user.user_id,
         full_name: user.full_name,
         email: user.email,
         role_id: user.role_id,
       },
     });
   } catch (error) {
-    console.error("Error registering user:", error);
-    return res
-      .status(500)
-      .json({ message: "Something went wrong, please try again later" });
+    console.error("Register error:", error);
+    return res.status(500).json({ error: "Registration failed" });
   }
 };

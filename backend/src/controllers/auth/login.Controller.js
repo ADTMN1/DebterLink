@@ -1,58 +1,43 @@
 import { comparePassword } from "../../Utils/hash.js";
-import {
-  generateAccessToken,
-  generateRefreshToken,
-} from "../../Utils/generateTokens.js";
-
+import { generateAccessToken, generateRefreshToken } from "../../Utils/generateTokens.js";
 import { findUserByEmail } from "../../services/authService/login.query.js";
 
 export const loginController = async (req, res) => {
   try {
     const { email, password } = req.body;
 
-    // Validate input
     if (!email || !password) {
-      return res
-        .status(400)
-        .json({ message: "Email and password are required" });
+      return res.status(400).json({ message: "Email and password are required" });
     }
 
-    // Check if user exists using query
-    const user = await findUserByEmail(email);
-    if (!user) {
-      return res.status(401).json({ message: "user don't exist check your email or password" });
+    const cleanEmail = email.trim().toLowerCase(); // sanitize email
+
+    const user = await findUserByEmail(cleanEmail);
+
+    const isValid = user && await comparePassword(password, user.password);
+    if (!isValid) {
+      return res.status(401).json({ message: "Invalid email or password" }); // consistent message
     }
 
-    // Validate password
-    const isPasswordValid = await comparePassword(password, user.password);
-    if (!isPasswordValid) {
-      return res.status(401).json({ message: "Invalid email or password" });
-    }
-
-    // Generate tokens
     const accessToken = generateAccessToken(user);
     const refreshToken = generateRefreshToken(user);
 
-    // Respond with tokens
     res.status(200).json({
-      status:true,
-    
+      status: true,
       message: "Login successful",
-    data:{
-        id: user.id,
+      data: {
+        id: user.user_id,
         full_name: user.full_name,
         email: user.email,
         phone_number: user.phone_number,
         role_id: user.role_id,
-},
+      },
       accessToken,
       refreshToken,
     });
   } catch (error) {
-    console.error("Error during login:", error);
-    res
-      .status(500)
-      .json({ message: "Something went wrong. Please try again later." });
+    console.error("Login error:", error.message);
+    res.status(500).json({ message: "Something went wrong. Please try again later." });
   }
 };
 

@@ -1,42 +1,75 @@
+// backend/src/index.js
 import express from "express";
-import authRoutes from "./routes/auth.routes.js";
-import attendanceRoutes from "../src/routes/student.attendance.routes.js";
 import { authMiddleware, verifyRole } from "./middleware/auth.middleware.js";
-import assignmentRoutes from "../src/routes/assigment.route.js";
-import examROutes from "./routes/examRoutes.js";
+
+// Route imports
+import authRoutes from "./routes/auth.routes.js";
+import attendanceRoutes from "./routes/student.attendance.routes.js";
+import assignmentRoutes from "./routes/assigment.route.js";
+import examRoutes from "./routes/examRoutes.js";
 import studentRoutes from "./routes/studentRoutes.js";
 import appealRoutes from "./routes/appealRoutes.js";
 import parentRoutes from "./routes/parent.routes.js";
-import notification_router from "./routes/notification.routes.js";
+import notificationRoutes from "./routes/notification.routes.js";
 import schoolRoutes from "./routes/schoolRoutes.js";
-import classROutes from "./routes/classRoutes.js";
+import classRoutes from "./routes/classRoutes.js";
+// import directorRoutes from "./routes/"; 
+import adminRoutes from "./routes/admin.routes.js";
+
 const router = express.Router();
 
-// Public/auth routes
+// ----------------------
+// Public routes
+// ----------------------
 router.use("/auth", authRoutes);
 
-// // Role-based routes
-// router.use("/super-admin", authMiddleware, verifyRole(), (req, res) =>
-//   res.send("SUPER ADMIN route")
-// );
-// router.use("/director", authMiddleware, verifyRole(1), (req, res) =>
-//   res.send("DIRECTOR route")
-// );
-// router.use("/admin", authMiddleware, verifyRole(5), (req, res) =>
-//   res.send("admin route")
-// );
-// router.use("/parent", authMiddleware, verifyRole(3), (req, res) =>
-//   res.send("parent route")
-// );
-// router.use("/teacher", authMiddleware, verifyRole(2), (req, res) =>
-//   res.send("teacher route")
-// );
-// router.use("/student", authMiddleware, verifyRole(3), (req, res) =>
-//   res.send("student route")
+// ----------------------
+// Role-based routes
+// ----------------------
+
+// Super Admin routes (role_id = 6)
+router.use(
+  "/super-admin",
+  authMiddleware,
+  verifyRole(6),
+  schoolRoutes
+);
+
+// Admin routes (role_id = 5)
+router.use(
+  "/admin",
+//   authMiddleware,
+//   verifyRole(5),
+  adminRoutes
+);
+
+// Director routes (role_id = 1)
+// router.use(
+//   "/director",
+//   authMiddleware,
+//   verifyRole(1),
+//   directorRoutes
 // );
 
-// // Attendance – Teacher only
-// router.use("/attendance", authMiddleware, verifyRole(2), attendanceRoutes);
+// Teacher routes (role_id = 2)
+router.use(
+  "/teacher",
+  authMiddleware,
+  verifyRole(2),
+  examRoutes
+);
+router.use(
+  "/attendance",
+  authMiddleware,
+  verifyRole(2),
+  attendanceRoutes
+);
+router.use(
+  "/assignment",
+  authMiddleware,
+  verifyRole(2),
+  assignmentRoutes
+);
 
 // Assignment Module Routes
 // router.use("/class", authMiddleware, verifyRole(4), classROutes);
