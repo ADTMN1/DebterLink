@@ -50,10 +50,13 @@ export default defineConfig(() => ({
   },
   server: {
     host: "0.0.0.0",
-    allowedHosts: true as true,   // <-- fixed
+    allowedHosts: true as true,
     fs: {
       strict: true,
       deny: ["**/.*"],
+    },
+    hmr: {
+      overlay: true,
     },
   },
 }));
