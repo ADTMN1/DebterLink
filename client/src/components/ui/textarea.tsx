@@ -1,7 +1,19 @@
+/**
+ * Multi-line text input component.
+ * @module components/ui/textarea
+ */
+
 import * as React from "react"
 
 import { cn } from "@/lib/utils"
 
+/**
+ * Accessible textarea with consistent styling and focus states.
+ * @component
+ * @example
+ * <Textarea placeholder="Enter description" rows={4} />
+ * <Textarea required aria-label="Comments" />
+ */
 const Textarea = React.forwardRef<
   HTMLTextAreaElement,
   React.ComponentProps<"textarea">

@@ -2,14 +2,18 @@ import DashboardLayout from '@/layouts/dashboard-layout';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Dialog, DialogContent, DialogFooter, DialogHeader, DialogTitle, DialogTrigger } from '@/components/ui/dialog';
-import { Input } from '@/components/ui/input';
-import { Label } from '@/components/ui/label';
-import { Textarea } from '@/components/ui/textarea';
+import { SanitizedInput } from '@/components/ui/sanitized-input';
+import { SanitizedTextarea } from '@/components/ui/sanitized-input';
+import { useSanitizedForm } from '@/hooks/use-sanitized-form';
+import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage } from '@/components/ui/form';
+import { resourceUploadSchema, ResourceUploadFormData } from '@/lib/validations';
+import { zodResolver } from '@hookform/resolvers/zod';
+import { Loader2 } from 'lucide-react';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { FileIcon, Download, Search, Upload, X } from 'lucide-react';
-import { useState } from 'react';
+import { useState, useMemo, useCallback } from 'react';
 import { useAuthStore } from '@/store/useAuthStore';
-import { useToast } from '@/hooks/use-toast';
+import { toast } from 'sonner';
 import { Badge } from '@/components/ui/badge';
 
 type Resource = {
@@ -65,15 +69,24 @@ const initialResources: Resource[] = [
 
 export default function ResourcesPage() {
   const { user } = useAuthStore();
-  const { toast } = useToast();
   const isTeacher = user?.role === 'teacher' || user?.role === 'director';
   const [resources, setResources] = useState<Resource[]>(initialResources);
   const [isDialogOpen, setIsDialogOpen] = useState(false);
-  const [form, setForm] = useState({
-    title: '',
-    description: '',
-    category: 'Textbook',
-    file: null as File | null,
+  const form = useSanitizedForm<ResourceUploadFormData>({
+    resolver: zodResolver(resourceUploadSchema),
+    defaultValues: {
+      title: '',
+      description: '',
+      category: 'Textbook',
+      grade: '11',
+      subject: '',
+      file: null as any,
+    },
+    sanitizationMap: {
+      title: 'text',
+      description: 'description',
+      subject: 'text',
+    },
   });
 
   const formatFileSize = (bytes: number): string => {
@@ -87,54 +100,36 @@ export default function ResourcesPage() {
     return ext || 'FILE';
   };
 
-  const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+  const handleFileChange = useCallback((e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
     if (file) {
-      if (file.size > 50 * 1024 * 1024) { // 50MB limit
-        toast({
-          title: 'File too large',
-          description: 'File size must be less than 50MB',
-          variant: 'destructive',
-        });
-        return;
-      }
-      setForm((f) => ({ ...f, file }));
+      form.setValue('file', file);
     }
-  };
+  }, [form]);
 
-  const handleUploadResource = () => {
-    if (!form.title.trim() || !form.file) {
-      toast({
-        title: 'Validation Error',
-        description: 'Please provide a title and select a file.',
-        variant: 'destructive',
-      });
-      return;
-    }
+  const resourceId = useMemo(() => `resource-${Date.now()}`, []);
 
+  const handleUploadResource = form.handleSanitizedSubmit((data: ResourceUploadFormData) => {
     const newResource: Resource = {
-      id: Date.now().toString(),
-      title: form.title.trim(),
-      description: form.description.trim() || undefined,
-      category: form.category,
-      fileType: getFileType(form.file.name),
-      fileSize: formatFileSize(form.file.size),
+      id: `${resourceId}-${resources.length}`,
+      title: data.title,
+      description: data.description || undefined,
+      category: data.category,
+      fileType: getFileType(data.file.name),
+      fileSize: formatFileSize(data.file.size),
       uploadedBy: user?.name || 'Unknown',
       uploadedDate: new Date().toISOString().split('T')[0],
-      file: form.file,
+      file: data.file,
     };
 
     setResources([newResource, ...resources]);
     setIsDialogOpen(false);
-    setForm({ title: '', description: '', category: 'Textbook', file: null });
+    form.reset();
 
-    toast({
-      title: 'Resource uploaded',
-      description: `Successfully uploaded "${newResource.title}"`,
-    });
-  };
+    toast.success(`Successfully uploaded "${newResource.title}"`);
+  });
 
-  const handleDownload = (resource: Resource) => {
+  const handleDownload = useCallback((resource: Resource) => {
     if (resource.file) {
       const url = URL.createObjectURL(resource.file);
       const a = document.createElement('a');
@@ -145,12 +140,9 @@ export default function ResourcesPage() {
       document.body.removeChild(a);
       URL.revokeObjectURL(url);
     } else {
-      toast({
-        title: 'Download',
-        description: `Downloading ${resource.title}...`,
-      });
+      toast.info(`Downloading ${resource.title}...`);
     }
-  };
+  }, []);
 
   const categoryColors: Record<string, string> = {
     'Textbook': 'bg-blue-100 text-blue-700 dark:bg-blue-900/30 dark:text-blue-400',
@@ -168,7 +160,7 @@ export default function ResourcesPage() {
            <div className="flex items-center gap-4">
              <div className="relative w-64">
                 <Search className="absolute left-2 top-2.5 h-4 w-4 text-muted-foreground" />
-                <Input placeholder="Search resources..." className="pl-8" />
+                <SanitizedInput sanitizer="text" placeholder="Search resources..." className="pl-8" />
              </div>
              {isTeacher && (
                <Dialog open={isDialogOpen} onOpenChange={setIsDialogOpen}>
@@ -181,100 +173,133 @@ export default function ResourcesPage() {
                    <DialogHeader>
                      <DialogTitle>Upload New Resource</DialogTitle>
                    </DialogHeader>
-                   <form
-                     onSubmit={(e) => {
-                       e.preventDefault();
-                       handleUploadResource();
-                     }}
-                   >
-                     <div className="space-y-4 mt-2">
-                       <div className="space-y-2">
-                         <Label htmlFor="title">Resource Title</Label>
-                         <Input
-                           id="title"
-                           value={form.title}
-                           onChange={(e) => setForm((f) => ({ ...f, title: e.target.value }))}
-                           placeholder="e.g. Physics Grade 11 Textbook"
-                           required
+                   <Form {...form}>
+                     <form onSubmit={handleUploadResource} className="space-y-4 mt-2">
+                       <FormField
+                         control={form.control}
+                         name="title"
+                         render={({ field }) => (
+                           <FormItem>
+                             <FormLabel>Resource Title</FormLabel>
+                             <FormControl>
+                               <SanitizedInput sanitizer="text" placeholder="e.g. Physics Grade 11 Textbook" {...field} />
+                             </FormControl>
+                             <FormMessage />
+                           </FormItem>
+                         )}
+                       />
+                       <FormField
+                         control={form.control}
+                         name="description"
+                         render={({ field }) => (
+                           <FormItem>
+                             <FormLabel>Description (Optional)</FormLabel>
+                             <FormControl>
+                               <SanitizedTextarea sanitizer="description" placeholder="Brief description..." rows={3} {...field} />
+                             </FormControl>
+                             <FormMessage />
+                           </FormItem>
+                         )}
+                       />
+                       <div className="grid grid-cols-3 gap-4">
+                         <FormField
+                           control={form.control}
+                           name="category"
+                           render={({ field }) => (
+                             <FormItem>
+                               <FormLabel>Category</FormLabel>
+                               <Select onValueChange={field.onChange} value={field.value}>
+                                 <FormControl>
+                                   <SelectTrigger>
+                                     <SelectValue />
+                                   </SelectTrigger>
+                                 </FormControl>
+                                 <SelectContent>
+                                   <SelectItem value="Textbook">Textbook</SelectItem>
+                                   <SelectItem value="Reference">Reference</SelectItem>
+                                   <SelectItem value="Manual">Manual</SelectItem>
+                                   <SelectItem value="Worksheet">Worksheet</SelectItem>
+                                   <SelectItem value="Video">Video</SelectItem>
+                                 </SelectContent>
+                               </Select>
+                               <FormMessage />
+                             </FormItem>
+                           )}
+                         />
+                         <FormField
+                           control={form.control}
+                           name="grade"
+                           render={({ field }) => (
+                             <FormItem>
+                               <FormLabel>Grade</FormLabel>
+                               <Select onValueChange={field.onChange} value={field.value}>
+                                 <FormControl>
+                                   <SelectTrigger>
+                                     <SelectValue />
+                                   </SelectTrigger>
+                                 </FormControl>
+                                 <SelectContent>
+                                   <SelectItem value="9">Grade 9</SelectItem>
+                                   <SelectItem value="10">Grade 10</SelectItem>
+                                   <SelectItem value="11">Grade 11</SelectItem>
+                                   <SelectItem value="12">Grade 12</SelectItem>
+                                 </SelectContent>
+                               </Select>
+                               <FormMessage />
+                             </FormItem>
+                           )}
+                         />
+                         <FormField
+                           control={form.control}
+                           name="subject"
+                           render={({ field }) => (
+                             <FormItem>
+                               <FormLabel>Subject</FormLabel>
+                               <FormControl>
+                                 <SanitizedInput sanitizer="text" placeholder="e.g. Physics" {...field} />
+                               </FormControl>
+                               <FormMessage />
+                             </FormItem>
+                           )}
                          />
                        </div>
-                       <div className="space-y-2">
-                         <Label htmlFor="description">Description (Optional)</Label>
-                         <Textarea
-                           id="description"
-                           value={form.description}
-                           onChange={(e) => setForm((f) => ({ ...f, description: e.target.value }))}
-                           placeholder="Brief description of the resource..."
-                           rows={3}
-                         />
-                       </div>
-                       <div className="grid grid-cols-2 gap-4">
-                         <div className="space-y-2">
-                           <Label htmlFor="category">Category</Label>
-                           <Select value={form.category} onValueChange={(value) => setForm((f) => ({ ...f, category: value }))}>
-                             <SelectTrigger id="category">
-                               <SelectValue />
-                             </SelectTrigger>
-                             <SelectContent>
-                               <SelectItem value="Textbook">Textbook</SelectItem>
-                               <SelectItem value="Reference">Reference</SelectItem>
-                               <SelectItem value="Manual">Manual</SelectItem>
-                               <SelectItem value="Worksheet">Worksheet</SelectItem>
-                               <SelectItem value="Video">Video</SelectItem>
-                             </SelectContent>
-                           </Select>
-                         </div>
-                         <div className="space-y-2">
-                           <Label htmlFor="file">File</Label>
-                           <Input
-                             id="file"
-                             type="file"
-                             onChange={handleFileChange}
-                             accept=".pdf,.doc,.docx,.txt,.mp4,.mp3,.ppt,.pptx"
-                             required
-                           />
-                         </div>
-                       </div>
-                       {form.file && (
-                         <div className="flex items-center gap-2 p-3 bg-muted rounded-md">
-                           <FileIcon className="h-5 w-5 text-primary" />
-                           <div className="flex-1">
-                             <p className="text-sm font-medium">{form.file.name}</p>
-                             <p className="text-xs text-muted-foreground">{formatFileSize(form.file.size)}</p>
-                           </div>
-                           <Button
-                             type="button"
-                             variant="ghost"
-                             size="sm"
-                             onClick={() => setForm((f) => ({ ...f, file: null }))}
-                           >
-                             <X className="h-4 w-4" />
-                           </Button>
-                         </div>
-                       )}
-                       <p className="text-xs text-muted-foreground">
-                         Supported formats: PDF, DOC, DOCX, TXT, MP4, MP3, PPT, PPTX (Max 50MB)
-                       </p>
-                     </div>
-                     <DialogFooter className="mt-6">
-                       <Button
-                         type="button"
-                         variant="outline"
-                         onClick={() => {
-                           setIsDialogOpen(false);
-                           setForm({ title: '', description: '', category: 'Textbook', file: null });
-                         }}
-                       >
-                         Cancel
-                       </Button>
-                       <Button
-                         type="submit"
-                         disabled={!form.title.trim() || !form.file}
-                       >
-                         Upload Resource
-                       </Button>
-                     </DialogFooter>
-                   </form>
+                       <FormField
+                         control={form.control}
+                         name="file"
+                         render={() => (
+                           <FormItem>
+                             <FormLabel htmlFor="resource-file">File</FormLabel>
+                             <FormControl>
+                               <SanitizedInput
+                                 sanitizer="text"
+                                 id="resource-file"
+                                 type="file"
+                                 onChange={handleFileChange}
+                                 accept=".pdf,.doc,.docx,.txt,.mp4,.mp3,.ppt,.pptx"
+                               />
+                             </FormControl>
+                             {form.watch('file') && (
+                               <div className="flex items-center gap-2 p-3 bg-muted rounded-md mt-2">
+                                 <FileIcon className="h-5 w-5 text-primary" />
+                                 <div className="flex-1">
+                                   <p className="text-sm font-medium">{form.watch('file')?.name}</p>
+                                   <p className="text-xs text-muted-foreground">{form.watch('file') ? formatFileSize(form.watch('file').size) : ''}</p>
+                                 </div>
+                               </div>
+                             )}
+                             <FormMessage />
+                           </FormItem>
+                         )}
+                       />
+                       <DialogFooter className="mt-6">
+                         <Button type="button" variant="outline" onClick={() => setIsDialogOpen(false)}>Cancel</Button>
+                         <Button type="submit" disabled={form.formState.isSubmitting}>
+                           {form.formState.isSubmitting ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : null}
+                           Upload Resource
+                         </Button>
+                       </DialogFooter>
+                     </form>
+                   </Form>
                  </DialogContent>
                </Dialog>
              )}

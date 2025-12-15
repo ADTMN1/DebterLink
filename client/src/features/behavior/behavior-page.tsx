@@ -7,8 +7,12 @@ import { useAuthStore } from '@/store/useAuthStore';
 import { Badge } from '@/components/ui/badge';
 import { Plus, ThumbsUp, ThumbsDown } from 'lucide-react';
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger, DialogFooter } from '@/components/ui/dialog';
-import { Input } from '@/components/ui/input';
-import { Textarea } from '@/components/ui/textarea';
+import { SanitizedInput } from '@/components/ui/sanitized-input';
+import { SanitizedTextarea } from '@/components/ui/sanitized-input';
+import { useSanitizedForm } from '@/hooks/use-sanitized-form';
+import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage } from '@/components/ui/form';
+import { behaviorRecordSchema, BehaviorRecordFormData } from '@/lib/validations';
+import { zodResolver } from '@hookform/resolvers/zod';
 import { Label } from '@/components/ui/label';
 import { useState } from 'react';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
@@ -125,10 +129,20 @@ export default function BehaviorPage() {
   const [viewGrade, setViewGrade] = useState('');
   const [viewSection, setViewSection] = useState('');
   const [isDialogOpen, setIsDialogOpen] = useState(false);
-  const [form, setForm] = useState({
-    studentName: '',
-    type: '' as 'positive' | 'negative' | '',
-    description: '',
+  const behaviorForm = useSanitizedForm<BehaviorRecordFormData>({
+    resolver: zodResolver(behaviorRecordSchema),
+    defaultValues: {
+      studentId: '',
+      type: 'positive',
+      category: '',
+      description: '',
+      severity: 'low',
+      actionTaken: '',
+    },
+    sanitizationMap: {
+      description: 'description',
+      actionTaken: 'description',
+    },
   });
 
   const { data: records = [], isLoading } = useQuery({
@@ -156,24 +170,15 @@ export default function BehaviorPage() {
     },
   });
 
-  const handleSaveRecord = () => {
-    if (!form.studentName.trim() || !form.type || !form.description.trim()) {
-      toast({
-        title: 'Validation Error',
-        description: 'Please fill in all required fields.',
-        variant: 'destructive',
-      });
-      return;
-    }
-
+  const handleSaveRecord = behaviorForm.handleSanitizedSubmit((data: BehaviorRecordFormData) => {
     createMutation.mutate({
-      studentName: form.studentName.trim(),
-      type: form.type,
-      description: form.description.trim(),
+      studentName: 'Sample Student',
+      type: data.type,
+      description: data.description,
       recordedBy: user?.name || 'Unknown',
       date: new Date().toISOString().split('T')[0],
     });
-  };
+  });
 
   const formatDate = (dateString: string) => {
     const date = new Date(dateString);
@@ -492,69 +497,98 @@ export default function BehaviorPage() {
                    <DialogHeader>
                       <DialogTitle>Record Student Behavior</DialogTitle>
                    </DialogHeader>
-                   <form
-                     onSubmit={(e) => {
-                       e.preventDefault();
-                       handleSaveRecord();
-                     }}
-                   >
-                     <div className="space-y-4 py-4">
-                        <div className="space-y-2">
-                           <Label htmlFor="studentName">Student Name</Label>
-                           <Input
-                             id="studentName"
-                             value={form.studentName}
-                             onChange={(e) => setForm((f) => ({ ...f, studentName: e.target.value }))}
-                             placeholder="Enter student name..."
-                             required
-                           />
+                   <Form {...behaviorForm}>
+                     <form onSubmit={handleSaveRecord} className="space-y-4 py-4">
+                        <FormField
+                          control={behaviorForm.control}
+                          name="studentId"
+                          render={({ field }) => (
+                            <FormItem>
+                              <FormLabel>Student</FormLabel>
+                              <Select onValueChange={field.onChange} value={field.value}>
+                                <FormControl>
+                                  <SelectTrigger>
+                                    <SelectValue placeholder="Select student" />
+                                  </SelectTrigger>
+                                </FormControl>
+                                <SelectContent>
+                                  <SelectItem value="student1">Abebe Kebede</SelectItem>
+                                  <SelectItem value="student2">Sara Tadesse</SelectItem>
+                                  <SelectItem value="student3">Dawit Mekonnen</SelectItem>
+                                </SelectContent>
+                              </Select>
+                              <FormMessage />
+                            </FormItem>
+                          )}
+                        />
+                        <div className="grid grid-cols-2 gap-4">
+                          <FormField
+                            control={behaviorForm.control}
+                            name="type"
+                            render={({ field }) => (
+                              <FormItem>
+                                <FormLabel>Type</FormLabel>
+                                <Select onValueChange={field.onChange} value={field.value}>
+                                  <FormControl>
+                                    <SelectTrigger>
+                                      <SelectValue />
+                                    </SelectTrigger>
+                                  </FormControl>
+                                  <SelectContent>
+                                    <SelectItem value="positive">Positive</SelectItem>
+                                    <SelectItem value="negative">Negative</SelectItem>
+                                  </SelectContent>
+                                </Select>
+                                <FormMessage />
+                              </FormItem>
+                            )}
+                          />
+                          <FormField
+                            control={behaviorForm.control}
+                            name="category"
+                            render={({ field }) => (
+                              <FormItem>
+                                <FormLabel>Category</FormLabel>
+                                <Select onValueChange={field.onChange} value={field.value}>
+                                  <FormControl>
+                                    <SelectTrigger>
+                                      <SelectValue placeholder="Select category" />
+                                    </SelectTrigger>
+                                  </FormControl>
+                                  <SelectContent>
+                                    <SelectItem value="academic">Academic</SelectItem>
+                                    <SelectItem value="social">Social</SelectItem>
+                                    <SelectItem value="disciplinary">Disciplinary</SelectItem>
+                                    <SelectItem value="participation">Participation</SelectItem>
+                                  </SelectContent>
+                                </Select>
+                                <FormMessage />
+                              </FormItem>
+                            )}
+                          />
                         </div>
-                        <div className="space-y-2">
-                           <Label htmlFor="type">Type</Label>
-                           <Select
-                             value={form.type}
-                             onValueChange={(value: 'positive' | 'negative') => setForm((f) => ({ ...f, type: value }))}
-                           >
-                              <SelectTrigger id="type">
-                                 <SelectValue placeholder="Select type" />
-                              </SelectTrigger>
-                              <SelectContent>
-                                 <SelectItem value="positive">Positive</SelectItem>
-                                 <SelectItem value="negative">Negative</SelectItem>
-                              </SelectContent>
-                           </Select>
-                        </div>
-                        <div className="space-y-2">
-                           <Label htmlFor="description">Description</Label>
-                           <Textarea
-                             id="description"
-                             value={form.description}
-                             onChange={(e) => setForm((f) => ({ ...f, description: e.target.value }))}
-                             placeholder="Describe the incident..."
-                             rows={4}
-                             required
-                           />
-                        </div>
-                     </div>
-                     <DialogFooter>
-                        <Button
-                          type="button"
-                          variant="outline"
-                          onClick={() => {
-                            setIsDialogOpen(false);
-                            setForm({ studentName: '', type: '', description: '' });
-                          }}
-                        >
-                          Cancel
-                        </Button>
-                        <Button
-                          type="submit"
-                          disabled={!form.studentName.trim() || !form.type || !form.description.trim() || createMutation.isPending}
-                        >
-                          {createMutation.isPending ? 'Saving...' : 'Save Record'}
-                        </Button>
-                     </DialogFooter>
-                   </form>
+                        <FormField
+                          control={behaviorForm.control}
+                          name="description"
+                          render={({ field }) => (
+                            <FormItem>
+                              <FormLabel>Description</FormLabel>
+                              <FormControl>
+                                <SanitizedTextarea sanitizer="description" placeholder="Describe the incident..." rows={4} {...field} />
+                              </FormControl>
+                              <FormMessage />
+                            </FormItem>
+                          )}
+                        />
+                        <DialogFooter>
+                           <Button type="button" variant="outline" onClick={() => setIsDialogOpen(false)}>Cancel</Button>
+                           <Button type="submit" disabled={behaviorForm.formState.isSubmitting || createMutation.isPending}>
+                             {(behaviorForm.formState.isSubmitting || createMutation.isPending) ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : null}
+                             Save Record
+                           </Button>
+                        </DialogFooter>
+                     </form>
+                   </Form>
                 </DialogContent>
              </Dialog>
           )}
