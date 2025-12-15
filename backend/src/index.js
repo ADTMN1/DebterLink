@@ -47,7 +47,7 @@ router.use("/super-admin",    authMiddleware,  verifyRole(6),schoolRoutes);
 router.use("/director",  authMiddleware,  verifyRole(1) , (req, res) => res.send("DIRECTOR route"));
 router.use("/admin",  authMiddleware,  verifyRole(5) , (req, res) => res.send("admin route"));
 router.use("/parent",  authMiddleware,  verifyRole(3) , parentRoutes);
-// router.use("/parent",   parentRoutes);
+// router.use("/parent",   parentRoutes)
 router.use("/teacher",  authMiddleware,  verifyRole(2) , examROutes);
 // router.use("/teacher",    examROutes);
 router.use("/student",  authMiddleware,  verifyRole(4) , studentRoutes);

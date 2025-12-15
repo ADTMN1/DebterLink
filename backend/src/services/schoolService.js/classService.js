@@ -219,7 +219,6 @@ WHERE s.class_id = $1;
     throw error
   }
   }
-  // -------------------- Utilities --------------------
 
 
 

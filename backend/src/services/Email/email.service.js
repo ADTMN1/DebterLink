@@ -1,4 +1,3 @@
-import axios from 'axios';
 
 export const sendResetEmail = async (toEmail, resetUrl, userName = "") => {
   try {
