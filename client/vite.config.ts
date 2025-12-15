@@ -12,12 +12,6 @@ export default defineConfig(() => ({
     react(),
     tailwindcss(),
     metaImagesPlugin(),
-    visualizer({
-      filename: './dist/bundle-stats.html',
-      open: false,
-      gzipSize: true,
-      brotliSize: true,
-    }),
   ],
   resolve: {
     alias: {
@@ -47,13 +41,21 @@ export default defineConfig(() => ({
     },
     chunkSizeWarningLimit: 1000,
     minify: 'esbuild',
+    target: 'esnext',
+  },
+  optimizeDeps: {
+    include: ['react', 'react-dom', 'react-hook-form', 'framer-motion'],
+    force: true,
   },
   server: {
     host: "0.0.0.0",
-    allowedHosts: true as true,   // <-- fixed
+    allowedHosts: true as true,
     fs: {
       strict: true,
       deny: ["**/.*"],
+    },
+    hmr: {
+      overlay: true,
     },
   },
 }));

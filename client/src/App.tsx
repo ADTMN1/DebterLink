@@ -77,7 +77,7 @@ function Router() {
 
       {/* Protected Routes with Role-Based Access */}
       <Route path="/dashboard">
-        {() => <PageTransition><ProtectedRoute component={getDashboard()} /></PageTransition>}
+        {() => <ProtectedRoute component={getDashboard()} />}
       </Route>
 
       <Route path="/profile">
@@ -204,13 +204,6 @@ function Router() {
 }
 
 function App() {
-  useNetworkStatus(); // Monitor network status
-  
-  useEffect(() => {
-    // Initialize global input sanitization
-    initializeGlobalSanitization();
-  }, []);
-
   return (
     <QueryClientProvider client={queryClient}>
       <Suspense fallback={<LoadingSpinner />}>
