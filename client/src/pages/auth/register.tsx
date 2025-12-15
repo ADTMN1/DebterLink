@@ -1,4 +1,7 @@
-import { Button } from '@/components/ui/button';
+import { useForm } from 'react-hook-form';
+import { zodResolver } from '@hookform/resolvers/zod';
+import * as z from 'zod';
+import { Button } from "@/components/ui/button";
 import {
   Form,
   FormControl,
@@ -6,20 +9,33 @@ import {
   FormItem,
   FormLabel,
   FormMessage,
-} from '@/components/ui/form';
-import { SanitizedInput } from '@/components/ui/sanitized-input';
-import { useAuthForm, useAsyncValidation, asyncValidators } from '@/hooks';
-import { useLocation, Link, Redirect } from 'wouter';
-import { useTranslation } from 'react-i18next';
-import AuthLayout from '@/layouts/auth-layout';
-import { Loader2, User, Mail, Lock } from 'lucide-react';
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
-import { useAuthStore } from '@/store/useAuthStore';
-import { registerSchema, RegisterFormData } from '@/lib/validations';
+} from "@/components/ui/form";
+import { Input } from "@/components/ui/input";
+import { useLocation, Link, Redirect } from "wouter";
+import AuthLayout from "@/layouts/auth-layout";
+import { Loader2, User, Mail, Lock } from "lucide-react";
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select";
+import { useAuthStore } from "@/store/useAuthStore";
+
+const formSchema = z.object({
+  fullName: z.string().min(2, "Name is required"),
+  email: z.string().email(),
+  role: z.enum(['student', 'parent', 'teacher', 'director']),
+  password: z.string().min(6),
+  confirmPassword: z.string().min(6),
+}).refine((data) => data.password === data.confirmPassword, {
+  message: "Passwords don't match",
+  path: ["confirmPassword"],
+});
 
 export default function RegisterPage() {
   const [, setLocation] = useLocation();
-  const { t } = useTranslation();
   const { user } = useAuthStore();
   const isLoading = false; // Mock state
 
@@ -33,7 +49,6 @@ export default function RegisterPage() {
 
   const onSubmit = handleSubmit(async (values) => {
     // Mock registration
-    console.log(values);
     setLocation('/login');
   });
 
