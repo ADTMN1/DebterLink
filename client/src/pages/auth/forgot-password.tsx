@@ -1,6 +1,4 @@
-import { useForm } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
-import * as z from 'zod';
 import { Button } from '@/components/ui/button';
 import {
   Form,
@@ -10,32 +8,31 @@ import {
   FormLabel,
   FormMessage,
 } from '@/components/ui/form';
-import { Input } from '@/components/ui/input';
+import { SanitizedInput } from '@/components/ui/sanitized-input';
+import { useSanitizedForm } from '@/hooks/use-sanitized-form';
 import { Link } from 'wouter';
 import AuthLayout from '@/layouts/auth-layout';
 import { Loader2, Mail, ArrowLeft } from 'lucide-react';
 import { useState } from 'react';
-
-const formSchema = z.object({
-  email: z.string().email(),
-});
+import { forgotPasswordSchema, ForgotPasswordFormData } from '@/lib/validations';
 
 export default function ForgotPasswordPage() {
   const [isSubmitted, setIsSubmitted] = useState(false);
   const isLoading = false;
 
-  const form = useForm<z.infer<typeof formSchema>>({
-    resolver: zodResolver(formSchema),
+  const form = useSanitizedForm<ForgotPasswordFormData>({
+    resolver: zodResolver(forgotPasswordSchema),
     defaultValues: {
       email: '',
     },
+    sanitizationMap: { email: 'email' },
   });
 
-  async function onSubmit(values: z.infer<typeof formSchema>) {
+  const onSubmit = form.handleSanitizedSubmit(async (values: ForgotPasswordFormData) => {
     // Mock API call
     console.log(values);
     setIsSubmitted(true);
-  }
+  });
 
   return (
     <AuthLayout>
@@ -48,7 +45,7 @@ export default function ForgotPasswordPage() {
 
       {!isSubmitted ? (
         <Form {...form}>
-          <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-4">
+          <form onSubmit={onSubmit} className="space-y-4">
             <FormField
               control={form.control}
               name="email"
@@ -58,7 +55,7 @@ export default function ForgotPasswordPage() {
                   <FormControl>
                     <div className="relative">
                       <Mail className="absolute left-3 top-2.5 h-4 w-4 text-muted-foreground" />
-                      <Input placeholder="email@example.com" className="pl-9" {...field} />
+                      <SanitizedInput sanitizer="email" placeholder="email@example.com" className="pl-9" autoComplete="email" {...field} />
                     </div>
                   </FormControl>
                   <FormMessage />

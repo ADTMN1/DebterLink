@@ -12,7 +12,49 @@
     "welcome": "እንኳን ደህና መጡ",
     "language": "ቋንቋ",
     "theme": "ጭብጥ",
-    "loading": "በመጫን ላይ..."
+    "loading": "በመጫን ላይ...",
+    "save": "አስቀምጥ",
+    "cancel": "ሰርዝ",
+    "delete": "ሰርዝ",
+    "edit": "አርትዕ",
+    "create": "ፍጠር",
+    "submit": "አስገባ",
+    "search": "ፈልግ",
+    "filter": "አጣራ",
+    "export": "ወደ ውጭ ላክ",
+    "import": "አስገባ",
+    "refresh": "አድስ",
+    "close": "ዝጋ",
+    "back": "ተመለስ",
+    "next": "ቀጣይ",
+    "previous": "ቀዳሚ",
+    "confirm": "አረጋግጥ",
+    "yes": "አዎ",
+    "no": "አይ"
+  },
+  "auth": {
+    "username": "የተጠቃሚ ስም",
+    "password": "የይለፍ ቃል",
+    "email": "ኢሜይል",
+    "forgotPassword": "የይለፍ ቃል ረሱ?",
+    "rememberMe": "አስታውሰኝ",
+    "signIn": "ግባ",
+    "signUp": "ተመዝገብ",
+    "signOut": "ውጣ"
+  },
+  "errors": {
+    "required": "ይህ መስክ ያስፈልጋል",
+    "invalidEmail": "ልክ ያልሆነ ኢሜይል",
+    "passwordMismatch": "የይለፍ ቃሎች አይዛመዱም",
+    "networkError": "የኔትወርክ ስህተት",
+    "unauthorized": "ያልተፈቀደ መዳረሻ",
+    "notFound": "አልተገኘም"
+  },
+  "success": {
+    "saved": "በተሳካ ሁኔታ ተቀምጧል",
+    "deleted": "በተሳካ ሁኔታ ተሰርዟል",
+    "updated": "በተሳካ ሁኔታ ተዘምኗል",
+    "created": "በተሳካ ሁኔታ ተፈጥሯል"
   },
   "roles": {
     "student": "ተማሪ",

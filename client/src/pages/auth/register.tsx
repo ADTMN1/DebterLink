@@ -44,21 +44,13 @@ export default function RegisterPage() {
     return <Redirect to="/login" />;
   }
 
-  const form = useForm<z.infer<typeof formSchema>>({
-    resolver: zodResolver(formSchema),
-    defaultValues: {
-      fullName: '',
-      email: '',
-      role: 'student',
-      password: '',
-      confirmPassword: '',
-    },
-  });
+  const { form, handleSubmit } = useAuthForm('register');
+  const { validateAsync, asyncErrors, validating } = useAsyncValidation();
 
-  async function onSubmit(values: z.infer<typeof formSchema>) {
+  const onSubmit = handleSubmit(async (values) => {
     // Mock registration
     setLocation('/login');
-  }
+  });
 
   return (
     <AuthLayout>
@@ -70,17 +62,17 @@ export default function RegisterPage() {
       </div>
 
       <Form {...form}>
-        <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-4">
+        <form onSubmit={onSubmit} className="space-y-4">
           <FormField
             control={form.control}
-            name="fullName"
+            name="name"
             render={({ field }) => (
               <FormItem>
                 <FormLabel>Full Name</FormLabel>
                 <FormControl>
                   <div className="relative">
                     <User className="absolute left-3 top-2.5 h-4 w-4 text-muted-foreground" />
-                    <Input placeholder="Abebe Kebede" className="pl-9" {...field} />
+                    <SanitizedInput sanitizer="name" placeholder="Abebe Kebede" className="pl-9" autoComplete="name" {...field} />
                   </div>
                 </FormControl>
                 <FormMessage />
@@ -97,9 +89,21 @@ export default function RegisterPage() {
                 <FormControl>
                   <div className="relative">
                     <Mail className="absolute left-3 top-2.5 h-4 w-4 text-muted-foreground" />
-                    <Input placeholder="email@example.com" className="pl-9" {...field} />
+                    <SanitizedInput 
+                      sanitizer="email" 
+                      placeholder="email@example.com" 
+                      className="pl-9" 
+                      autoComplete="email"
+                      {...field}
+                      onBlur={(e) => {
+                        field.onBlur();
+                        validateAsync('email', e.target.value, asyncValidators.checkEmailAvailable);
+                      }}
+                    />
                   </div>
                 </FormControl>
+                {validating.email && <div className="text-sm text-muted-foreground">Checking availability...</div>}
+                {asyncErrors.email && <div className="text-sm text-destructive">{asyncErrors.email}</div>}
                 <FormMessage />
               </FormItem>
             )}
@@ -107,23 +111,28 @@ export default function RegisterPage() {
 
           <FormField
             control={form.control}
-            name="role"
+            name="username"
             render={({ field }) => (
               <FormItem>
-                <FormLabel>I am a...</FormLabel>
-                <Select onValueChange={field.onChange} defaultValue={field.value}>
-                  <FormControl>
-                    <SelectTrigger>
-                      <SelectValue placeholder="Select role" />
-                    </SelectTrigger>
-                  </FormControl>
-                  <SelectContent>
-                    <SelectItem value="student">Student</SelectItem>
-                    <SelectItem value="parent">Parent</SelectItem>
-                    <SelectItem value="teacher">Teacher</SelectItem>
-                    <SelectItem value="director">Director</SelectItem>
-                  </SelectContent>
-                </Select>
+                <FormLabel>Username</FormLabel>
+                <FormControl>
+                  <div className="relative">
+                    <User className="absolute left-3 top-2.5 h-4 w-4 text-muted-foreground" />
+                    <SanitizedInput 
+                      sanitizer="username" 
+                      placeholder="Enter username" 
+                      className="pl-9" 
+                      autoComplete="username"
+                      {...field}
+                      onBlur={(e) => {
+                        field.onBlur();
+                        validateAsync('username', e.target.value, asyncValidators.checkUsernameAvailable);
+                      }}
+                    />
+                  </div>
+                </FormControl>
+                {validating.username && <div className="text-sm text-muted-foreground">Checking availability...</div>}
+                {asyncErrors.username && <div className="text-sm text-destructive">{asyncErrors.username}</div>}
                 <FormMessage />
               </FormItem>
             )}
@@ -139,7 +148,7 @@ export default function RegisterPage() {
                   <FormControl>
                     <div className="relative">
                       <Lock className="absolute left-3 top-2.5 h-4 w-4 text-muted-foreground" />
-                      <Input type="password" placeholder="••••••" className="pl-9" {...field} />
+                      <SanitizedInput sanitizer="text" type="password" placeholder="••••••" className="pl-9" autoComplete="new-password" {...field} />
                     </div>
                   </FormControl>
                   <FormMessage />
@@ -156,7 +165,7 @@ export default function RegisterPage() {
                   <FormControl>
                     <div className="relative">
                       <Lock className="absolute left-3 top-2.5 h-4 w-4 text-muted-foreground" />
-                      <Input type="password" placeholder="••••••" className="pl-9" {...field} />
+                      <SanitizedInput sanitizer="text" type="password" placeholder="••••••" className="pl-9" autoComplete="new-password" {...field} />
                     </div>
                   </FormControl>
                   <FormMessage />
