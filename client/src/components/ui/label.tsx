@@ -1,3 +1,8 @@
+/**
+ * Accessible label component for form inputs.
+ * @module components/ui/label
+ */
+
 "use client"
 
 import * as React from "react"
@@ -10,6 +15,14 @@ const labelVariants = cva(
   "text-sm font-medium leading-none peer-disabled:cursor-not-allowed peer-disabled:opacity-70"
 )
 
+/**
+ * Form label with proper accessibility attributes.
+ * Automatically associates with form controls.
+ * @component
+ * @example
+ * <Label htmlFor="email">Email</Label>
+ * <Input id="email" type="email" />
+ */
 const Label = React.forwardRef<
   React.ElementRef<typeof LabelPrimitive.Root>,
   React.ComponentPropsWithoutRef<typeof LabelPrimitive.Root> &

@@ -1,3 +1,4 @@
+import { memo } from 'react';
 import { useUIStore } from '@/store/useUIStore';
 import { useAuthStore } from '@/store/useAuthStore';
 import { Button } from '@/components/ui/button';
@@ -32,7 +33,7 @@ import {
 } from '@/components/ui/command';
 import { Badge } from '@/components/ui/badge';
 
-export function Navbar() {
+export const Navbar = memo(function Navbar() {
   const { theme, setTheme, language, setLanguage, toggleSidebar, calendarType, setCalendarType } = useUIStore();
   const { user, logout } = useAuthStore();
   const { t, i18n } = useTranslation();
@@ -46,13 +47,19 @@ export function Navbar() {
     { type: 'page', label: 'Attendance', href: '/dashboard/attendance' },
     { type: 'page', label: 'Assignments', href: '/dashboard/assignments' },
     { type: 'page', label: 'Grades', href: '/dashboard/grades' },
+    { type: 'page', label: 'Gradebook', href: '/dashboard/gradebook' },
     { type: 'page', label: 'Calendar', href: '/dashboard/calendar' },
+    { type: 'page', label: 'Timetable', href: '/dashboard/timetable' },
     { type: 'page', label: 'Resources', href: '/dashboard/resources' },
     { type: 'page', label: 'Behavior', href: '/dashboard/behavior' },
     { type: 'page', label: 'Messages', href: '/dashboard/messages' },
+    { type: 'page', label: 'Profile', href: '/profile' },
+    { type: 'page', label: 'Settings', href: '/settings' },
+    { type: 'page', label: 'User Management', href: '/dashboard/users' },
     { type: 'action', label: 'Create Assignment', action: () => setLocation('/dashboard/assignments') },
     { type: 'action', label: 'Send Message', action: () => setLocation('/dashboard/messages') },
     { type: 'action', label: 'View Attendance', action: () => setLocation('/dashboard/attendance') },
+    { type: 'action', label: 'Add Event', action: () => setLocation('/dashboard/calendar') },
   ];
 
   const filteredItems = searchItems.filter(item => 
@@ -107,7 +114,7 @@ export function Navbar() {
     <>
       <header className="sticky top-0 z-30 flex h-16 w-full items-center justify-between border-b bg-background/95 px-6 backdrop-blur supports-[backdrop-filter]:bg-background/60">
         <div className="flex items-center gap-4 flex-1 min-w-0">
-          <Button variant="ghost" size="icon" className="md:hidden" onClick={toggleSidebar}>
+          <Button variant="ghost" size="icon" className="md:hidden" onClick={toggleSidebar} aria-label="Toggle menu">
             <Menu className="h-5 w-5" />
           </Button>
           
@@ -140,6 +147,7 @@ export function Navbar() {
             variant="outline"
             className="hidden md:flex h-9 w-[200px] justify-between text-sm text-muted-foreground"
             onClick={() => setSearchOpen(true)}
+            aria-label="Open search"
           >
             <div className="flex items-center gap-2">
               <Search className="h-4 w-4" />
@@ -153,7 +161,7 @@ export function Navbar() {
           {/* Calendar Toggle */}
           <DropdownMenu>
             <DropdownMenuTrigger asChild>
-              <Button variant="ghost" size="icon" className="hidden md:flex">
+              <Button variant="ghost" size="icon" className="hidden md:flex" aria-label="Toggle calendar type">
                 <Calendar className="h-5 w-5 text-muted-foreground" />
               </Button>
             </DropdownMenuTrigger>
@@ -170,7 +178,7 @@ export function Navbar() {
           {/* Language Switcher */}
           <DropdownMenu>
             <DropdownMenuTrigger asChild>
-              <Button variant="ghost" size="icon">
+              <Button variant="ghost" size="icon" aria-label="Change language">
                 <Globe className="h-5 w-5 text-muted-foreground" />
               </Button>
             </DropdownMenuTrigger>
@@ -192,6 +200,7 @@ export function Navbar() {
             variant="ghost" 
             size="icon"
             onClick={() => setTheme(theme === 'light' ? 'dark' : 'light')}
+            aria-label={theme === 'light' ? 'Switch to dark mode' : 'Switch to light mode'}
           >
             {theme === 'light' ? (
               <Sun className="h-5 w-5 text-muted-foreground" />
@@ -201,7 +210,7 @@ export function Navbar() {
           </Button>
 
           {/* Notifications with Badge */}
-          <Button variant="ghost" size="icon" className="relative">
+          <Button variant="ghost" size="icon" className="relative" aria-label="Notifications">
             <Bell className="h-5 w-5 text-muted-foreground" />
             {notificationCount > 0 && (
               <Badge className="absolute -top-1 -right-1 h-5 w-5 flex items-center justify-center p-0 text-xs bg-destructive text-destructive-foreground">
@@ -215,7 +224,7 @@ export function Navbar() {
           {/* User Profile */}
           <DropdownMenu>
             <DropdownMenuTrigger asChild>
-              <Button variant="ghost" className="relative h-8 w-8 rounded-full">
+              <Button variant="ghost" className="relative h-8 w-8 rounded-full" aria-label="User menu">
                 <Avatar className="h-8 w-8 border">
                   <AvatarImage src={user?.avatar} alt={user?.name} />
                   <AvatarFallback className="text-xs">{user?.name.charAt(0)}</AvatarFallback>
@@ -299,4 +308,4 @@ export function Navbar() {
       </CommandDialog>
     </>
   );
-}
+});

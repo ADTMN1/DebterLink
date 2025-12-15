@@ -1,8 +1,8 @@
 import DashboardLayout from '@/layouts/dashboard-layout';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
-import { Input } from '@/components/ui/input';
-import { Textarea } from '@/components/ui/textarea';
+import { SanitizedInput } from '@/components/ui/sanitized-input';
+import { SanitizedTextarea } from '@/components/ui/sanitized-input';
 import { useState } from 'react';
 import { useToast } from '@/hooks/use-toast';
 
@@ -48,9 +48,9 @@ export default function MessagesPage() {
           </CardHeader>
           <CardContent>
             <div className="space-y-2">
-              <Input placeholder="To (teacher/student)" value={compose.to} onChange={(e) => setCompose(s => ({ ...s, to: e.target.value }))} />
-              <Input placeholder="Subject" value={compose.subject} onChange={(e) => setCompose(s => ({ ...s, subject: e.target.value }))} />
-              <Textarea placeholder="Write your message..." value={compose.body} onChange={(e) => setCompose(s => ({ ...s, body: e.target.value }))} rows={4} />
+              <SanitizedInput sanitizer="text" placeholder="To (teacher/student)" value={compose.to} onChange={(e) => setCompose(s => ({ ...s, to: e.target.value }))} />
+              <SanitizedInput sanitizer="text" placeholder="Subject" value={compose.subject} onChange={(e) => setCompose(s => ({ ...s, subject: e.target.value }))} />
+              <SanitizedTextarea sanitizer="description" placeholder="Write your message..." value={compose.body} onChange={(e) => setCompose(s => ({ ...s, body: e.target.value }))} rows={4} />
               <div className="flex justify-end">
                 <Button onClick={handleSend}>Send</Button>
               </div>

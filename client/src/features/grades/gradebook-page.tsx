@@ -3,7 +3,7 @@ import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
-import { Input } from '@/components/ui/input';
+import { SanitizedInput } from '@/components/ui/sanitized-input';
 import { Save, Plus, Download } from 'lucide-react';
 import { useState } from 'react';
 import { useAuthStore } from '@/store/useAuthStore';
@@ -43,7 +43,7 @@ export default function GradebookPage() {
           <h2 className="text-3xl font-bold tracking-tight">Gradebook</h2>
           <Card>
             <CardContent className="py-8 text-center text-muted-foreground">
-              You don't have permission to access this page. Only teachers can manage gradebooks.
+              You don&apos;t have permission to access this page. Only teachers can manage gradebooks.
             </CardContent>
           </Card>
         </div>
@@ -70,11 +70,12 @@ export default function GradebookPage() {
 
   const selectedClass = assignedClasses.find(c => c.id === selectedClassId);
 
-  const updateGrade = (studentId: number, field: 'quiz' | 'test' | 'mid' | 'final', value: number) => {
+  const updateGrade = (studentId: number, field: 'quiz' | 'test' | 'mid' | 'final', value: string) => {
+    const numValue = Math.max(0, Math.min(100, parseInt(value) || 0));
     setStudents(prev =>
       prev.map(student =>
         student.id === studentId
-          ? { ...student, [field]: Math.max(0, Math.min(100, value || 0)) }
+          ? { ...student, [field]: numValue }
           : student
       )
     );
@@ -268,13 +269,14 @@ export default function GradebookPage() {
                       <TableCell className="font-medium">{student.name}</TableCell>
                       <TableCell>
                         {(isEditing || editingStudents.has(student.id)) ? (
-                          <Input
+                          <SanitizedInput
+                            sanitizer="text"
                             className="w-20 text-center"
                             type="number"
                             min="0"
                             max="100"
-                            value={student.quiz}
-                            onChange={(e) => updateGrade(student.id, 'quiz', parseInt(e.target.value) || 0)}
+                            value={student.quiz.toString()}
+                            onChange={(e) => updateGrade(student.id, 'quiz', e.target.value)}
                           />
                         ) : (
                           <div className="text-center">{student.quiz}</div>
@@ -282,13 +284,14 @@ export default function GradebookPage() {
                       </TableCell>
                       <TableCell>
                         {(isEditing || editingStudents.has(student.id)) ? (
-                          <Input
+                          <SanitizedInput
+                            sanitizer="text"
                             className="w-20 text-center"
                             type="number"
                             min="0"
                             max="100"
-                            value={student.test}
-                            onChange={(e) => updateGrade(student.id, 'test', parseInt(e.target.value) || 0)}
+                            value={student.test.toString()}
+                            onChange={(e) => updateGrade(student.id, 'test', e.target.value)}
                           />
                         ) : (
                           <div className="text-center">{student.test}</div>
@@ -296,13 +299,14 @@ export default function GradebookPage() {
                       </TableCell>
                       <TableCell>
                         {(isEditing || editingStudents.has(student.id)) ? (
-                          <Input
+                          <SanitizedInput
+                            sanitizer="text"
                             className="w-20 text-center"
                             type="number"
                             min="0"
                             max="100"
-                            value={student.mid}
-                            onChange={(e) => updateGrade(student.id, 'mid', parseInt(e.target.value) || 0)}
+                            value={student.mid.toString()}
+                            onChange={(e) => updateGrade(student.id, 'mid', e.target.value)}
                           />
                         ) : (
                           <div className="text-center">{student.mid}</div>
@@ -310,13 +314,14 @@ export default function GradebookPage() {
                       </TableCell>
                       <TableCell>
                         {(isEditing || editingStudents.has(student.id)) ? (
-                          <Input
+                          <SanitizedInput
+                            sanitizer="text"
                             className="w-20 text-center"
                             type="number"
                             min="0"
                             max="100"
-                            value={student.final}
-                            onChange={(e) => updateGrade(student.id, 'final', parseInt(e.target.value) || 0)}
+                            value={student.final.toString()}
+                            onChange={(e) => updateGrade(student.id, 'final', e.target.value)}
                           />
                         ) : (
                           <div className="text-center">{student.final}</div>

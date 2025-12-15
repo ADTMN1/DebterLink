@@ -2,15 +2,22 @@ import DashboardLayout from '@/layouts/dashboard-layout';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Dialog, DialogContent, DialogFooter, DialogHeader, DialogTitle, DialogTrigger } from '@/components/ui/dialog';
-import { Input } from '@/components/ui/input';
-import { Label } from '@/components/ui/label';
-import { Textarea } from '@/components/ui/textarea';
+import { SanitizedInput } from '@/components/ui/sanitized-input';
+import { SanitizedTextarea } from '@/components/ui/sanitized-input';
+import { useSanitizedForm, sanitizationMaps } from '@/hooks/use-sanitized-form';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
-import { FileText, Calendar as CalendarIcon, Upload, X } from 'lucide-react';
+import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage } from '@/components/ui/form';
+import { FileText, Calendar as CalendarIcon, Upload, X, Loader2 } from 'lucide-react';
 import { useEffect, useState } from 'react';
-import { useAuthStore } from '@/store/useAuthStore';
+import { Label } from '@/components/ui/label';
+import { Input } from '@/components/ui/input';
+import { Textarea } from '@/components/ui/textarea';
+import { zodResolver } from '@hookform/resolvers/zod';
+import { toast } from 'sonner';
 import { useToast } from '@/hooks/use-toast';
+import { useAuthStore } from '@/store/useAuthStore';
 import { Badge } from '@/components/ui/badge';
+import { createAssignmentSchema, submitAssignmentSchema, fileUploadSchema, CreateAssignmentFormData, SubmitAssignmentFormData } from '@/lib/validations';
 
 type Assignment = {
   id: string;
@@ -26,17 +33,32 @@ type Assignment = {
 
 export default function AssignmentsPage() {
   const { user } = useAuthStore();
-  const { toast } = useToast();
+  const { toast: toastFn } = useToast();
   const isTeacher = user?.role === 'teacher' || user?.role === 'director';
   const [isDialogOpen, setIsDialogOpen] = useState(false);
-  const [form, setForm] = useState({
-    title: '',
-    description: '',
-    dueDate: '',
-    class: '',
-    points: '',
-    attachment: null as File | null,
+  // Create assignment form
+  const createForm = useSanitizedForm<CreateAssignmentFormData>({
+    resolver: zodResolver(createAssignmentSchema),
+    defaultValues: {
+      title: '',
+      description: '',
+      dueDate: '',
+      class: '',
+      points: 100,
+    },
+    sanitizationMap: sanitizationMaps.assignment,
   });
+
+  // Submit assignment form
+  const submitAssignmentForm = useSanitizedForm<SubmitAssignmentFormData>({
+    resolver: zodResolver(submitAssignmentSchema),
+    defaultValues: {
+      subject: '',
+      teacherId: '',
+    },
+    sanitizationMap: { subject: 'text' },
+  });
+
   const [assignments, setAssignments] = useState<Assignment[]>([
     {
       id: '1',
@@ -75,9 +97,15 @@ export default function AssignmentsPage() {
 
   const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
-    if (file) {
-      setForm((f) => ({ ...f, attachment: file }));
+    if (!file) return;
+
+    const validation = fileUploadSchema.safeParse({ file });
+    if (!validation.success) {
+      toast.error(validation.error.errors[0].message);
+      return;
     }
+
+    setSelectedFile(file);
   };
 
   // Student submission state
@@ -86,6 +114,8 @@ export default function AssignmentsPage() {
   const [selectedAssignment, setSelectedAssignment] = useState<Assignment | null>(null);
   const [teachers, setTeachers] = useState<Array<{ id: string; name: string }>>([]);
   const [submitForm, setSubmitForm] = useState({ attachment: null as File | null, subject: '', teacherId: '' });
+  const [selectedFile, setSelectedFile] = useState<File | null>(null);
+  const [form, setForm] = useState({ title: '', description: '', dueDate: '', class: '', points: '100', attachment: null as File | null });
   
   // Teacher view submissions state
   const [isViewSubmissionsOpen, setIsViewSubmissionsOpen] = useState(false);
@@ -157,7 +187,7 @@ export default function AssignmentsPage() {
       const url = URL.createObjectURL(blob);
       setPreviewFile({ name: fileName, url, type });
     } catch (error) {
-      toast({ title: 'Preview failed', description: 'Could not preview file.', variant: 'destructive' });
+      toastFn({ title: 'Preview failed', description: 'Could not preview file.', variant: 'destructive' });
     }
   };
 
@@ -199,17 +229,18 @@ export default function AssignmentsPage() {
       document.body.removeChild(link);
       window.URL.revokeObjectURL(url);
     } catch (error) {
-      toast({ title: 'Download failed', description: 'Could not download file.', variant: 'destructive' });
+      toastFn({ title: 'Download failed', description: 'Could not download file.', variant: 'destructive' });
     }
   };
 
   const handleSubmitAssignment = async (e: React.FormEvent) => {
     e.preventDefault();
+    const data = { subject: submitForm.subject, teacherId: submitForm.teacherId };
     if (!selectedAssignment) return;
 
     const student = user;
     if (!student) {
-      toast({ title: 'Not signed in', description: 'Please sign in to submit.', variant: 'destructive' });
+      toast.error('Please sign in to submit.');
       return;
     }
 
@@ -220,20 +251,20 @@ export default function AssignmentsPage() {
         fileContentBase64 = await fileToBase64(submitForm.attachment);
         fileName = submitForm.attachment.name;
       } catch (err) {
-        toast({ title: 'File error', description: 'Failed to read file.', variant: 'destructive' });
+        toast.error('Failed to read file.');
         return;
       }
     }
 
-    const teacherName = submitForm.teacherId ? teachers.find(t => t.id === submitForm.teacherId)?.name : undefined;
+    const teacherName = data.teacherId ? teachers.find(t => t.id === data.teacherId)?.name : undefined;
 
     const payload = {
       assignmentId: selectedAssignment.id,
       assignmentTitle: selectedAssignment.title,
       studentId: student.id || 'unknown',
       studentName: student.name || student.username || 'Student',
-      subject: submitForm.subject || selectedAssignment.title || selectedAssignment.class,
-      teacherId: submitForm.teacherId || undefined,
+      subject: data.subject,
+      teacherId: data.teacherId || undefined,
       teacherName: teacherName || undefined,
       fileName,
       fileContentBase64,
@@ -248,29 +279,21 @@ export default function AssignmentsPage() {
       });
       if (!res.ok) throw new Error('Failed to submit');
       setIsSubmitOpen(false);
-      toast({ title: 'Submitted', description: 'Your assignment was submitted.' });
+      toast.success('Your assignment was submitted.');
     } catch (err) {
-      toast({ title: 'Submission failed', description: 'Could not submit assignment.', variant: 'destructive' });
+      toast.error('Could not submit assignment.');
     }
   };
 
   const handleCreateAssignment = () => {
-    if (!form.title.trim() || !form.description.trim() || !form.dueDate || !form.class || !form.points) {
-      toast({
-        title: 'Validation Error',
-        description: 'Please fill in all required fields.',
-        variant: 'destructive',
-      });
-      return;
-    }
-
+    const data = form;
     const newAssignment: Assignment = {
       id: Date.now().toString(),
-      title: form.title.trim(),
-      description: form.description.trim(),
-      dueDate: form.dueDate,
-      class: form.class,
-      points: parseInt(form.points) || 100,
+      title: data.title,
+      description: data.description,
+      dueDate: data.dueDate,
+      class: data.class,
+      points: data.points,
       status: 'active',
       submittedCount: 0,
       totalStudents: 45,
@@ -278,19 +301,8 @@ export default function AssignmentsPage() {
 
     setAssignments([newAssignment, ...assignments]);
     setIsDialogOpen(false);
-    setForm({
-      title: '',
-      description: '',
-      dueDate: '',
-      class: '',
-      points: '',
-      attachment: null,
-    });
-
-    toast({
-      title: 'Assignment created',
-      description: `Successfully created "${newAssignment.title}" for ${newAssignment.class}`,
-    });
+    setForm({ title: '', description: '', dueDate: '', class: '', points: '100', attachment: null });
+    toast.success(`Successfully created "${newAssignment.title}" for ${newAssignment.class}`);
   };
 
   const formatDate = (dateString: string) => {

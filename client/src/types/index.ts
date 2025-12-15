@@ -14,11 +14,12 @@ export interface AuthState {
   isLoading: boolean;
   login: (role: Role) => Promise<void>;
   logout: () => Promise<void>;
+  updateUser: (user: User) => void;
 }
 
 export interface NavigationItem {
   title: string;
   href: string;
-  icon: React.ComponentType<any>;
+  icon: React.ComponentType<{ className?: string; size?: number }>;
   roles: Role[];
 }

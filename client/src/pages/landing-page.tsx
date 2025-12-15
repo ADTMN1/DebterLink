@@ -1,6 +1,7 @@
 import { Link } from 'wouter';
 import { Button } from '@/components/ui/button';
 import { motion } from 'framer-motion';
+import { OptimizedImage } from '@/components/ui/optimized-image';
 import { CheckCircle2, ArrowRight, School, Shield, Zap, Users, Menu, X } from 'lucide-react';
 import { useState, useEffect } from 'react';
 import { Logo } from '@/components/ui/logo';
@@ -94,7 +95,7 @@ export default function LandingPage() {
                 {/* Language Switcher */}
                 <DropdownMenu>
                   <DropdownMenuTrigger asChild>
-                    <Button variant="ghost" size="icon">
+                    <Button variant="ghost" size="icon" aria-label="Change language">
                       <Globe className="h-5 w-5 text-muted-foreground" />
                     </Button>
                   </DropdownMenuTrigger>
@@ -116,6 +117,7 @@ export default function LandingPage() {
                   variant="ghost" 
                   size="icon"
                   onClick={() => setTheme(theme === 'light' ? 'dark' : 'light')}
+                  aria-label={theme === 'light' ? 'Switch to dark mode' : 'Switch to light mode'}
                 >
                   {theme === 'light' ? (
                     <Sun className="h-5 w-5 text-muted-foreground" />
@@ -134,9 +136,13 @@ export default function LandingPage() {
 
             {/* Mobile Menu Button */}
             <div className="md:hidden">
-              <Button variant="ghost" size="icon" onClick={() => setMobileMenuOpen(!mobileMenuOpen)}>
+              <button 
+                onClick={() => setMobileMenuOpen(!mobileMenuOpen)} 
+                className="text-muted-foreground"
+                aria-label={mobileMenuOpen ? "Close menu" : "Open menu"}
+              >
                 {mobileMenuOpen ? <X /> : <Menu />}
-              </Button>
+              </button>
             </div>
           </div>
         </div>
@@ -173,6 +179,7 @@ export default function LandingPage() {
                 variant="ghost" 
                 size="icon"
                 onClick={() => setTheme(theme === 'light' ? 'dark' : 'light')}
+                aria-label={theme === 'light' ? 'Switch to dark mode' : 'Switch to light mode'}
               >
                 {theme === 'light' ? (
                   <Sun className="h-5 w-5 text-muted-foreground" />
@@ -231,7 +238,7 @@ export default function LandingPage() {
               className="relative"
             >
               <div className="relative rounded-2xl overflow-hidden shadow-2xl border bg-card">
-                <img src={heroImage} alt="Students learning" className="w-full object-cover h-[500px]" />
+                <OptimizedImage src={heroImage} alt="Students learning with tablets in Ethiopian classroom" className="w-full object-cover h-[500px]" />
                 <div className="absolute inset-0 bg-gradient-to-t from-black/60 to-transparent flex items-end p-8">
                   <div className="text-white">
                     <p className="font-medium text-lg">Empowering the next generation</p>
@@ -290,7 +297,7 @@ export default function LandingPage() {
             transition={{ duration: 0.7 }}
             className="relative rounded-xl overflow-hidden shadow-2xl border-4 border-card"
           >
-            <img src={dashboardImage} alt="Dashboard Interface" className="w-full" />
+            <OptimizedImage src={dashboardImage} alt="Modern dashboard interface showing school analytics" className="w-full" />
           </motion.div>
         </div>
       </section>
@@ -332,7 +339,7 @@ export default function LandingPage() {
               className="order-2 lg:order-1"
             >
               <div className="relative rounded-2xl overflow-hidden shadow-xl border bg-card rotate-2 hover:rotate-0 transition-transform duration-500">
-                <img src={teacherImage} alt="Teacher using app" className="w-full h-[400px] object-cover" />
+                <OptimizedImage src={teacherImage} alt="Ethiopian teacher taking attendance on tablet" className="w-full h-[400px] object-cover" />
               </div>
             </motion.div>
             
@@ -384,7 +391,7 @@ export default function LandingPage() {
                   {item.quote}
                 </p>
                 <div className="flex items-center gap-4">
-                  <img src={item.image} alt={item.name} className="h-12 w-12 rounded-full object-cover border-2 border-primary/20" />
+                  <OptimizedImage src={item.image} alt={`${item.name} - ${item.role}`} className="h-12 w-12 rounded-full object-cover border-2 border-primary/20" />
                   <div>
                     <h4 className="font-bold">{item.name}</h4>
                     <p className="text-xs text-muted-foreground">{item.role}</p>
@@ -430,23 +437,23 @@ export default function LandingPage() {
             <div>
               <h4 className="font-bold mb-4">Product</h4>
               <ul className="space-y-2 text-sm text-muted-foreground">
-                <li><a href="#" className="hover:text-primary">Features</a></li>
-                <li><a href="#" className="hover:text-primary">Mobile App</a></li>
+                <li><a href="#features" className="hover:text-primary">Features</a></li>
+                <li><a href="#features" className="hover:text-primary">Mobile App</a></li>
               </ul>
             </div>
             <div>
               <h4 className="font-bold mb-4">Company</h4>
               <ul className="space-y-2 text-sm text-muted-foreground">
-                <li><a href="#" className="hover:text-primary">About Us</a></li>
-                <li><a href="#" className="hover:text-primary">Careers</a></li>
-                <li><a href="#" className="hover:text-primary">Contact</a></li>
+                <li><a href="#testimonials" className="hover:text-primary">About Us</a></li>
+                <li><a href="#testimonials" className="hover:text-primary">Careers</a></li>
+                <li><a href="#testimonials" className="hover:text-primary">Contact</a></li>
               </ul>
             </div>
             <div>
               <h4 className="font-bold mb-4">Legal</h4>
               <ul className="space-y-2 text-sm text-muted-foreground">
-                <li><a href="#" className="hover:text-primary">Privacy Policy</a></li>
-                <li><a href="#" className="hover:text-primary">Terms of Service</a></li>
+                <li><a href="#features" className="hover:text-primary">Privacy Policy</a></li>
+                <li><a href="#features" className="hover:text-primary">Terms of Service</a></li>
               </ul>
             </div>
           </div>

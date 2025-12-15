@@ -4,6 +4,7 @@ import { Button } from '@/components/ui/button';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
+import { SanitizedInput } from '@/components/ui/sanitized-input';
 import { useState } from 'react';
 import { Check, X, Clock } from 'lucide-react';
 import { useAuthStore } from '@/store/useAuthStore';
@@ -23,6 +24,11 @@ export default function AttendancePage() {
   ]; // In real app: filter classes where teacherId === user.id
   
   const [selectedClass, setSelectedClass] = useState(teacherClasses[0]?.id || '');
+  const [searchQuery, setSearchQuery] = useState('');
+  
+  const filteredStudents = students.filter(student => 
+    student.name.toLowerCase().includes(searchQuery.toLowerCase())
+  );
 
   // Mock Data
   const [students, setStudents] = useState([

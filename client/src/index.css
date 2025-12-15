@@ -1,5 +1,4 @@
 @import "tailwindcss";
-@import "tw-animate-css";
 
 @custom-variant dark (&:is(.dark *));
 
@@ -116,7 +115,7 @@
   --secondary-foreground: 45 80% 80%;
   
   --muted: 240 3.7% 15.9%;
-  --muted-foreground: 240 5% 75%;
+  --muted-foreground: 240 5% 65%;
   
   --accent: 165 30% 15%;
   --accent-foreground: 0 0% 98%;
@@ -195,6 +194,44 @@
   select, input[type="checkbox"], input[type="radio"], label[for],
   .cursor-pointer, [onclick], [data-state], [aria-haspopup] {
     @apply cursor-pointer;
+  }
+  
+  /* Visible focus indicators for accessibility */
+  *:focus-visible {
+    @apply outline-none ring-2 ring-ring ring-offset-2 ring-offset-background;
+  }
+  
+  button:focus-visible,
+  a:focus-visible,
+  [role="button"]:focus-visible,
+  input:focus-visible,
+  select:focus-visible,
+  textarea:focus-visible {
+    @apply ring-2 ring-primary;
+  }
+  
+  /* Screen reader only class */
+  .sr-only {
+    position: absolute;
+    width: 1px;
+    height: 1px;
+    padding: 0;
+    margin: -1px;
+    overflow: hidden;
+    clip: rect(0, 0, 0, 0);
+    white-space: nowrap;
+    border-width: 0;
+  }
+  
+  /* Skip link styling */
+  .skip-link {
+    @apply absolute left-0 top-0 z-50 bg-primary text-primary-foreground px-4 py-2 rounded-br-md;
+    transform: translateY(-100%);
+    transition: transform 0.3s;
+  }
+  
+  .skip-link:focus {
+    transform: translateY(0);
   }
   
   /* Footer styling */

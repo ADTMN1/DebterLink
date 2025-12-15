@@ -1,15 +1,17 @@
 import DashboardLayout from '@/layouts/dashboard-layout';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
+import { SanitizedInput } from '@/components/ui/sanitized-input';
+import { SanitizedTextarea } from '@/components/ui/sanitized-input';
 import { Input } from '@/components/ui/input';
 import { Button } from '@/components/ui/button';
 import { ScrollArea } from '@/components/ui/scroll-area';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import { Search, Send, Paperclip, Mic, Plus, X, Square } from 'lucide-react';
-import { useState } from 'react';
+import { useState, useMemo, useCallback } from 'react';
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger, DialogFooter } from '@/components/ui/dialog';
 import { Label } from '@/components/ui/label';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
-import { Textarea } from '@/components/ui/textarea';
+
 import { useToast } from '@/hooks/use-toast';
 
 export default function MessagingPage() {
@@ -33,14 +35,17 @@ export default function MessagingPage() {
     { id: 5, name: 'Grade 12A Class', role: 'Class', class: 'Grade 12A', lastMsg: 'Exam schedule', time: '1 day ago', unread: 0 },
   ];
 
-  const filteredContacts = contacts.filter((contact) => {
-    const matchesSearch = contact.name.toLowerCase().includes(searchQuery.toLowerCase()) ||
-      contact.lastMsg.toLowerCase().includes(searchQuery.toLowerCase());
-    const matchesClass = classFilter === 'all' || contact.class === classFilter || contact.class === 'all';
-    return matchesSearch && matchesClass;
-  });
+  const filteredContacts = useMemo(() => 
+    contacts.filter((contact) => {
+      const matchesSearch = contact.name.toLowerCase().includes(searchQuery.toLowerCase()) ||
+        contact.lastMsg.toLowerCase().includes(searchQuery.toLowerCase());
+      const matchesClass = classFilter === 'all' || contact.class === classFilter || contact.class === 'all';
+      return matchesSearch && matchesClass;
+    }),
+    [searchQuery, classFilter]
+  );
 
-  const handleFileSelect = (e: React.ChangeEvent<HTMLInputElement>) => {
+  const handleFileSelect = useCallback((e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
     if (file) {
       if (file.size > 10 * 1024 * 1024) {
@@ -49,7 +54,7 @@ export default function MessagingPage() {
       }
       setSelectedFile(file);
     }
-  };
+  }, [toast]);
 
   const startRecording = async () => {
     try {
@@ -81,7 +86,7 @@ export default function MessagingPage() {
     }
   };
 
-  const handleSendNewMessage = () => {
+  const handleSendNewMessage = useCallback(() => {
     if (!newMessageForm.recipient.trim() || !newMessageForm.message.trim()) {
       toast({ title: 'Error', description: 'Please fill in all fields', variant: 'destructive' });
       return;
@@ -94,9 +99,9 @@ export default function MessagingPage() {
     setNewMessageForm({ recipient: '', message: '', recipientType: 'individual' });
     setSelectedFile(null);
     setAudioBlob(null);
-  };
+  }, [newMessageForm, selectedFile, audioBlob, toast]);
 
-  const handleSendChatMessage = () => {
+  const handleSendChatMessage = useCallback(() => {
     if (!chatMessage.trim() && !selectedFile && !audioBlob) {
       toast({ title: 'Error', description: 'Please enter a message or attach a file', variant: 'destructive' });
       return;
@@ -107,7 +112,7 @@ export default function MessagingPage() {
     setChatMessage('');
     setSelectedFile(null);
     setAudioBlob(null);
-  };
+  }, [chatMessage, selectedFile, audioBlob, toast]);
 
   return (
     <DashboardLayout>
@@ -140,7 +145,8 @@ export default function MessagingPage() {
                 <div className="space-y-2">
                   <Label htmlFor="recipient">To</Label>
                   {newMessageForm.recipientType === 'individual' ? (
-                    <Input
+                    <SanitizedInput
+                      sanitizer="text"
                       id="recipient"
                       value={newMessageForm.recipient}
                       onChange={(e) => setNewMessageForm(f => ({ ...f, recipient: e.target.value }))}
@@ -164,7 +170,8 @@ export default function MessagingPage() {
                 </div>
                 <div className="space-y-2">
                   <Label htmlFor="message">Message</Label>
-                  <Textarea
+                  <SanitizedTextarea
+                    sanitizer="description"
                     id="message"
                     value={newMessageForm.message}
                     onChange={(e) => setNewMessageForm(f => ({ ...f, message: e.target.value }))}
@@ -220,7 +227,9 @@ export default function MessagingPage() {
                     )}
                     {audioBlob && (
                       <div className="flex items-center gap-2 flex-1">
-                        <audio controls src={URL.createObjectURL(audioBlob)} className="flex-1" />
+                        <audio controls src={URL.createObjectURL(audioBlob)} className="flex-1">
+                          <track kind="captions" srcLang="en" label="English" />
+                        </audio>
                         <Button
                           type="button"
                           variant="ghost"
@@ -247,7 +256,8 @@ export default function MessagingPage() {
           <CardHeader className="px-4 py-3 border-b space-y-2">
             <div className="relative">
               <Search className="absolute left-2 top-2.5 h-4 w-4 text-muted-foreground" />
-              <Input 
+              <SanitizedInput 
+                sanitizer="text"
                 placeholder="Search messages..." 
                 className="pl-8 bg-muted/50" 
                 value={searchQuery}
@@ -270,7 +280,15 @@ export default function MessagingPage() {
               {filteredContacts.map((contact) => (
                 <div 
                   key={contact.id}
+                  role="button"
+                  tabIndex={0}
                   onClick={() => setActiveChat(contact.id)}
+                  onKeyDown={(e) => {
+                    if (e.key === 'Enter' || e.key === ' ') {
+                      e.preventDefault();
+                      setActiveChat(contact.id);
+                    }
+                  }}
                   className={`flex items-start gap-3 p-4 cursor-pointer transition-colors hover:bg-accent/50 ${activeChat === contact.id ? 'bg-accent' : ''}`}
                 >
                   <Avatar>
@@ -342,10 +360,12 @@ export default function MessagingPage() {
                   variant="ghost" 
                   size="icon"
                   onClick={() => document.getElementById('chat-file')?.click()}
+                  aria-label="Attach file"
                 >
                    <Paperclip className="h-5 w-5 text-muted-foreground" />
                 </Button>
-                <Input 
+                <SanitizedInput 
+                  sanitizer="description"
                   placeholder="Type your message..." 
                   className="flex-1" 
                   value={chatMessage}
@@ -362,6 +382,7 @@ export default function MessagingPage() {
                     variant="ghost" 
                     size="icon"
                     onClick={startRecording}
+                    aria-label="Start voice recording"
                   >
                      <Mic className="h-5 w-5 text-muted-foreground" />
                   </Button>
@@ -370,11 +391,12 @@ export default function MessagingPage() {
                     variant="destructive" 
                     size="icon"
                     onClick={stopRecording}
+                    aria-label="Stop voice recording"
                   >
                      <Square className="h-5 w-5" />
                   </Button>
                 )}
-                <Button size="icon" onClick={handleSendChatMessage}>
+                <Button size="icon" onClick={handleSendChatMessage} aria-label="Send message">
                    <Send className="h-5 w-5" />
                 </Button>
              </div>
@@ -394,7 +416,9 @@ export default function MessagingPage() {
              )}
              {audioBlob && (
                <div className="flex items-center gap-2 p-2 mt-2 bg-muted rounded-md">
-                 <audio controls src={URL.createObjectURL(audioBlob)} className="flex-1" />
+                 <audio controls src={URL.createObjectURL(audioBlob)} className="flex-1">
+                   <track kind="captions" srcLang="en" label="English" />
+                 </audio>
                  <Button
                    type="button"
                    variant="ghost"
