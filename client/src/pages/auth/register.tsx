@@ -1,7 +1,7 @@
 import { useForm } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import * as z from 'zod';
-import { Button } from '@/components/ui/button';
+import { Button } from "@/components/ui/button";
 import {
   Form,
   FormControl,
@@ -9,14 +9,19 @@ import {
   FormItem,
   FormLabel,
   FormMessage,
-} from '@/components/ui/form';
-import { Input } from '@/components/ui/input';
-import { useLocation, Link, Redirect } from 'wouter';
-import { useTranslation } from 'react-i18next';
-import AuthLayout from '@/layouts/auth-layout';
-import { Loader2, User, Mail, Lock } from 'lucide-react';
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
-import { useAuthStore } from '@/store/useAuthStore';
+} from "@/components/ui/form";
+import { Input } from "@/components/ui/input";
+import { useLocation, Link, Redirect } from "wouter";
+import AuthLayout from "@/layouts/auth-layout";
+import { Loader2, User, Mail, Lock } from "lucide-react";
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select";
+import { useAuthStore } from "@/store/useAuthStore";
 
 const formSchema = z.object({
   fullName: z.string().min(2, "Name is required"),
@@ -31,7 +36,6 @@ const formSchema = z.object({
 
 export default function RegisterPage() {
   const [, setLocation] = useLocation();
-  const { t } = useTranslation();
   const { user } = useAuthStore();
   const isLoading = false; // Mock state
 
@@ -53,7 +57,6 @@ export default function RegisterPage() {
 
   async function onSubmit(values: z.infer<typeof formSchema>) {
     // Mock registration
-    console.log(values);
     setLocation('/login');
   }
 
