@@ -91,7 +91,7 @@ export const Sidebar = memo(function Sidebar() {
     {
       title: 'Behavior Analytics',
       href: '/dashboard/behavior-analytics',
-      icon: TrendingUp,
+      icon: BarChart3,
       roles: ['director'] as Role[]
     },
     {
@@ -241,7 +241,7 @@ export const Sidebar = memo(function Sidebar() {
       </AnimatePresence>
 
       {/* Navigation */}
-      <ScrollArea className="h-[calc(100vh-12rem)] py-4">
+      <ScrollArea className="h-[calc(100vh-16rem)] py-4">
         <nav className="grid gap-2 px-2">
           {filteredItems.map((item, index) => {
             const isActive = location === item.href;

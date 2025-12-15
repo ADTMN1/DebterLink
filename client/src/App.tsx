@@ -13,34 +13,38 @@ import { ErrorBoundary } from "@/components/error-boundary";
 import { FullPageLoader } from "@/components/ui/loading-states";
 import { useNetworkStatus } from "@/hooks/use-network-status";
 
-// Lazy load all pages
-const LoginPage = lazy(() => import("@/pages/auth/login"));
+// Critical pages - load immediately
+import LandingPage from "@/pages/landing-page";
+import LoginPage from "@/pages/auth/login";
+import NotFound from "@/pages/not-found";
+
+// Auth pages
 const RegisterPage = lazy(() => import("@/pages/auth/register"));
 const ForgotPasswordPage = lazy(() => import("@/pages/auth/forgot-password"));
-const LandingPage = lazy(() => import("@/pages/landing-page"));
-const NotFound = lazy(() => import("@/pages/not-found"));
 
-// Dashboards
+// Dashboard pages
 const StudentDashboard = lazy(() => import("@/pages/dashboard/student-dashboard"));
-const StudentGrades = lazy(() => import("@/pages/dashboard/student-grades"));
 const TeacherDashboard = lazy(() => import("@/pages/dashboard/teacher-dashboard"));
 const ParentDashboard = lazy(() => import("@/pages/dashboard/parent-dashboard"));
 const DirectorDashboard = lazy(() => import("@/pages/dashboard/director-dashboard"));
 const AdminDashboard = lazy(() => import("@/pages/dashboard/admin-dashboard"));
 
-// Features
+// Feature pages
+const StudentGrades = lazy(() => import("@/pages/dashboard/student-grades"));
 const AttendancePage = lazy(() => import("@/pages/dashboard/attendance-page").then(m => ({ default: m.AttendancePage })));
 const ResultsPage = lazy(() => import("@/pages/dashboard/results-page").then(m => ({ default: m.ResultsPage })));
+const ProfilePage = lazy(() => import("@/pages/profile/profile-page"));
+const SettingsPage = lazy(() => import("@/pages/settings-page"));
+const BehaviorAnalyticsPage = lazy(() => import("@/pages/dashboard/behavior-analytics-page").then(m => ({ default: m.BehaviorAnalyticsPage })));
+
+// Feature modules
 const AssignmentsPage = lazy(() => import("@/features/assignments/assignments-page"));
 const MessagingPage = lazy(() => import("@/features/messaging/messaging-page"));
 const CalendarPage = lazy(() => import("@/features/calendar/calendar-page"));
 const ResourcesPage = lazy(() => import("@/features/resources/resources-page"));
 const AppealsPage = lazy(() => import("@/features/appeals/appeals-page"));
 const TimetablePage = lazy(() => import("@/features/timetable/timetable-page"));
-const ProfilePage = lazy(() => import("@/pages/profile/profile-page"));
-const SettingsPage = lazy(() => import("@/pages/settings-page"));
 const BehaviorPage = lazy(() => import("@/features/behavior/behavior-page"));
-const BehaviorAnalyticsPage = lazy(() => import("@/pages/dashboard/behavior-analytics-page").then(m => ({ default: m.BehaviorAnalyticsPage })));
 const GradebookPage = lazy(() => import("@/features/grades/gradebook-page"));
 const UsersPage = lazy(() => import("@/features/admin/users-page"));
 const SchoolsPage = lazy(() => import("@/features/admin/schools-page"));
@@ -51,21 +55,19 @@ const BackupPage = lazy(() => import("@/features/backup/backup-page"));
 const ClassesPage = lazy(() => import("@/features/classes/classes-page"));
 const SubjectsPage = lazy(() => import("@/features/subjects/subjects-page"));
 
-const LoadingFallback = () => <FullPageLoader />;
+import { LoadingSpinner } from "@/components/loading-spinner";
 
 function Router() {
   const { user } = useAuthStore();
   const [location] = useLocation();
 
-  // Simple role-based dashboard redirect
   const getDashboard = () => {
     switch (user?.role) {
       case 'student': return StudentDashboard;
       case 'teacher': return TeacherDashboard;
       case 'parent': return ParentDashboard;
       case 'director': return DirectorDashboard;
-      case 'admin': return AdminDashboard;
-      case 'super_admin': return AdminDashboard;
+      case 'admin': case 'super_admin': return AdminDashboard;
       default: return StudentDashboard;
     }
   };
@@ -215,15 +217,12 @@ function App() {
   }, []);
 
   return (
-    <ErrorBoundary>
-      <QueryClientProvider client={queryClient}>
-        <Announcer />
-        <Suspense fallback={<LoadingFallback />}>
-          <Router />
-        </Suspense>
-        <Toaster />
-      </QueryClientProvider>
-    </ErrorBoundary>
+    <QueryClientProvider client={queryClient}>
+      <Suspense fallback={<LoadingSpinner />}>
+        <Router />
+      </Suspense>
+      <Toaster />
+    </QueryClientProvider>
   );
 }
 

@@ -4,9 +4,7 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Badge } from '@/components/ui/badge';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
-import { BookOpen, FileText, ClipboardCheck, Award, Download } from 'lucide-react';
-import { Button } from '@/components/ui/button';
-import { toast } from 'sonner';
+import { BookOpen, FileText, ClipboardCheck, Award } from 'lucide-react';
 import { useState } from 'react';
 import { useAuthStore } from '@/store/useAuthStore';
 
@@ -86,53 +84,12 @@ export default function StudentGrades() {
 
   const currentData = mockGrades[selectedSemester as keyof typeof mockGrades];
 
-  const handleExport = () => {
-    const csvRows = [
-      ['Subject', 'Category', 'Name', 'Date', 'Score', 'Max', 'Percentage', 'Grade']
-    ];
-
-    Object.entries(currentData).forEach(([subject, data]) => {
-      data.assignments.forEach(item => {
-        const percentage = (item.score / item.max) * 100;
-        csvRows.push([subject, 'Assignment', item.name, item.date, item.score.toString(), item.max.toString(), percentage.toFixed(1), getGradeLetter(percentage)]);
-      });
-      data.quizzes.forEach(item => {
-        const percentage = (item.score / item.max) * 100;
-        csvRows.push([subject, 'Quiz', item.name, item.date, item.score.toString(), item.max.toString(), percentage.toFixed(1), getGradeLetter(percentage)]);
-      });
-      if (data.midterm) {
-        const percentage = (data.midterm.score / data.midterm.max) * 100;
-        csvRows.push([subject, 'Midterm', 'Mid-term Exam', data.midterm.date, data.midterm.score.toString(), data.midterm.max.toString(), percentage.toFixed(1), getGradeLetter(percentage)]);
-      }
-      if (data.final) {
-        const percentage = (data.final.score / data.final.max) * 100;
-        csvRows.push([subject, 'Final', 'Final Exam', data.final.date, data.final.score.toString(), data.final.max.toString(), percentage.toFixed(1), getGradeLetter(percentage)]);
-      }
-    });
-
-    const csvContent = csvRows.map(row => row.join(',')).join('\n');
-    const blob = new Blob([csvContent], { type: 'text/csv' });
-    const url = URL.createObjectURL(blob);
-    const link = document.createElement('a');
-    link.href = url;
-    const studentName = isParent ? children.find(c => c.id === selectedChild)?.name : user?.name || 'Student';
-    link.download = `${studentName}_Grades_${selectedYear}_${selectedSemester}.csv`;
-    document.body.appendChild(link);
-    link.click();
-    document.body.removeChild(link);
-    URL.revokeObjectURL(url);
-    toast.success('Grades exported successfully');
-  };
-
   return (
     <DashboardLayout>
       <div className="space-y-6">
         <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4">
           <h1 className="text-3xl font-bold">Grades & Results</h1>
           <div className="flex gap-2">
-            <Button variant="outline" size="sm" onClick={handleExport}>
-              <Download className="mr-2 h-4 w-4" /> Export
-            </Button>
             {isParent && (
               <Select value={selectedChild} onValueChange={setSelectedChild}>
                 <SelectTrigger className="w-48">

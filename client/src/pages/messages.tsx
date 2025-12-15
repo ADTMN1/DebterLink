@@ -4,10 +4,8 @@ import { Button } from '@/components/ui/button';
 import { SanitizedInput } from '@/components/ui/sanitized-input';
 import { SanitizedTextarea } from '@/components/ui/sanitized-input';
 import { useState } from 'react';
-import { useToast } from '@/hooks/use-toast';
 
 export default function MessagesPage() {
-  const { toast } = useToast();
   const [messages, setMessages] = useState<Array<{ id: string; from: string; subject: string; body: string; date: string }>>([
     { id: '1', from: 'Tigist Alemu', subject: 'Homework update', body: 'Please submit lab report by Monday.', date: '2025-12-03' },
     { id: '2', from: 'Director', subject: 'Holiday notice', body: 'School closed next Friday.', date: '2025-11-28' },
@@ -16,25 +14,10 @@ export default function MessagesPage() {
   const [compose, setCompose] = useState({ to: '', subject: '', body: '' });
 
   const handleSend = () => {
-    // Validation
-    if (!compose.to.trim()) {
-      toast({ title: 'Validation Error', description: 'Please enter recipient', variant: 'destructive' });
-      return;
-    }
-    if (!compose.subject.trim()) {
-      toast({ title: 'Validation Error', description: 'Please enter subject', variant: 'destructive' });
-      return;
-    }
-    if (!compose.body.trim()) {
-      toast({ title: 'Validation Error', description: 'Please enter message body', variant: 'destructive' });
-      return;
-    }
-    
     // Demo: just add to local list
     const id = Date.now().toString();
     setMessages([{ id, from: 'You', subject: compose.subject, body: compose.body, date: new Date().toISOString() }, ...messages]);
     setCompose({ to: '', subject: '', body: '' });
-    toast({ title: 'Message sent', description: 'Your message has been sent successfully' });
   };
 
   return (

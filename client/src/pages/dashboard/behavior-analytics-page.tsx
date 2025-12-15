@@ -15,9 +15,6 @@ export const BehaviorAnalyticsPage = () => {
   const [behaviorIncidents, setBehaviorIncidents] = useState<any[]>([]);
 
   const handleLoadBehaviorData = () => {
-    if (!grade || !section) {
-      return;
-    }
     // Simulate fetching behavior data based on selected filters
     console.log('Loading behavior data for:', { grade, section, startDate, endDate });
 
@@ -93,8 +90,8 @@ export const BehaviorAnalyticsPage = () => {
               </div>
 
               <div className="flex items-end">
-                <Button onClick={handleLoadBehaviorData} disabled={!grade || !section}>
-                  View Behavior
+                <Button onClick={handleLoadBehaviorData}>
+                  View Behavior Analytics
                 </Button>
               </div>
             </div>

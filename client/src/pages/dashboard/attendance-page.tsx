@@ -106,9 +106,19 @@ export const AttendancePage = () => {
   const handleLoadAttendance = (gradeParam?: string, sectionParam?: string) => {
     const targetGrade = gradeParam || grade;
     const targetSection = sectionParam || section;
-
-    console.log("Loading attendance for:", { grade: targetGrade, section: targetSection, date });
-
+    
+    if (isTeacher) {
+      const isAssigned = teacherAssignedClasses.some(
+        cls => cls.grade === targetGrade && cls.section === targetSection
+      );
+      if (!isAssigned) {
+        alert('You can only record attendance for your assigned classes');
+        return;
+      }
+    }
+    
+    console.log('Loading attendance for:', { grade: targetGrade, section: targetSection, date });
+    
     const dummyAttendance = [
       { id: 1, studentName: "Dawit Mekonnen", rollNo: "001" },
       { id: 2, studentName: "Sara Tadesse", rollNo: "002" },

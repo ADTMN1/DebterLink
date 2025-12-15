@@ -136,11 +136,7 @@ export default function LandingPage() {
 
             {/* Mobile Menu Button */}
             <div className="md:hidden">
-              <button 
-                onClick={() => setMobileMenuOpen(!mobileMenuOpen)} 
-                className="text-muted-foreground"
-                aria-label={mobileMenuOpen ? "Close menu" : "Open menu"}
-              >
+              <button onClick={() => setMobileMenuOpen(!mobileMenuOpen)} className="text-muted-foreground">
                 {mobileMenuOpen ? <X /> : <Menu />}
               </button>
             </div>

@@ -3,8 +3,8 @@ import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
-import { SanitizedInput } from '@/components/ui/sanitized-input';
-import { Save, Plus, Download } from 'lucide-react';
+import { Input } from '@/components/ui/input';
+import { Save, Plus } from 'lucide-react';
 import { useState } from 'react';
 import { useAuthStore } from '@/store/useAuthStore';
 import { toast } from 'sonner';
@@ -65,7 +65,6 @@ export default function GradebookPage() {
 
   const [selectedClassId, setSelectedClassId] = useState('');
   const [selectedSubject, setSelectedSubject] = useState('');
-  const [editingStudents, setEditingStudents] = useState<Set<number>>(new Set());
   const [isEditing, setIsEditing] = useState(false);
 
   const selectedClass = assignedClasses.find(c => c.id === selectedClassId);
@@ -98,28 +97,6 @@ export default function GradebookPage() {
     return 'F';
   };
 
-  const toggleEdit = (studentId: number) => {
-    setEditingStudents(prev => {
-      const newSet = new Set(prev);
-      if (newSet.has(studentId)) {
-        newSet.delete(studentId);
-      } else {
-        newSet.add(studentId);
-      }
-      return newSet;
-    });
-  };
-
-  const handleSaveStudent = (studentId: number) => {
-    setEditingStudents(prev => {
-      const newSet = new Set(prev);
-      newSet.delete(studentId);
-      return newSet;
-    });
-    const student = students.find(s => s.id === studentId);
-    toast.success(`Grades saved for ${student?.name}`);
-  };
-
   const handleAddResult = () => {
     if (!selectedClassId || !selectedSubject) {
       toast.error('Please select class and subject');
@@ -130,10 +107,6 @@ export default function GradebookPage() {
   };
 
   const handleSave = () => {
-    if (!selectedClassId || !selectedSubject) {
-      toast.error('Please select class and subject');
-      return;
-    }
     const incomplete = students.some(s => s.quiz === 0 || s.test === 0 || s.mid === 0 || s.final === 0);
     if (incomplete) {
       toast.error('Please enter all grades for all students');
@@ -152,36 +125,6 @@ export default function GradebookPage() {
       { id: 4, name: 'Lydia Mengistu', quiz: 20, test: 18, mid: 30, final: 0 },
       { id: 5, name: 'Dawit Alemu', quiz: 16, test: 16, mid: 24, final: 0 },
     ]);
-  };
-
-  const handleExport = () => {
-    if (!selectedClassId || !selectedSubject) {
-      toast.error('Please select class and subject');
-      return;
-    }
-
-    const csvContent = [
-      ['Student Name', 'Quiz (20%)', 'Test (20%)', 'Mid Exam (30%)', 'Final Exam (30%)', 'Total (100%)'],
-      ...students.map(student => [
-        student.name,
-        student.quiz,
-        student.test,
-        student.mid,
-        student.final,
-        calculateTotal(student).toFixed(2)
-      ])
-    ].map(row => row.join(',')).join('\n');
-
-    const blob = new Blob([csvContent], { type: 'text/csv' });
-    const url = URL.createObjectURL(blob);
-    const link = document.createElement('a');
-    link.href = url;
-    link.download = `${selectedClass?.name}_${selectedSubject}_Grades.csv`;
-    document.body.appendChild(link);
-    link.click();
-    document.body.removeChild(link);
-    URL.revokeObjectURL(url);
-    toast.success('Grades exported successfully');
   };
 
   return (
@@ -238,14 +181,9 @@ export default function GradebookPage() {
         {selectedClassId && selectedSubject && (
         <Card>
           <CardHeader>
-            <div className="flex items-center justify-between">
-              <CardTitle>
-                {selectedClass?.name} - {selectedSubject} {isEditing && <span className="text-sm text-muted-foreground">(Editing Mode)</span>}
-              </CardTitle>
-              <Button variant="outline" size="sm" onClick={handleExport}>
-                <Download className="mr-2 h-4 w-4" /> Export
-              </Button>
-            </div>
+            <CardTitle>
+              {selectedClass?.name} - {selectedSubject} {isEditing && <span className="text-sm text-muted-foreground">(Editing Mode)</span>}
+            </CardTitle>
           </CardHeader>
           <CardContent className="p-0">
             <Table>
@@ -257,7 +195,7 @@ export default function GradebookPage() {
                   <TableHead className="text-center">Mid Exam (30%)</TableHead>
                   <TableHead className="text-center">Final Exam (30%)</TableHead>
                   <TableHead className="text-center font-bold">Total (100%)</TableHead>
-                  <TableHead className="text-center">Actions</TableHead>
+                  <TableHead className="text-center font-bold">Grade</TableHead>
                 </TableRow>
               </TableHeader>
               <TableBody>
@@ -268,9 +206,8 @@ export default function GradebookPage() {
                     <TableRow key={student.id}>
                       <TableCell className="font-medium">{student.name}</TableCell>
                       <TableCell>
-                        {(isEditing || editingStudents.has(student.id)) ? (
-                          <SanitizedInput
-                            sanitizer="text"
+                        {isEditing ? (
+                          <Input
                             className="w-20 text-center"
                             type="number"
                             min="0"
@@ -283,9 +220,8 @@ export default function GradebookPage() {
                         )}
                       </TableCell>
                       <TableCell>
-                        {(isEditing || editingStudents.has(student.id)) ? (
-                          <SanitizedInput
-                            sanitizer="text"
+                        {isEditing ? (
+                          <Input
                             className="w-20 text-center"
                             type="number"
                             min="0"
@@ -298,9 +234,8 @@ export default function GradebookPage() {
                         )}
                       </TableCell>
                       <TableCell>
-                        {(isEditing || editingStudents.has(student.id)) ? (
-                          <SanitizedInput
-                            sanitizer="text"
+                        {isEditing ? (
+                          <Input
                             className="w-20 text-center"
                             type="number"
                             min="0"
@@ -313,9 +248,8 @@ export default function GradebookPage() {
                         )}
                       </TableCell>
                       <TableCell>
-                        {(isEditing || editingStudents.has(student.id)) ? (
-                          <SanitizedInput
-                            sanitizer="text"
+                        {isEditing ? (
+                          <Input
                             className="w-20 text-center"
                             type="number"
                             min="0"
@@ -330,18 +264,10 @@ export default function GradebookPage() {
                       <TableCell className="text-center font-bold text-lg">
                         {total.toFixed(2)}%
                       </TableCell>
-                      <TableCell className="text-center">
-                        {!isEditing && (
-                          editingStudents.has(student.id) ? (
-                            <Button size="sm" onClick={() => handleSaveStudent(student.id)}>
-                              <Save className="h-4 w-4" />
-                            </Button>
-                          ) : (
-                            <Button size="sm" variant="outline" onClick={() => toggleEdit(student.id)}>
-                              Edit
-                            </Button>
-                          )
-                        )}
+                      <TableCell className="text-center font-bold text-lg">
+                        <span className={grade === 'A' ? 'text-orange-600' : grade === 'B' ? 'text-blue-600' : grade === 'C' ? 'text-yellow-600' : grade === 'D' ? 'text-orange-500' : 'text-red-600'}>
+                          {grade}
+                        </span>
                       </TableCell>
                     </TableRow>
                   );

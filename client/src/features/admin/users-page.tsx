@@ -31,53 +31,28 @@ export default function UsersPage() {
   const [isDialogOpen, setIsDialogOpen] = useState(false);
   const [isEditDialogOpen, setIsEditDialogOpen] = useState(false);
   const [isPasswordDialogOpen, setIsPasswordDialogOpen] = useState(false);
-  const [editingUser, setEditingUser] = useState<any>(null);
-  // Create user form
-  const createForm = useSanitizedForm<CreateUserFormData>({
-    resolver: zodResolver(createUserSchema),
-    defaultValues: {
-      name: '',
-      username: '',
-      email: '',
-      password: '',
-      role: user?.role === 'super_admin' ? 'Admin' : 'Student',
-      status: 'Active',
-    },
-    sanitizationMap: sanitizationMaps.user,
+  const [selectedUser, setSelectedUser] = useState<any>(null);
+  const [searchTerm, setSearchTerm] = useState('');
+  const [roleFilter, setRoleFilter] = useState('all');
+  const [newPassword, setNewPassword] = useState('');
+  const [form, setForm] = useState({
+    name: '',
+    username: '',
+    email: '',
+    password: '',
+    role: 'Student' as 'Student' | 'Teacher' | 'Parent' | 'Director' | 'Admin' | 'Super Admin',
+    status: 'Active' as 'Active' | 'Suspended',
   });
-
-  // Edit user form
-  const editForm = useSanitizedForm<EditUserFormData>({
-    resolver: zodResolver(editUserSchema),
-    defaultValues: {
-      name: '',
-      email: '',
-      role: 'Student',
-      status: 'Active',
-    },
-    sanitizationMap: { name: 'name', email: 'email' },
-  });
-
-  // Password change form
-  const passwordForm = useSanitizedForm<PasswordChangeFormData>({
-    resolver: zodResolver(passwordChangeSchema),
-    defaultValues: {
-      currentPassword: '',
-      newPassword: '',
-      confirmPassword: '',
-    },
-    sanitizationMap: {
-      currentPassword: 'text',
-      newPassword: 'text',
-      confirmPassword: 'text'
-    },
+  const [editForm, setEditForm] = useState({
+    name: '',
+    email: '',
+    role: 'Student' as 'Student' | 'Teacher' | 'Parent' | 'Director' | 'Admin' | 'Super Admin',
+    status: 'Active' as 'Active' | 'Suspended',
   });
 
   // Determine which roles can be assigned
   const availableRoles = user?.role === 'super_admin' 
-    ? ['Admin', 'Director'] 
-    : user?.role === 'director'
-    ? ['Student', 'Teacher', 'Parent']
+    ? ['Student', 'Teacher', 'Parent', 'Director', 'Admin'] 
     : ['Student', 'Teacher', 'Parent', 'Director'];
 
   const { data: users = [], isLoading, error, refetch } = useQuery<AdminUser[]>({
@@ -100,8 +75,20 @@ export default function UsersPage() {
     { id: '8', name: 'Admin User', username: 'admin', email: 'admin@school.com', role: 'Admin', status: 'Active', createdAt: new Date().toISOString() },
   ];
 
-  const [localUsers, setLocalUsers] = useState(demoUsers);
-  const displayUsers = users.length > 0 ? users : localUsers;
+  const allUsers = users.length > 0 ? users : demoUsers;
+  
+  // Filter users based on search term and role
+  const displayUsers = allUsers.filter(user => {
+    const matchesSearch = searchTerm === '' || 
+      user.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
+      user.email.toLowerCase().includes(searchTerm.toLowerCase()) ||
+      user.username.toLowerCase().includes(searchTerm.toLowerCase());
+    
+    const matchesRole = roleFilter === 'all' || 
+      user.role.toLowerCase() === roleFilter.toLowerCase();
+    
+    return matchesSearch && matchesRole;
+  });
 
   const createUserMutation = useMutation({
     mutationFn: async (data: CreateUserFormData) => {
@@ -122,8 +109,11 @@ export default function UsersPage() {
     },
     onSuccess: async (data) => {
       setIsDialogOpen(false);
-      createForm.reset();
-      toast.success(`Successfully created user: ${data.name}`);
+      setForm({ name: '', username: '', email: '', password: '', role: 'Student', status: 'Active' });
+      toast({
+        title: 'User created (Demo)',
+        description: `Successfully registered ${data.name} with username: ${data.username}`,
+      });
     },
     onError: (error: Error) => {
       handleError(error, 'user creation');
@@ -134,46 +124,67 @@ export default function UsersPage() {
     createUserMutation.mutate(data);
   });
 
-  const handleToggleSuspend = (userId: string, currentStatus: string) => {
-    const newStatus = currentStatus === 'Active' ? 'Suspended' : 'Active';
-    setLocalUsers(prev => prev.map(u => 
-      u.id === userId ? { ...u, status: newStatus } : u
-    ));
-    toast({
-      title: 'Status Updated',
-      description: `User ${newStatus === 'Suspended' ? 'suspended' : 'activated'} successfully`,
-    });
-  };
-
-  const handleOpenEdit = (userData: any) => {
-    setEditingUser(userData);
-    editForm.reset({
-      name: userData.name,
-      email: userData.email,
-      role: userData.role,
-      status: userData.status,
+  const handleEditUser = (user: any) => {
+    setSelectedUser(user);
+    setEditForm({
+      name: user.name,
+      email: user.email,
+      role: user.role,
+      status: user.status,
     });
     setIsEditDialogOpen(true);
   };
 
-  const onEditSubmit = editForm.handleSanitizedSubmit((data: EditUserFormData) => {
-    setLocalUsers(prev => prev.map(u => 
-      u.id === editingUser.id ? { ...u, ...data } : u
-    ));
-    setIsEditDialogOpen(false);
-    toast.success('User information updated successfully');
-  });
-
-  const handleOpenChangePassword = (userData: any) => {
-    setEditingUser(userData);
-    passwordForm.reset();
+  const handleChangePassword = (user: any) => {
+    setSelectedUser(user);
+    setNewPassword('');
     setIsPasswordDialogOpen(true);
   };
 
-  const onPasswordSubmit = passwordForm.handleSanitizedSubmit((data: PasswordChangeFormData) => {
+  const handleToggleStatus = (user: any) => {
+    const newStatus = user.status === 'Active' ? 'Suspended' : 'Active';
+    toast({
+      title: `User ${newStatus}`,
+      description: `${user.name} has been ${newStatus.toLowerCase()}.`,
+    });
+    console.log(`Demo: User ${user.name} status changed to ${newStatus}`);
+  };
+
+  const handleSaveEdit = () => {
+    if (!editForm.name.trim() || !editForm.email.trim()) {
+      toast({
+        title: 'Validation Error',
+        description: 'Please fill in all required fields.',
+        variant: 'destructive',
+      });
+      return;
+    }
+    
+    toast({
+      title: 'User Updated',
+      description: `${editForm.name} has been updated successfully.`,
+    });
+    console.log('Demo: User updated:', { ...selectedUser, ...editForm });
+    setIsEditDialogOpen(false);
+  };
+
+  const handleSavePassword = () => {
+    if (newPassword.length < 6) {
+      toast({
+        title: 'Validation Error',
+        description: 'Password must be at least 6 characters.',
+        variant: 'destructive',
+      });
+      return;
+    }
+    
+    toast({
+      title: 'Password Changed',
+      description: `Password for ${selectedUser?.name} has been updated.`,
+    });
+    console.log('Demo: Password changed for user:', selectedUser?.name);
     setIsPasswordDialogOpen(false);
-    toast.success(`Password updated for ${editingUser.name}`);
-  });
+  };
 
   return (
     <DashboardLayout>
@@ -290,23 +301,92 @@ export default function UsersPage() {
                       )}
                     />
                   </div>
-                  <DialogFooter className="mt-6">
-                    <Button type="button" variant="outline" onClick={() => setIsDialogOpen(false)}>
-                      Cancel
-                    </Button>
-                    <Button type="submit" disabled={createUserMutation.isPending}>
-                      {createUserMutation.isPending ? (
-                        <>
-                          <Loader2 className="mr-2 h-4 w-4 animate-spin" />
-                          Creating...
-                        </>
-                      ) : (
-                        'Create User'
-                      )}
-                    </Button>
-                  </DialogFooter>
-                </form>
-              </Form>
+                  <div className="space-y-2">
+                    <Label htmlFor="email">Email</Label>
+                    <Input
+                      id="email"
+                      type="email"
+                      value={form.email}
+                      onChange={(e) => setForm((f) => ({ ...f, email: e.target.value }))}
+                      placeholder="e.g. john@school.com"
+                      required
+                    />
+                  </div>
+                  <div className="space-y-2">
+                    <Label htmlFor="password">Password</Label>
+                    <Input
+                      id="password"
+                      type="password"
+                      value={form.password}
+                      onChange={(e) => setForm((f) => ({ ...f, password: e.target.value }))}
+                      placeholder="Minimum 6 characters"
+                      required
+                      minLength={6}
+                    />
+                    <p className="text-xs text-muted-foreground">Minimum 6 characters required</p>
+                  </div>
+                  <div className="grid grid-cols-2 gap-4">
+                    <div className="space-y-2">
+                      <Label htmlFor="role">Role</Label>
+                      <select
+                        id="role"
+                        className="border rounded-md px-3 py-2 text-sm bg-background"
+                        value={form.role}
+                        onChange={(e) =>
+                          setForm((f) => ({
+                            ...f,
+                            role: e.target.value as typeof form.role,
+                          }))
+                        }
+                      >
+                        {availableRoles.map((role) => (
+                          <option key={role} value={role}>{role}</option>
+                        ))}
+                      </select>
+                      <p className="text-xs text-muted-foreground">
+                        {user?.role === 'super_admin' 
+                          ? 'You can assign Admin role' 
+                          : 'Only Super Admin can assign Admin role'}
+                      </p>
+                    </div>
+                    <div className="space-y-2">
+                      <Label htmlFor="status">Status</Label>
+                      <select
+                        id="status"
+                        className="border rounded-md px-3 py-2 text-sm bg-background"
+                        value={form.status}
+                        onChange={(e) =>
+                          setForm((f) => ({
+                            ...f,
+                            status: e.target.value as typeof form.status,
+                          }))
+                        }
+                      >
+                        <option value="Active">Active</option>
+                        <option value="Suspended">Suspended</option>
+                      </select>
+                    </div>
+                  </div>
+                </div>
+                <DialogFooter className="mt-6">
+                  <Button
+                    type="button"
+                    variant="outline"
+                    onClick={() => {
+                      setIsDialogOpen(false);
+                      setForm({ name: '', username: '', email: '', password: '', role: 'Student', status: 'Active' });
+                    }}
+                  >
+                    Cancel
+                  </Button>
+                  <Button
+                    type="submit"
+                    disabled={createUserMutation.isPending}
+                  >
+                    {createUserMutation.isPending ? 'Creating...' : 'Create User'}
+                  </Button>
+                </DialogFooter>
+              </form>
               </DialogContent>
             </Dialog>
           )}
@@ -318,83 +398,78 @@ export default function UsersPage() {
             <DialogHeader>
               <DialogTitle>Edit User</DialogTitle>
             </DialogHeader>
-            <Form {...editForm}>
-              <form onSubmit={onEditSubmit} className="space-y-4 mt-2">
-                <FormField
-                  control={editForm.control}
-                  name="name"
-                  render={({ field }) => (
-                    <FormItem>
-                      <FormLabel>Full Name</FormLabel>
-                      <FormControl>
-                        <SanitizedInput sanitizer="name" {...field} />
-                      </FormControl>
-                      <FormMessage />
-                    </FormItem>
-                  )}
+            <div className="space-y-4 mt-2">
+              <div className="space-y-2">
+                <Label htmlFor="edit-name">Full Name</Label>
+                <Input
+                  id="edit-name"
+                  value={editForm.name}
+                  onChange={(e) => setEditForm((f) => ({ ...f, name: e.target.value }))}
+                  placeholder="e.g. John Doe"
+                  required
                 />
-                <FormField
-                  control={editForm.control}
-                  name="email"
-                  render={({ field }) => (
-                    <FormItem>
-                      <FormLabel>Email</FormLabel>
-                      <FormControl>
-                        <SanitizedInput sanitizer="email" type="email" {...field} />
-                      </FormControl>
-                      <FormMessage />
-                    </FormItem>
-                  )}
+              </div>
+              <div className="space-y-2">
+                <Label htmlFor="edit-email">Email</Label>
+                <Input
+                  id="edit-email"
+                  type="email"
+                  value={editForm.email}
+                  onChange={(e) => setEditForm((f) => ({ ...f, email: e.target.value }))}
+                  placeholder="e.g. john@school.com"
+                  required
                 />
-                <div className="grid grid-cols-2 gap-4">
-                  <FormField
-                    control={editForm.control}
-                    name="role"
-                    render={({ field }) => (
-                      <FormItem>
-                        <FormLabel>Role</FormLabel>
-                        <Select onValueChange={field.onChange} value={field.value}>
-                          <FormControl>
-                            <SelectTrigger>
-                              <SelectValue />
-                            </SelectTrigger>
-                          </FormControl>
-                          <SelectContent>
-                            {availableRoles.map(role => <SelectItem key={role} value={role}>{role}</SelectItem>)}
-                          </SelectContent>
-                        </Select>
-                        <FormMessage />
-                      </FormItem>
-                    )}
-                  />
-                  <FormField
-                    control={editForm.control}
-                    name="status"
-                    render={({ field }) => (
-                      <FormItem>
-                        <FormLabel>Status</FormLabel>
-                        <Select onValueChange={field.onChange} value={field.value}>
-                          <FormControl>
-                            <SelectTrigger>
-                              <SelectValue />
-                            </SelectTrigger>
-                          </FormControl>
-                          <SelectContent>
-                            <SelectItem value="Active">Active</SelectItem>
-                            <SelectItem value="Suspended">Suspended</SelectItem>
-                          </SelectContent>
-                        </Select>
-                        <FormMessage />
-                      </FormItem>
-                    )}
-                  />
+              </div>
+              <div className="grid grid-cols-2 gap-4">
+                <div className="space-y-2">
+                  <Label htmlFor="edit-role">Role</Label>
+                  <select
+                    id="edit-role"
+                    className="border rounded-md px-3 py-2 text-sm bg-background w-full"
+                    value={editForm.role}
+                    onChange={(e) =>
+                      setEditForm((f) => ({
+                        ...f,
+                        role: e.target.value as typeof editForm.role,
+                      }))
+                    }
+                  >
+                    {availableRoles.map((role) => (
+                      <option key={role} value={role}>{role}</option>
+                    ))}
+                  </select>
                 </div>
-                <DialogFooter className="mt-6">
-                  <Button type="button" variant="outline" onClick={() => setIsEditDialogOpen(false)}>Cancel</Button>
-                  <Button type="submit">Update User</Button>
-                </DialogFooter>
-              </form>
-            </Form>
+                <div className="space-y-2">
+                  <Label htmlFor="edit-status">Status</Label>
+                  <select
+                    id="edit-status"
+                    className="border rounded-md px-3 py-2 text-sm bg-background w-full"
+                    value={editForm.status}
+                    onChange={(e) =>
+                      setEditForm((f) => ({
+                        ...f,
+                        status: e.target.value as typeof editForm.status,
+                      }))
+                    }
+                  >
+                    <option value="Active">Active</option>
+                    <option value="Suspended">Suspended</option>
+                  </select>
+                </div>
+              </div>
+            </div>
+            <DialogFooter className="mt-6">
+              <Button
+                type="button"
+                variant="outline"
+                onClick={() => setIsEditDialogOpen(false)}
+              >
+                Cancel
+              </Button>
+              <Button onClick={handleSaveEdit}>
+                Save Changes
+              </Button>
+            </DialogFooter>
           </DialogContent>
         </Dialog>
 
@@ -404,62 +479,51 @@ export default function UsersPage() {
             <DialogHeader>
               <DialogTitle>Change Password</DialogTitle>
             </DialogHeader>
-            <Form {...passwordForm}>
-              <form onSubmit={onPasswordSubmit} className="space-y-4 mt-2">
-                <FormField
-                  control={passwordForm.control}
-                  name="currentPassword"
-                  render={({ field }) => (
-                    <FormItem>
-                      <FormLabel>Current Password</FormLabel>
-                      <FormControl>
-                        <SanitizedInput sanitizer="text" type="password" placeholder="Enter current password" {...field} />
-                      </FormControl>
-                      <FormMessage />
-                    </FormItem>
-                  )}
+            <div className="space-y-4 mt-2">
+              <div className="space-y-2">
+                <Label>User</Label>
+                <Input value={selectedUser?.name || ''} disabled />
+              </div>
+              <div className="space-y-2">
+                <Label htmlFor="new-password">New Password</Label>
+                <Input
+                  id="new-password"
+                  type="password"
+                  value={newPassword}
+                  onChange={(e) => setNewPassword(e.target.value)}
+                  placeholder="Enter new password"
+                  required
+                  minLength={6}
                 />
-                <FormField
-                  control={passwordForm.control}
-                  name="newPassword"
-                  render={({ field }) => (
-                    <FormItem>
-                      <FormLabel>New Password</FormLabel>
-                      <FormControl>
-                        <SanitizedInput sanitizer="text" type="password" placeholder="Minimum 8 characters" {...field} />
-                      </FormControl>
-                      <FormMessage />
-                    </FormItem>
-                  )}
-                />
-                <FormField
-                  control={passwordForm.control}
-                  name="confirmPassword"
-                  render={({ field }) => (
-                    <FormItem>
-                      <FormLabel>Confirm Password</FormLabel>
-                      <FormControl>
-                        <SanitizedInput sanitizer="text" type="password" placeholder="Re-enter password" {...field} />
-                      </FormControl>
-                      <FormMessage />
-                    </FormItem>
-                  )}
-                />
-                <DialogFooter className="mt-6">
-                  <Button type="button" variant="outline" onClick={() => setIsPasswordDialogOpen(false)}>Cancel</Button>
-                  <Button type="submit">Change Password</Button>
-                </DialogFooter>
-              </form>
-            </Form>
+                <p className="text-xs text-muted-foreground">Minimum 6 characters required</p>
+              </div>
+            </div>
+            <DialogFooter className="mt-6">
+              <Button
+                type="button"
+                variant="outline"
+                onClick={() => setIsPasswordDialogOpen(false)}
+              >
+                Cancel
+              </Button>
+              <Button onClick={handleSavePassword}>
+                Change Password
+              </Button>
+            </DialogFooter>
           </DialogContent>
         </Dialog>
 
         <div className="flex gap-4 items-center">
           <div className="relative flex-1 max-w-sm">
             <Search className="absolute left-2 top-2.5 h-4 w-4 text-muted-foreground" />
-            <SanitizedInput sanitizer="text" placeholder="Search users..." className="pl-8" />
+            <Input 
+              placeholder="Search users..." 
+              className="pl-8" 
+              value={searchTerm}
+              onChange={(e) => setSearchTerm(e.target.value)}
+            />
           </div>
-          <Select defaultValue="all">
+          <Select value={roleFilter} onValueChange={setRoleFilter}>
             <SelectTrigger className="w-[150px]">
               <SelectValue placeholder="Role" />
             </SelectTrigger>
@@ -468,9 +532,11 @@ export default function UsersPage() {
               <SelectItem value="student">Student</SelectItem>
               <SelectItem value="teacher">Teacher</SelectItem>
               <SelectItem value="parent">Parent</SelectItem>
+              <SelectItem value="director">Director</SelectItem>
+              <SelectItem value="admin">Admin</SelectItem>
             </SelectContent>
           </Select>
-          <Button variant="outline" size="icon" aria-label="Filter users">
+          <Button variant="outline" size="icon" onClick={() => { setSearchTerm(''); setRoleFilter('all'); }}>
             <Filter className="h-4 w-4" />
           </Button>
         </div>
@@ -583,12 +649,9 @@ export default function UsersPage() {
                           </Button>
                         </DropdownMenuTrigger>
                         <DropdownMenuContent align="end">
-                          <DropdownMenuItem onClick={() => handleOpenEdit(user)}>Edit</DropdownMenuItem>
-                          <DropdownMenuItem onClick={() => handleOpenChangePassword(user)}>Change Password</DropdownMenuItem>
-                          <DropdownMenuItem 
-                            className="text-destructive"
-                            onClick={() => handleToggleSuspend(user.id, user.status)}
-                          >
+                          <DropdownMenuItem onClick={() => handleEditUser(user)}>Edit</DropdownMenuItem>
+                          <DropdownMenuItem onClick={() => handleChangePassword(user)}>Change Password</DropdownMenuItem>
+                          <DropdownMenuItem className="text-destructive" onClick={() => handleToggleStatus(user)}>
                             {user.status === 'Active' ? 'Suspend' : 'Activate'}
                           </DropdownMenuItem>
                         </DropdownMenuContent>

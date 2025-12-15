@@ -160,17 +160,22 @@ export default function SchoolsPage() {
                       onChange={(e) => setForm((f) => ({ ...f, students: e.target.value }))}
                     />
                   </div>
-  <div className="space-y-2">
+                  <div className="space-y-2">
                     <Label htmlFor="status">Status</Label>
-                    <Select value={form.status} onValueChange={(value: 'Active' | 'Maintenance') => setForm((f) => ({ ...f, status: value }))}>
-                      <SelectTrigger id="status">
-                        <SelectValue />
-                      </SelectTrigger>
-                      <SelectContent>
-                        <SelectItem value="Active">Active</SelectItem>
-                        <SelectItem value="Maintenance">Maintenance</SelectItem>
-                      </SelectContent>
-                    </Select>
+                    <select
+                      id="status"
+                      className="border rounded-md px-3 py-2 text-sm bg-background"
+                      value={form.status}
+                      onChange={(e) =>
+                        setForm((f) => ({
+                          ...f,
+                          status: e.target.value as 'Active' | 'Maintenance',
+                        }))
+                      }
+                    >
+                      <option value="Active">Active</option>
+                      <option value="Maintenance">Maintenance</option>
+                    </select>
                   </div>
                 </div>
               </div>
