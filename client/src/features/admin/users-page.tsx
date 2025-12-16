@@ -15,8 +15,10 @@ import { AdminUser } from '@shared/schema';
 import { useState } from 'react';
 import { useToast } from '@/hooks/use-toast';
 import { useAuthStore } from '@/store/useAuthStore';
+import AddUserDialog from './userFunction/addNewUser';
 
 export default function UsersPage() {
+  const [isAddOpen, setIsAddOpen] =useState(false)
   const queryClient = useQueryClient();
   const { toast } = useToast();
   const { user } = useAuthStore();
@@ -44,8 +46,8 @@ export default function UsersPage() {
   });
 
   // Determine which roles can be assigned
-  const availableRoles = user?.role === 'super_admin' 
-    ? ['Student', 'Teacher', 'Parent', 'Director', 'Admin'] 
+  const availableRoles = user?.role === 'super_admin'
+    ? ['Student', 'Teacher', 'Parent', 'Director', 'Admin']
     : ['Student', 'Teacher', 'Parent', 'Director'];
 
   const { data: users = [], isLoading } = useQuery<AdminUser[]>({
@@ -65,17 +67,17 @@ export default function UsersPage() {
   ];
 
   const allUsers = users.length > 0 ? users : demoUsers;
-  
+
   // Filter users based on search term and role
   const displayUsers = allUsers.filter(user => {
-    const matchesSearch = searchTerm === '' || 
+    const matchesSearch = searchTerm === '' ||
       user.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
       user.email.toLowerCase().includes(searchTerm.toLowerCase()) ||
       user.username.toLowerCase().includes(searchTerm.toLowerCase());
-    
-    const matchesRole = roleFilter === 'all' || 
+
+    const matchesRole = roleFilter === 'all' ||
       user.role.toLowerCase() === roleFilter.toLowerCase();
-    
+
     return matchesSearch && matchesRole;
   });
 
@@ -83,7 +85,7 @@ export default function UsersPage() {
     mutationFn: async () => {
       // Demo: Simulate API call
       await new Promise(resolve => setTimeout(resolve, 500));
-      
+
       const userData = {
         id: Date.now().toString(),
         name: form.name.trim(),
@@ -93,7 +95,7 @@ export default function UsersPage() {
         status: form.status,
         createdAt: new Date().toISOString(),
       };
-      
+
       console.log('Demo: User created:', userData);
       return userData;
     },
@@ -132,7 +134,7 @@ export default function UsersPage() {
       });
       return;
     }
-    
+
     createUserMutation.mutate();
   };
 
@@ -171,7 +173,7 @@ export default function UsersPage() {
       });
       return;
     }
-    
+
     toast({
       title: 'User Updated',
       description: `${editForm.name} has been updated successfully.`,
@@ -189,7 +191,7 @@ export default function UsersPage() {
       });
       return;
     }
-    
+
     toast({
       title: 'Password Changed',
       description: `Password for ${selectedUser?.name} has been updated.`,
@@ -203,133 +205,17 @@ export default function UsersPage() {
       <div className="space-y-6">
         <div className="flex flex-col md:flex-row justify-between gap-4">
           <h2 className="text-3xl font-bold tracking-tight">User Management</h2>
+        
           {canAddUser && (
-            <Dialog open={isDialogOpen} onOpenChange={setIsDialogOpen}>
-              <DialogTrigger asChild>
-                <Button>
-                  <UserPlus className="mr-2 h-4 w-4" /> Add New User
-                </Button>
-              </DialogTrigger>
-              <DialogContent>
-              <DialogHeader>
-                <DialogTitle>Add New User</DialogTitle>
-              </DialogHeader>
-              <form
-                onSubmit={(e) => {
-                  e.preventDefault();
-                  handleCreateUser();
-                }}
-              >
-                <div className="space-y-4 mt-2">
-                  <div className="space-y-2">
-                    <Label htmlFor="name">Full Name</Label>
-                    <Input
-                      id="name"
-                      value={form.name}
-                      onChange={(e) => setForm((f) => ({ ...f, name: e.target.value }))}
-                      placeholder="e.g. John Doe"
-                      required
-                    />
-                  </div>
-                  <div className="space-y-2">
-                    <Label htmlFor="username">Username</Label>
-                    <Input
-                      id="username"
-                      value={form.username}
-                      onChange={(e) => setForm((f) => ({ ...f, username: e.target.value }))}
-                      placeholder="e.g. johndoe"
-                      required
-                    />
-                    <p className="text-xs text-muted-foreground">User will login with this username</p>
-                  </div>
-                  <div className="space-y-2">
-                    <Label htmlFor="email">Email</Label>
-                    <Input
-                      id="email"
-                      type="email"
-                      value={form.email}
-                      onChange={(e) => setForm((f) => ({ ...f, email: e.target.value }))}
-                      placeholder="e.g. john@school.com"
-                      required
-                    />
-                  </div>
-                  <div className="space-y-2">
-                    <Label htmlFor="password">Password</Label>
-                    <Input
-                      id="password"
-                      type="password"
-                      value={form.password}
-                      onChange={(e) => setForm((f) => ({ ...f, password: e.target.value }))}
-                      placeholder="Minimum 6 characters"
-                      required
-                      minLength={6}
-                    />
-                    <p className="text-xs text-muted-foreground">Minimum 6 characters required</p>
-                  </div>
-                  <div className="grid grid-cols-2 gap-4">
-                    <div className="space-y-2">
-                      <Label htmlFor="role">Role</Label>
-                      <select
-                        id="role"
-                        className="border rounded-md px-3 py-2 text-sm bg-background"
-                        value={form.role}
-                        onChange={(e) =>
-                          setForm((f) => ({
-                            ...f,
-                            role: e.target.value as typeof form.role,
-                          }))
-                        }
-                      >
-                        {availableRoles.map((role) => (
-                          <option key={role} value={role}>{role}</option>
-                        ))}
-                      </select>
-                      <p className="text-xs text-muted-foreground">
-                        {user?.role === 'super_admin' 
-                          ? 'You can assign Admin role' 
-                          : 'Only Super Admin can assign Admin role'}
-                      </p>
-                    </div>
-                    <div className="space-y-2">
-                      <Label htmlFor="status">Status</Label>
-                      <select
-                        id="status"
-                        className="border rounded-md px-3 py-2 text-sm bg-background"
-                        value={form.status}
-                        onChange={(e) =>
-                          setForm((f) => ({
-                            ...f,
-                            status: e.target.value as typeof form.status,
-                          }))
-                        }
-                      >
-                        <option value="Active">Active</option>
-                        <option value="Suspended">Suspended</option>
-                      </select>
-                    </div>
-                  </div>
-                </div>
-                <DialogFooter className="mt-6">
-                  <Button
-                    type="button"
-                    variant="outline"
-                    onClick={() => {
-                      setIsDialogOpen(false);
-                      setForm({ name: '', username: '', email: '', password: '', role: 'Student', status: 'Active' });
-                    }}
-                  >
-                    Cancel
-                  </Button>
-                  <Button
-                    type="submit"
-                    disabled={createUserMutation.isPending}
-                  >
-                    {createUserMutation.isPending ? 'Creating...' : 'Create User'}
-                  </Button>
-                </DialogFooter>
-              </form>
-              </DialogContent>
-            </Dialog>
+            <AddUserDialog
+              isOpen={isAddOpen}
+              setIsOpen={setIsAddOpen}
+              availableRoles={
+                user?.role === "super_admin"
+                  ? ["Student", "Teacher", "Parent", "Director", "Admin"]
+                  : ["Student", "Teacher", "Parent", "Director"]
+              }
+            />
           )}
         </div>
 
@@ -345,7 +231,9 @@ export default function UsersPage() {
                 <Input
                   id="edit-name"
                   value={editForm.name}
-                  onChange={(e) => setEditForm((f) => ({ ...f, name: e.target.value }))}
+                  onChange={(e) =>
+                    setEditForm((f) => ({ ...f, name: e.target.value }))
+                  }
                   placeholder="e.g. John Doe"
                   required
                 />
@@ -356,7 +244,9 @@ export default function UsersPage() {
                   id="edit-email"
                   type="email"
                   value={editForm.email}
-                  onChange={(e) => setEditForm((f) => ({ ...f, email: e.target.value }))}
+                  onChange={(e) =>
+                    setEditForm((f) => ({ ...f, email: e.target.value }))
+                  }
                   placeholder="e.g. john@school.com"
                   required
                 />
@@ -376,7 +266,9 @@ export default function UsersPage() {
                     }
                   >
                     {availableRoles.map((role) => (
-                      <option key={role} value={role}>{role}</option>
+                      <option key={role} value={role}>
+                        {role}
+                      </option>
                     ))}
                   </select>
                 </div>
@@ -407,15 +299,16 @@ export default function UsersPage() {
               >
                 Cancel
               </Button>
-              <Button onClick={handleSaveEdit}>
-                Save Changes
-              </Button>
+              <Button onClick={handleSaveEdit}>Save Changes</Button>
             </DialogFooter>
           </DialogContent>
         </Dialog>
 
         {/* Change Password Dialog */}
-        <Dialog open={isPasswordDialogOpen} onOpenChange={setIsPasswordDialogOpen}>
+        <Dialog
+          open={isPasswordDialogOpen}
+          onOpenChange={setIsPasswordDialogOpen}
+        >
           <DialogContent>
             <DialogHeader>
               <DialogTitle>Change Password</DialogTitle>
@@ -423,7 +316,7 @@ export default function UsersPage() {
             <div className="space-y-4 mt-2">
               <div className="space-y-2">
                 <Label>User</Label>
-                <Input value={selectedUser?.name || ''} disabled />
+                <Input value={selectedUser?.name || ""} disabled />
               </div>
               <div className="space-y-2">
                 <Label htmlFor="new-password">New Password</Label>
@@ -436,7 +329,9 @@ export default function UsersPage() {
                   required
                   minLength={6}
                 />
-                <p className="text-xs text-muted-foreground">Minimum 6 characters required</p>
+                <p className="text-xs text-muted-foreground">
+                  Minimum 6 characters required
+                </p>
               </div>
             </div>
             <DialogFooter className="mt-6">
@@ -447,9 +342,7 @@ export default function UsersPage() {
               >
                 Cancel
               </Button>
-              <Button onClick={handleSavePassword}>
-                Change Password
-              </Button>
+              <Button onClick={handleSavePassword}>Change Password</Button>
             </DialogFooter>
           </DialogContent>
         </Dialog>
@@ -457,9 +350,9 @@ export default function UsersPage() {
         <div className="flex gap-4 items-center">
           <div className="relative flex-1 max-w-sm">
             <Search className="absolute left-2 top-2.5 h-4 w-4 text-muted-foreground" />
-            <Input 
-              placeholder="Search users..." 
-              className="pl-8" 
+            <Input
+              placeholder="Search users..."
+              className="pl-8"
               value={searchTerm}
               onChange={(e) => setSearchTerm(e.target.value)}
             />
@@ -477,7 +370,14 @@ export default function UsersPage() {
               <SelectItem value="admin">Admin</SelectItem>
             </SelectContent>
           </Select>
-          <Button variant="outline" size="icon" onClick={() => { setSearchTerm(''); setRoleFilter('all'); }}>
+          <Button
+            variant="outline"
+            size="icon"
+            onClick={() => {
+              setSearchTerm("");
+              setRoleFilter("all");
+            }}
+          >
             <Filter className="h-4 w-4" />
           </Button>
         </div>
@@ -497,46 +397,71 @@ export default function UsersPage() {
               <TableBody>
                 {isLoading ? (
                   <TableRow>
-                    <TableCell colSpan={5} className="text-center py-8 text-muted-foreground">
+                    <TableCell
+                      colSpan={5}
+                      className="text-center py-8 text-muted-foreground"
+                    >
                       Loading users...
                     </TableCell>
                   </TableRow>
                 ) : displayUsers.length === 0 ? (
                   <TableRow>
-                    <TableCell colSpan={5} className="text-center py-8 text-muted-foreground">
+                    <TableCell
+                      colSpan={5}
+                      className="text-center py-8 text-muted-foreground"
+                    >
                       No users found
                     </TableCell>
                   </TableRow>
                 ) : (
                   displayUsers.map((user) => (
-                  <TableRow key={user.id}>
-                    <TableCell className="font-medium">{user.name}</TableCell>
-                    <TableCell>{user.email}</TableCell>
-                    <TableCell>
-                      <Badge variant="outline" className="capitalize">{user.role}</Badge>
-                    </TableCell>
-                    <TableCell>
-                      <Badge variant={user.status === 'Active' ? 'default' : 'destructive'}>
-                        {user.status}
-                      </Badge>
-                    </TableCell>
-                    <TableCell className="text-right">
-                      <DropdownMenu>
-                        <DropdownMenuTrigger asChild>
-                          <Button variant="ghost" size="icon">
-                            <MoreHorizontal className="h-4 w-4" />
-                          </Button>
-                        </DropdownMenuTrigger>
-                        <DropdownMenuContent align="end">
-                          <DropdownMenuItem onClick={() => handleEditUser(user)}>Edit</DropdownMenuItem>
-                          <DropdownMenuItem onClick={() => handleChangePassword(user)}>Change Password</DropdownMenuItem>
-                          <DropdownMenuItem className="text-destructive" onClick={() => handleToggleStatus(user)}>
-                            {user.status === 'Active' ? 'Suspend' : 'Activate'}
-                          </DropdownMenuItem>
-                        </DropdownMenuContent>
-                      </DropdownMenu>
-                    </TableCell>
-                  </TableRow>
+                    <TableRow key={user.id}>
+                      <TableCell className="font-medium">{user.name}</TableCell>
+                      <TableCell>{user.email}</TableCell>
+                      <TableCell>
+                        <Badge variant="outline" className="capitalize">
+                          {user.role}
+                        </Badge>
+                      </TableCell>
+                      <TableCell>
+                        <Badge
+                          variant={
+                            user.status === "Active" ? "default" : "destructive"
+                          }
+                        >
+                          {user.status}
+                        </Badge>
+                      </TableCell>
+                      <TableCell className="text-right">
+                        <DropdownMenu>
+                          <DropdownMenuTrigger asChild>
+                            <Button variant="ghost" size="icon">
+                              <MoreHorizontal className="h-4 w-4" />
+                            </Button>
+                          </DropdownMenuTrigger>
+                          <DropdownMenuContent align="end">
+                            <DropdownMenuItem
+                              onClick={() => handleEditUser(user)}
+                            >
+                              Edit
+                            </DropdownMenuItem>
+                            <DropdownMenuItem
+                              onClick={() => handleChangePassword(user)}
+                            >
+                              Change Password
+                            </DropdownMenuItem>
+                            <DropdownMenuItem
+                              className="text-destructive"
+                              onClick={() => handleToggleStatus(user)}
+                            >
+                              {user.status === "Active"
+                                ? "Suspend"
+                                : "Activate"}
+                            </DropdownMenuItem>
+                          </DropdownMenuContent>
+                        </DropdownMenu>
+                      </TableCell>
+                    </TableRow>
                   ))
                 )}
               </TableBody>

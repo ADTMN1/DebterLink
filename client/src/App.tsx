@@ -16,22 +16,44 @@ const RegisterPage = lazy(() => import("@/pages/auth/register"));
 const ForgotPasswordPage = lazy(() => import("@/pages/auth/forgot-password"));
 
 // Dashboard pages
-const StudentDashboard = lazy(() => import("@/pages/dashboard/student-dashboard"));
-const TeacherDashboard = lazy(() => import("@/pages/dashboard/teacher-dashboard"));
-const ParentDashboard = lazy(() => import("@/pages/dashboard/parent-dashboard"));
-const DirectorDashboard = lazy(() => import("@/pages/dashboard/director-dashboard"));
+const StudentDashboard = lazy(
+  () => import("@/pages/dashboard/student-dashboard")
+);
+const TeacherDashboard = lazy(
+  () => import("@/pages/dashboard/teacher-dashboard")
+);
+const ParentDashboard = lazy(
+  () => import("@/pages/dashboard/parent-dashboard")
+);
+const DirectorDashboard = lazy(
+  () => import("@/pages/dashboard/director-dashboard")
+);
 const AdminDashboard = lazy(() => import("@/pages/dashboard/admin-dashboard"));
 
 // Feature pages
 const StudentGrades = lazy(() => import("@/pages/dashboard/student-grades"));
-const AttendancePage = lazy(() => import("@/pages/dashboard/attendance-page").then(m => ({ default: m.AttendancePage })));
-const ResultsPage = lazy(() => import("@/pages/dashboard/results-page").then(m => ({ default: m.ResultsPage })));
+const AttendancePage = lazy(() =>
+  import("@/pages/dashboard/attendance-page").then((m) => ({
+    default: m.AttendancePage,
+  }))
+);
+const ResultsPage = lazy(() =>
+  import("@/pages/dashboard/results-page").then((m) => ({
+    default: m.ResultsPage,
+  }))
+);
 const ProfilePage = lazy(() => import("@/pages/profile/profile-page"));
 const SettingsPage = lazy(() => import("@/pages/settings-page"));
-const BehaviorAnalyticsPage = lazy(() => import("@/pages/dashboard/behavior-analytics-page").then(m => ({ default: m.BehaviorAnalyticsPage })));
+const BehaviorAnalyticsPage = lazy(() =>
+  import("@/pages/dashboard/behavior-analytics-page").then((m) => ({
+    default: m.BehaviorAnalyticsPage,
+  }))
+);
 
 // Feature modules
-const AssignmentsPage = lazy(() => import("@/features/assignments/assignments-page"));
+const AssignmentsPage = lazy(
+  () => import("@/features/assignments/assignments-page")
+);
 const MessagingPage = lazy(() => import("@/features/messaging/messaging-page"));
 const CalendarPage = lazy(() => import("@/features/calendar/calendar-page"));
 const ResourcesPage = lazy(() => import("@/features/resources/resources-page"));
@@ -55,12 +77,19 @@ function Router() {
 
   const getDashboard = () => {
     switch (user?.role) {
-      case 'student': return StudentDashboard;
-      case 'teacher': return TeacherDashboard;
-      case 'parent': return ParentDashboard;
-      case 'director': return DirectorDashboard;
-      case 'admin': case 'super_admin': return AdminDashboard;
-      default: return StudentDashboard;
+      case "student":
+        return StudentDashboard;
+      case "teacher":
+        return TeacherDashboard;
+      case "parent":
+        return ParentDashboard;
+      case "director":
+        return DirectorDashboard;
+      case "admin":
+      case "super_admin":
+        return AdminDashboard;
+      default:
+        return StudentDashboard;
     }
   };
 
@@ -68,6 +97,7 @@ function Router() {
     <Switch>
       <Route path="/login" component={LoginPage} />
       <Route path="/register" component={RegisterPage} />
+
       <Route path="/forgot-password" component={ForgotPasswordPage} />
       <Route path="/landing" component={LandingPage} />
 
@@ -86,92 +116,184 @@ function Router() {
 
       {/* Student Routes */}
       <Route path="/grades">
-        {() => <ProtectedRoute component={StudentGrades} allowedRoles={['student', 'parent']} />}
+        {() => (
+          <ProtectedRoute
+            component={StudentGrades}
+            allowedRoles={["student", "parent"]}
+          />
+        )}
       </Route>
 
       <Route path="/dashboard/attendance">
-        {() => <ProtectedRoute component={AttendancePage} allowedRoles={['student', 'teacher', 'parent', 'director']} />}
+        {() => (
+          <ProtectedRoute
+            component={AttendancePage}
+            allowedRoles={["student", "teacher", "parent", "director"]}
+          />
+        )}
       </Route>
 
       <Route path="/dashboard/results">
-        {() => <ProtectedRoute component={ResultsPage} allowedRoles={['director']} />}
+        {() => (
+          <ProtectedRoute component={ResultsPage} allowedRoles={["director"]} />
+        )}
       </Route>
 
       <Route path="/assignments">
-        {() => <ProtectedRoute component={AssignmentsPage} allowedRoles={['student', 'teacher']} />}
+        {() => (
+          <ProtectedRoute
+            component={AssignmentsPage}
+            allowedRoles={["student", "teacher"]}
+          />
+        )}
       </Route>
 
-
       <Route path="/gradebook">
-        {() => <ProtectedRoute component={GradebookPage} allowedRoles={['teacher']} />}
+        {() => (
+          <ProtectedRoute
+            component={GradebookPage}
+            allowedRoles={["teacher"]}
+          />
+        )}
       </Route>
 
       <Route path="/behavior">
-        {() => <ProtectedRoute component={BehaviorPage} allowedRoles={['student', 'parent', 'teacher', 'director']} />}
+        {() => (
+          <ProtectedRoute
+            component={BehaviorPage}
+            allowedRoles={["student", "parent", "teacher", "director"]}
+          />
+        )}
       </Route>
       <Route path="/dashboard/behavior-analytics">
-        {() => <ProtectedRoute component={BehaviorAnalyticsPage} allowedRoles={['director']} />}
+        {() => (
+          <ProtectedRoute
+            component={BehaviorAnalyticsPage}
+            allowedRoles={["director"]}
+          />
+        )}
       </Route>
 
       <Route path="/calendar">
-        {() => <ProtectedRoute component={CalendarPage} allowedRoles={['student', 'parent', 'teacher', 'director', 'admin']} />}
+        {() => (
+          <ProtectedRoute
+            component={CalendarPage}
+            allowedRoles={["student", "parent", "teacher", "director", "admin"]}
+          />
+        )}
       </Route>
 
       <Route path="/resources">
-        {() => <ProtectedRoute component={ResourcesPage} allowedRoles={['student', 'teacher', 'director']} />}
+        {() => (
+          <ProtectedRoute
+            component={ResourcesPage}
+            allowedRoles={["student", "teacher", "director"]}
+          />
+        )}
       </Route>
 
       <Route path="/appeals">
-        {() => <ProtectedRoute component={AppealsPage} allowedRoles={['student', 'parent', 'teacher', 'director']} />}
+        {() => (
+          <ProtectedRoute
+            component={AppealsPage}
+            allowedRoles={["student", "parent", "teacher", "director"]}
+          />
+        )}
       </Route>
 
       <Route path="/timetable">
-        {() => <ProtectedRoute component={TimetablePage} allowedRoles={['student', 'teacher', 'director']} />}
+        {() => (
+          <ProtectedRoute
+            component={TimetablePage}
+            allowedRoles={["student", "teacher", "director"]}
+          />
+        )}
       </Route>
 
       {/* Communication Routes */}
       <Route path="/messaging">
-        {() => <ProtectedRoute component={MessagingPage} allowedRoles={['student', 'parent', 'teacher', 'director']} />}
+        {() => (
+          <ProtectedRoute
+            component={MessagingPage}
+            allowedRoles={["student", "parent", "teacher", "director"]}
+          />
+        )}
       </Route>
 
       {/* Admin Routes */}
       <Route path="/users">
-        {() => <ProtectedRoute component={UsersPage} allowedRoles={['admin', 'super_admin', 'director']} />}
+        {() => (
+          <ProtectedRoute
+            component={UsersPage}
+            allowedRoles={["admin", "super_admin", "director"]}
+          />
+        )}
       </Route>
 
       <Route path="/schools">
-        {() => <ProtectedRoute component={SchoolsPage} allowedRoles={['super_admin']} />}
+        {() => (
+          <ProtectedRoute
+            component={SchoolsPage}
+            allowedRoles={["super_admin"]}
+          />
+        )}
       </Route>
 
       {/* Finance Routes */}
       <Route path="/salary">
-        {() => <ProtectedRoute component={SalaryPage} allowedRoles={['teacher', 'director']} />}
+        {() => (
+          <ProtectedRoute
+            component={SalaryPage}
+            allowedRoles={["teacher", "director"]}
+          />
+        )}
       </Route>
 
       {/* Reports - Director/Admin only */}
       <Route path="/reports">
-        {() => <ProtectedRoute component={ReportsPage} allowedRoles={['director', 'admin', 'super_admin']} />}
+        {() => (
+          <ProtectedRoute
+            component={ReportsPage}
+            allowedRoles={["director", "admin", "super_admin"]}
+          />
+        )}
       </Route>
 
       {/* Audit - Admin only */}
       <Route path="/audit">
-        {() => <ProtectedRoute component={AuditPage} allowedRoles={['admin', 'super_admin']} />}
+        {() => (
+          <ProtectedRoute
+            component={AuditPage}
+            allowedRoles={["admin", "super_admin"]}
+          />
+        )}
       </Route>
 
       {/* Backup - Super Admin only */}
       <Route path="/backup">
-        {() => <ProtectedRoute component={BackupPage} allowedRoles={['super_admin']} />}
+        {() => (
+          <ProtectedRoute
+            component={BackupPage}
+            allowedRoles={["super_admin"]}
+          />
+        )}
       </Route>
 
       {/* Director Routes */}
       <Route path="/classes">
-        {() => <ProtectedRoute component={ClassesPage} allowedRoles={['director']} />}
+        {() => (
+          <ProtectedRoute component={ClassesPage} allowedRoles={["director"]} />
+        )}
       </Route>
 
       <Route path="/subjects">
-        {() => <ProtectedRoute component={SubjectsPage} allowedRoles={['director']} />}
+        {() => (
+          <ProtectedRoute
+            component={SubjectsPage}
+            allowedRoles={["director"]}
+          />
+        )}
       </Route>
-
 
       {/* Redirect root to dashboard if logged in, else landing */}
       <Route path="/">

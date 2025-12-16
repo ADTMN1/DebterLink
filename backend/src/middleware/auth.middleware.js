@@ -6,14 +6,13 @@ export const authMiddleware = (req, res, next) => {
     return res.status(401).json({ error: "Access token required" });
   }
 
-  const token = authHeader.split(" ")[1]; // Expect "Bearer <token>"
+  const token = authHeader.split(" ")[1]; 
   if (!token) {
     return res.status(401).json({ error: "Access token required" });
   }
 
   try {
     const decoded = jwt.verify(token, process.env.JWT_ACCESS_SECRET);
-    // Attach decoded payload to request
     req.user = decoded;
     console.log("Decoded JWT payload:", decoded);
     next();
@@ -24,7 +23,7 @@ export const authMiddleware = (req, res, next) => {
 
 export const verifyRole = (role) => {
   return (req, res, next) => {
-    const userRole = Number(req.user.role_id); // normalize to number
+    const userRole = Number(req.user.role_id); 
     console.log("Checking role:", userRole, "Expected:", role);
 
     if (userRole !== role) {
@@ -33,10 +32,4 @@ export const verifyRole = (role) => {
     next();
   };
 };
-    // req.user=req.user
-//        const user = req.user
-
-
-
-
-  // export default {verifyRole, authMiddleware};
+   
