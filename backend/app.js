@@ -1,73 +1,107 @@
 import express from "express";
 import cors from "cors";
 import helmet from "helmet";
-import pool from "./config/db.config.js";
-import routes from "./src/index.js";
 import dotenv from "dotenv";
-import http from 'http'
-import { initSocket } from "./src/controllers/socket.controller/socketIo.js";
-import "./events/event.listner.js"; // Import event listeners
-import { sanitizeInput } from "./src/middleware/sanitize.js";
+import http from "http";
 import rateLimit from "express-rate-limit";
 
+import pool from "./config/db.config.js";
+import routes from "./src/index.js";
+import { initSocket } from "./src/controllers/socket.controller/socketIo.js";
+import { sanitizeInput } from "./src/middleware/sanitize.js";
+import { errorHandler } from "./src/middleware/errorHandler.js";
+
 dotenv.config();
+
 const app = express();
+const server = http.createServer(app);
 const PORT = process.env.PORT || 2000;
 
-// Security middleware
-app.use(helmet());
-app.use(cors({
-  origin: ["https://yourfrontend.com"], 
-  credentials: true,
-}));
-app.use(express.json());
-app.use(express.urlencoded({ extended: true }));
-app.use(sanitizeInput);
+/* ======================
+   Security Middleware
+====================== */
 
-// Rate limiter for auth
+// HTTP headers
+app.use(helmet());
+
+// CORS
+app.use(
+  cors({
+    origin: process.env.CLIENT_ORIGIN?.split(",") || [],
+    credentials: true,
+  })
+);
+
+// Body limits (PREVENT DoS)
+app.use(express.json({ limit: "10kb" }));
+app.use(express.urlencoded({ extended: true, limit: "10kb" }));
+
+/* ======================
+   Rate Limiters
+====================== */
+
 const authLimiter = rateLimit({
   windowMs: 5 * 60 * 1000,
   max: 5,
-  message: "Too many requests, try again later.",
+  standardHeaders: true,
+  legacyHeaders: false,
 });
-app.use("/api/auth/login", authLimiter);
 
-// Static files
+const generalLimiter = rateLimit({
+  windowMs: 15 * 60 * 1000,
+  max: 100,
+});
+
+app.use("/api/auth", authLimiter);
+app.use("/api", generalLimiter);
+
+/* ======================
+   Static Files
+====================== */
 app.use("/uploads", express.static("uploads"));
 
-// Trim URLs
-app.use((req, res, next) => {
-  req.url = req.url.trim();
-  next();
+/* ======================
+   Routes
+====================== */
+
+// Sanitize ONLY request input routes
+app.use("/api", sanitizeInput, routes);
+
+/* ======================
+   Health Check
+====================== */
+app.get("/health", async (req, res) => {
+  try {
+    await pool.query("SELECT 1");
+    res.status(200).json({ status: "ok" });
+  } catch {
+    res.status(503).json({ status: "db down" });
+  }
 });
 
-// Socket.io
-const server = http.createServer(app);
-initSocket(server)
-
-// API routes
-app.use("/api", routes);
-
-// DB check
-const main = async () => {
-  try {
-    const result = await pool.query("SELECT NOW()");
-    console.log("PostgreSQL server time:", result.rows[0]);
-  } catch (err) {
-    console.error("Error running queries:", err.message);
-  }
-};
-main();
-
-// Root endpoint
-app.get("/", async (req, res) => {
+/* ======================
+   Root
+====================== */
+app.get("/", (req, res) => {
   res.status(200).json({
     status: true,
-    msg: "DEBTER LINK IS LIVE NOW."
+    message: "DEBTER LINK IS LIVE",
   });
 });
 
-// Start server
+/* ======================
+   Global Error Handler
+====================== */
+app.use(errorHandler);
+
+/* ======================
+   Socket.IO
+====================== */
+initSocket(server);
+
+/* ======================
+   Server Start
+====================== */
 server.listen(PORT, () => {
-  console.log(`Server running on port ${PORT}`);
+  console.log(`🚀 Server running on port ${PORT}`);
 });

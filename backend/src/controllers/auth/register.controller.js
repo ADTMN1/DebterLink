@@ -1,103 +1,133 @@
-import registerQuery from "../../services/authService/register.query.js";
+// In register.controller.js
 import bcrypt from "bcryptjs";
+import { validationResult } from "express-validator";
+import registerQuery from "../../services/authService/register.query.js";
+import db from "../../../config/db.config.js";
+import { ROLES } from "../../../constants/roles.js";
+import { generateTemporaryPassword, sendWelcomeEmail } from "../../Utils/helper.js";
+import crypto from "crypto";
 
-/**
- * ADMIN-ONLY USER REGISTRATION
- * No tokens are issued here
- */
 export const registerController = async (req, res) => {
+  const client = await db.connect();
+  
   try {
-    const {
-      full_name,
-      email,
-      password,
-      confirmPassword,
-      phone_number,
-      role_id,
-    } = req.body;
-
-    /* ===============================
-       1. Required fields
-    =============================== */
-    if (!full_name || !email || !password || !confirmPassword || !role_id) {
-      return res.status(400).json({ error: "Invalid registration data" });
+    // Input validation
+    const errors = validationResult(req);
+    if (!errors.isEmpty()) {
+      return res.status(400).json({ 
+        error: "Validation failed", 
+        details: errors.array() 
+      });
     }
 
-    /* ===============================
-       2. Normalize input
-    =============================== */
-    const normalizedEmail = email.toLowerCase().trim();
-    const normalizedName = full_name.trim();
+    const { school, admin, created_by } = req.body;
 
-    /* ===============================
-       3. Email validation
-    =============================== */
-    const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
-    if (!emailRegex.test(normalizedEmail)) {
-      return res.status(400).json({ error: "Invalid registration data" });
-    }
+    // Verify super admin is creating
+    if (!req.user || req.user.role_id !== ROLES.SUPER_ADMIN) {
+  return res.status(403).json({
+    error: "Forbidden",
+    message: "Only super admin can create schools and admins"
+  });
+}
+    // Start transaction
+    await client.query("BEGIN");
 
-    /* ===============================
-       4. Password policy
-    =============================== */
-    if (password !== confirmPassword) {
-      return res.status(400).json({ error: "Invalid registration data" });
-    }
-
-    const strongRegex =
-      /^(?=.*[A-Z])(?=.*[a-z])(?=.*\d)(?=.*[@$!%*?&]).{8,}$/;
-
-    if (!strongRegex.test(password)) {
-      return res.status(400).json({ error: "Weak password" });
-    }
-
-    /* ===============================
-       5. Role escalation prevention
-    =============================== */
-    const ALLOWED_ROLES = [2, 3, 4]; // example: teacher, student, parent
-    if (!ALLOWED_ROLES.includes(Number(role_id))) {
-      return res.status(403).json({ error: "Unauthorized role assignment" });
-    }
-
-    /* ===============================
-       6. Check user existence
-    =============================== */
-    const userExists = await registerQuery.checkUserExists(normalizedEmail);
+    // Check if user already exists
+    const userExists = await registerQuery.checkUserExists(admin.email, client);
     if (userExists) {
-      // Generic message to prevent email enumeration
-      return res.status(400).json({ error: "Invalid registration data" });
+      await client.query("ROLLBACK");
+      return res.status(409).json({ 
+        error: "Conflict", 
+        message: "Email already registered" 
+      });
     }
 
-    /* ===============================
-       7. Secure password hashing
-    =============================== */
-    const hashedPassword = await bcrypt.hash(password, 12);
+    const newSchool = await registerQuery.createSchool({
+      school_name: school.name,
+      code: school.code,
+      email: school.email,
+      phone: school.phone,
+      address: school.address,
+      academic_year: school.academic_year,
+      status: school.status || 'active',
+      website: school.website
+    }, client);
 
-    /* ===============================
-       8. Create user
-    =============================== */
-    const user = await registerQuery.createUser(
-      normalizedName,
-      normalizedEmail,
+    
+    const temporaryPassword = generateTemporaryPassword();
+    const hashedPassword = await bcrypt.hash(temporaryPassword, 12);
+
+    const fullName = `${admin.first_name} ${admin.last_name}`.trim();
+    const adminUser = await registerQuery.createUser(
+      fullName,
+      admin.email,
       hashedPassword,
-      phone_number || null,
-      role_id
+      admin.phone,
+      ROLES.ADMIN, // Assuming 2 is the role_id for admin
+      client
     );
 
-    /* ===============================
-       9. Response (NO TOKENS)
-    =============================== */
-    return res.status(201).json({
-      message: "User registered successfully",
-      user: {
-        user_id: user.user_id,
-        full_name: user.full_name,
-        email: user.email,
-        role_id: user.role_id,
-      },
-    });
+    await registerQuery.createAdmin({
+      user_id: adminUser.user_id,
+      school_id: newSchool.school_id
+    }, client);
+
+    const resetToken = crypto.randomBytes(32).toString('hex');
+    const resetTokenExpiry = new Date(Date.now() + 24 * 60 * 60 * 1000); // 24 hours
+    
+    await registerQuery.createPasswordResetToken(
+      adminUser.user_id,
+      resetToken,
+      resetTokenExpiry,
+      client
+    );
+
+    await client.query("COMMIT");
+
+    await sendWelcomeEmail(
+      admin.email,
+      admin.first_name,
+      resetToken,
+      adminUser.user_id
+    );
+
+    const response = {
+      success: true,
+      message: "School and admin registration successful",
+      data: {
+        school: {
+          id: newSchool.school_id,
+          name: newSchool.school_name,
+          code: newSchool.code ?? school.code,
+          email: newSchool.email
+        },
+        admin: {
+          id: adminUser.user_id,
+          name: fullName,
+          email: adminUser.email,
+          role: 'school_admin'
+        }
+      }
+    };
+
+    return res.status(201).json(response);
+
   } catch (error) {
-    console.error("Register error:", error);
-    return res.status(500).json({ error: "Registration failed" });
+    await client.query("ROLLBACK");
+    console.error("Registration error:", error);
+    
+    if (error.code === '23505') { // Unique violation
+      return res.status(409).json({ 
+        error: "Conflict", 
+        message: "A record with this information already exists" 
+      });
+    }
+    
+    return res.status(500).json({ 
+      error: "Internal Server Error", 
+      message: "An unexpected error occurred during registration" 
+    });
+  } finally {
+    client.release();
   }
 };
