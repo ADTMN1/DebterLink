@@ -25,6 +25,7 @@ import { useAuthStore } from '@/store/useAuthStore';
 import { createUserSchema, editUserSchema, passwordChangeSchema, CreateUserFormData, EditUserFormData, PasswordChangeFormData } from '@/lib/validations';
 
 export default function UsersPage() {
+  const [isAddOpen, setIsAddOpen] =useState(false)
   const queryClient = useQueryClient();
   const { user } = useAuthStore();
   const canAddUser = user?.role === 'admin' || user?.role === 'super_admin';
@@ -74,8 +75,8 @@ export default function UsersPage() {
   });
 
   // Determine which roles can be assigned
-  const availableRoles = user?.role === 'super_admin' 
-    ? ['Student', 'Teacher', 'Parent', 'Director', 'Admin'] 
+  const availableRoles = user?.role === 'super_admin'
+    ? ['Student', 'Teacher', 'Parent', 'Director', 'Admin']
     : ['Student', 'Teacher', 'Parent', 'Director'];
 
   const { data: users = [], isLoading, error, refetch } = useQuery<AdminUser[]>({
@@ -99,24 +100,24 @@ export default function UsersPage() {
   ];
 
   const allUsers = users.length > 0 ? users : demoUsers;
-  
+
   // Filter users based on search term and role
   const displayUsers = allUsers.filter(user => {
-    const matchesSearch = searchTerm === '' || 
+    const matchesSearch = searchTerm === '' ||
       user.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
       user.email.toLowerCase().includes(searchTerm.toLowerCase()) ||
       user.username.toLowerCase().includes(searchTerm.toLowerCase());
-    
-    const matchesRole = roleFilter === 'all' || 
+
+    const matchesRole = roleFilter === 'all' ||
       user.role.toLowerCase() === roleFilter.toLowerCase();
-    
+
     return matchesSearch && matchesRole;
   });
 
   const createUserMutation = useMutation({
     mutationFn: async (data: CreateUserFormData) => {
       await new Promise(resolve => setTimeout(resolve, 500));
-      
+
       const userData = {
         id: Date.now().toString(),
         name: data.name,
@@ -126,7 +127,7 @@ export default function UsersPage() {
         status: data.status,
         createdAt: new Date().toISOString(),
       };
-      
+
       console.log('Demo: User created:', userData);
       return userData;
     },
@@ -190,6 +191,7 @@ export default function UsersPage() {
       <div className="space-y-6">
         <div className="flex flex-col md:flex-row justify-between gap-4">
           <h2 className="text-3xl font-bold tracking-tight">User Management</h2>
+        
           {canAddUser && (
             <Dialog open={isDialogOpen} onOpenChange={setIsDialogOpen}>
               <DialogTrigger asChild>
@@ -478,7 +480,10 @@ export default function UsersPage() {
         </Dialog>
 
         {/* Change Password Dialog */}
-        <Dialog open={isPasswordDialogOpen} onOpenChange={setIsPasswordDialogOpen}>
+        <Dialog
+          open={isPasswordDialogOpen}
+          onOpenChange={setIsPasswordDialogOpen}
+        >
           <DialogContent>
             <DialogHeader>
               <DialogTitle>Change Password</DialogTitle>
