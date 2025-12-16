@@ -1,5 +1,5 @@
 -- ============================================
---  School Management System – Full SQL Schema
+--  School Management System – Secure SQL Schema
 -- ============================================
 
 -- Enable UUID generator
@@ -21,7 +21,7 @@ CREATE TABLE school (
     school_name VARCHAR(120) NOT NULL,
     address TEXT,
     phone VARCHAR(20),
-    email VARCHAR(120),
+    email VARCHAR(120) NOT NULL,
     website VARCHAR(200),
     director_id UUID
 );
@@ -43,8 +43,8 @@ CREATE TABLE users (
 -- =====================
 CREATE TABLE director (
     director_id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
-    user_id UUID REFERENCES users(user_id),
-    managed_school_id UUID REFERENCES school(school_id),
+    user_id UUID UNIQUE REFERENCES users(user_id) ON DELETE CASCADE,
+    managed_school_id UUID UNIQUE REFERENCES school(school_id) ON DELETE SET NULL,
     office_number VARCHAR(20),
     office_phoneNumber VARCHAR(25),
     start_date DATE,
@@ -54,18 +54,18 @@ CREATE TABLE director (
 -- Update FK for school (director_id)
 ALTER TABLE school
 ADD CONSTRAINT fk_school_director
-FOREIGN KEY (director_id) REFERENCES director(director_id);
+FOREIGN KEY (director_id) REFERENCES director(director_id) ON DELETE SET NULL;
 
 -- =====================
 -- 5. Class / Section
 -- =====================
 CREATE TABLE class (
     class_id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
-    school_id UUID REFERENCES school(school_id),
-    class_name VARCHAR(50),
+    school_id UUID REFERENCES school(school_id) ON DELETE CASCADE,
+    class_name VARCHAR(50) NOT NULL,
     section VARCHAR(10),
-    class_teacher_id UUID,
-    academic_year VARCHAR(15)
+    class_teacher_id UUID REFERENCES teacher(teacher_id) ON DELETE SET NULL,
+    academic_year VARCHAR(15) NOT NULL
 );
 
 -- =====================
@@ -73,13 +73,13 @@ CREATE TABLE class (
 -- =====================
 CREATE TABLE student (
     student_id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
-    user_id UUID REFERENCES users(user_id),
-    class_id UUID REFERENCES class(class_id),
-    enrollment_date DATE,
+    user_id UUID UNIQUE REFERENCES users(user_id) ON DELETE CASCADE,
+    class_id UUID REFERENCES class(class_id) ON DELETE SET NULL,
+    enrollment_date DATE NOT NULL,
     overall_result VARCHAR(20),
     teacher_comment TEXT,
     behavioral_comment TEXT,
-    status VARCHAR(20)
+    status VARCHAR(20) CHECK (status IN ('active','inactive','suspended'))
 );
 
 -- =====================
@@ -87,25 +87,20 @@ CREATE TABLE student (
 -- =====================
 CREATE TABLE teacher (
     teacher_id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
-    user_id UUID REFERENCES users(user_id),
-    salary NUMERIC(10,2),
+    user_id UUID UNIQUE REFERENCES users(user_id) ON DELETE CASCADE,
+    salary NUMERIC(10,2) CHECK (salary >= 0),
     specialization VARCHAR(120),
-    advisor_class_id UUID REFERENCES class(class_id)
+    advisor_class_id UUID REFERENCES class(class_id) ON DELETE SET NULL
 );
-
--- Update class FK for class_teacher_id
-ALTER TABLE class
-ADD CONSTRAINT fk_class_teacher FOREIGN KEY (class_teacher_id)
-REFERENCES teacher(teacher_id);
 
 -- =====================
 -- 8. Parent
 -- =====================
 CREATE TABLE parent (
     parent_id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
-    user_id UUID REFERENCES users(user_id),
+    user_id UUID UNIQUE REFERENCES users(user_id) ON DELETE CASCADE,
     address TEXT,
-    child_student_id UUID REFERENCES student(student_id),
+    child_student_id UUID REFERENCES student(student_id) ON DELETE CASCADE,
     occupation VARCHAR(120)
 );
 
@@ -114,7 +109,7 @@ CREATE TABLE parent (
 -- =====================
 CREATE TABLE super_admin (
     super_admin_id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
-    user_id UUID REFERENCES users(user_id)
+    user_id UUID UNIQUE REFERENCES users(user_id) ON DELETE CASCADE
 );
 
 -- =====================
@@ -122,8 +117,8 @@ CREATE TABLE super_admin (
 -- =====================
 CREATE TABLE admin (
     admin_id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
-    user_id UUID REFERENCES users(user_id),
-    school_id UUID REFERENCES school(school_id)
+    user_id UUID UNIQUE REFERENCES users(user_id) ON DELETE CASCADE,
+    school_id UUID REFERENCES school(school_id) ON DELETE CASCADE
 );
 
 -- =====================
@@ -131,9 +126,9 @@ CREATE TABLE admin (
 -- =====================
 CREATE TABLE subject (
     subject_id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
-    subject_name VARCHAR(100),
-    subject_code VARCHAR(30),
-    teacher_id UUID REFERENCES teacher(teacher_id)
+    subject_name VARCHAR(100) NOT NULL,
+    subject_code VARCHAR(30) UNIQUE NOT NULL,
+    teacher_id UUID REFERENCES teacher(teacher_id) ON DELETE SET NULL
 );
 
 -- =====================
@@ -141,12 +136,12 @@ CREATE TABLE subject (
 -- =====================
 CREATE TABLE schedules (
     schedule_id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
-    teacher_id UUID REFERENCES teacher(teacher_id),
-    class_id UUID REFERENCES class(class_id),
-    subject_id UUID REFERENCES subject(subject_id),
-    start_time TIME,
-    end_time TIME,
-    day_of_week INT
+    teacher_id UUID REFERENCES teacher(teacher_id) ON DELETE CASCADE,
+    class_id UUID REFERENCES class(class_id) ON DELETE CASCADE,
+    subject_id UUID REFERENCES subject(subject_id) ON DELETE CASCADE,
+    start_time TIME NOT NULL,
+    end_time TIME NOT NULL,
+    day_of_week INT CHECK (day_of_week BETWEEN 1 AND 7)
 );
 
 -- =====================
@@ -154,8 +149,8 @@ CREATE TABLE schedules (
 -- =====================
 CREATE TABLE salary (
     salary_id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
-    user_id UUID REFERENCES users(user_id),
-    net_salary NUMERIC(10,2)
+    user_id UUID REFERENCES users(user_id) ON DELETE CASCADE,
+    net_salary NUMERIC(10,2) CHECK (net_salary >= 0)
 );
 
 -- =====================
@@ -163,12 +158,12 @@ CREATE TABLE salary (
 -- =====================
 CREATE TABLE student_attendance (
     attendance_id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
-    student_id UUID REFERENCES student(student_id),
-    class_id UUID REFERENCES class(class_id),
-    date DATE,
-    record_by UUID REFERENCES teacher(teacher_id),
+    student_id UUID REFERENCES student(student_id) ON DELETE CASCADE,
+    class_id UUID REFERENCES class(class_id) ON DELETE CASCADE,
+    date DATE NOT NULL,
+    record_by UUID REFERENCES teacher(teacher_id) ON DELETE SET NULL,
     shift VARCHAR(20),
-    status VARCHAR(10)
+    status VARCHAR(10) CHECK (status IN ('present','absent','late'))
 );
 
 -- =====================
@@ -176,9 +171,9 @@ CREATE TABLE student_attendance (
 -- =====================
 CREATE TABLE teacher_attendance (
     attendance_id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
-    teacher_id UUID REFERENCES teacher(teacher_id),
-    date DATE,
-    status VARCHAR(20),
+    teacher_id UUID REFERENCES teacher(teacher_id) ON DELETE CASCADE,
+    date DATE NOT NULL,
+    status VARCHAR(20) CHECK (status IN ('present','absent','leave')),
     check_in TIMESTAMP,
     check_out TIMESTAMP
 );
@@ -188,8 +183,8 @@ CREATE TABLE teacher_attendance (
 -- =====================
 CREATE TABLE exam_types (
     exam_type_id SERIAL PRIMARY KEY,
-    name VARCHAR(50),
-    semester VARCHAR(20)
+    name VARCHAR(50) NOT NULL,
+    semester VARCHAR(20) NOT NULL
 );
 
 -- =====================
@@ -197,12 +192,12 @@ CREATE TABLE exam_types (
 -- =====================
 CREATE TABLE exam (
     exam_id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
-    subject_id UUID REFERENCES subject(subject_id),
-    class_id UUID REFERENCES class(class_id),
-    teacher_id UUID REFERENCES teacher(teacher_id),
-    exam_type_id INT REFERENCES exam_types(exam_type_id),
-    total_marks INT,
-    exam_date DATE
+    subject_id UUID REFERENCES subject(subject_id) ON DELETE CASCADE,
+    class_id UUID REFERENCES class(class_id) ON DELETE CASCADE,
+    teacher_id UUID REFERENCES teacher(teacher_id) ON DELETE SET NULL,
+    exam_type_id INT REFERENCES exam_types(exam_type_id) ON DELETE SET NULL,
+    total_marks INT CHECK (total_marks >= 0),
+    exam_date DATE NOT NULL
 );
 
 -- =====================
@@ -210,10 +205,10 @@ CREATE TABLE exam (
 -- =====================
 CREATE TABLE grade (
     grade_id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
-    student_id UUID REFERENCES student(student_id),
-    subject_id UUID REFERENCES subject(subject_id),
-    total_grade INT,
-    score INT,
+    student_id UUID REFERENCES student(student_id) ON DELETE CASCADE,
+    subject_id UUID REFERENCES subject(subject_id) ON DELETE CASCADE,
+    total_grade INT CHECK (total_grade >= 0),
+    score INT CHECK (score >= 0),
     exam_date DATE
 );
 
@@ -222,12 +217,12 @@ CREATE TABLE grade (
 -- =====================
 CREATE TABLE assignment (
     assignment_id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
-    teacher_id UUID REFERENCES teacher(teacher_id),
-    class_id UUID REFERENCES class(class_id),
-    subject_id UUID REFERENCES subject(subject_id),
-    title VARCHAR(150),
+    teacher_id UUID REFERENCES teacher(teacher_id) ON DELETE SET NULL,
+    class_id UUID REFERENCES class(class_id) ON DELETE CASCADE,
+    subject_id UUID REFERENCES subject(subject_id) ON DELETE CASCADE,
+    title VARCHAR(150) NOT NULL,
     file_url TEXT,
-    score INT,
+    score INT CHECK (score >= 0),
     feedback TEXT,
     description TEXT,
     due_date DATE,
@@ -239,10 +234,10 @@ CREATE TABLE assignment (
 -- =====================
 CREATE TABLE messages (
     message_id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
-    sender_id UUID REFERENCES users(user_id),
-    receiver_id UUID REFERENCES users(user_id),
-    content TEXT,
-    sent_date TIMESTAMP,
+    sender_id UUID REFERENCES users(user_id) ON DELETE CASCADE,
+    receiver_id UUID REFERENCES users(user_id) ON DELETE CASCADE,
+    content TEXT NOT NULL,
+    sent_date TIMESTAMP NOT NULL DEFAULT NOW(),
     attachment_url TEXT,
     seen_status BOOLEAN DEFAULT FALSE
 );
@@ -252,10 +247,10 @@ CREATE TABLE messages (
 -- =====================
 CREATE TABLE appeal (
     appeal_id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
-    student_id UUID REFERENCES student(student_id),
-    grade_id UUID REFERENCES grade(grade_id),
-    reason TEXT,
-    status VARCHAR(20),
+    student_id UUID REFERENCES student(student_id) ON DELETE CASCADE,
+    grade_id UUID REFERENCES grade(grade_id) ON DELETE CASCADE,
+    reason TEXT NOT NULL,
+    status VARCHAR(20) CHECK (status IN ('pending','approved','rejected')),
     director_comment TEXT,
     stakeholder VARCHAR(100)
 );
@@ -265,21 +260,24 @@ CREATE TABLE appeal (
 -- =====================
 CREATE TABLE timetable (
     id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
-    class_id UUID REFERENCES class(class_id),
-    subject_id UUID REFERENCES subject(subject_id),
-    teacher_id UUID REFERENCES teacher(teacher_id),
-    day_of_week INT,
-    period_number INT
+    class_id UUID REFERENCES class(class_id) ON DELETE CASCADE,
+    subject_id UUID REFERENCES subject(subject_id) ON DELETE CASCADE,
+    teacher_id UUID REFERENCES teacher(teacher_id) ON DELETE SET NULL,
+    day_of_week INT CHECK (day_of_week BETWEEN 1 AND 7),
+    period_number INT CHECK (period_number > 0)
 );
+
+ALTER TABLE timetable
+ADD CONSTRAINT unique_class_period UNIQUE (class_id, day_of_week, period_number);
 
 -- =====================
 -- 23. Activity Logs
 -- =====================
 CREATE TABLE activity_logs (
     id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
-    user_id UUID REFERENCES users(user_id),
-    school_id UUID REFERENCES school(school_id),
-    action VARCHAR(100),
+    user_id UUID REFERENCES users(user_id) ON DELETE SET NULL,
+    school_id UUID REFERENCES school(school_id) ON DELETE SET NULL,
+    action VARCHAR(100) NOT NULL,
     entity_type VARCHAR(50),
     entity_id UUID,
     metadata JSONB
@@ -290,12 +288,20 @@ CREATE TABLE activity_logs (
 -- =====================
 CREATE TABLE password_reset_tokens (
     id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
-    user_id UUID REFERENCES users(user_id),
-    token TEXT,
-    token_hash TEXT,
-    email VARCHAR(255),
+    user_id UUID REFERENCES users(user_id) ON DELETE CASCADE,
+    token_hash TEXT NOT NULL,
+    email VARCHAR(255) NOT NULL,
     is_used BOOLEAN DEFAULT FALSE,
     ip_address INET,
     user_agent TEXT,
     created_at TIMESTAMP WITH TIME ZONE DEFAULT NOW()
 );
+
+-- =====================
+-- 25. Index Recommendations (optional but advised)
+-- =====================
+CREATE INDEX idx_student_class ON student(class_id);
+CREATE INDEX idx_teacher_user ON teacher(user_id);
+CREATE INDEX idx_assignment_class ON assignment(class_id);
+CREATE INDEX idx_grade_student ON grade(student_id);
+CREATE INDEX idx_messages_receiver ON messages(receiver_id);
