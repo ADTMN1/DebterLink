@@ -12,7 +12,25 @@
     "welcome": "Welcome back",
     "language": "Language",
     "theme": "Theme",
-    "loading": "Loading..."
+    "loading": "Loading...",
+    "save": "Save",
+    "cancel": "Cancel",
+    "delete": "Delete",
+    "edit": "Edit",
+    "create": "Create",
+    "submit": "Submit",
+    "search": "Search",
+    "filter": "Filter",
+    "export": "Export",
+    "import": "Import",
+    "refresh": "Refresh",
+    "close": "Close",
+    "back": "Back",
+    "next": "Next",
+    "previous": "Previous",
+    "confirm": "Confirm",
+    "yes": "Yes",
+    "no": "No"
   },
   "roles": {
     "student": "Student",
@@ -34,9 +52,32 @@
     "timetable": "Timetable",
     "users": "Users",
     "reports": "Reports",
-    "behavior": "Behavior",
     "gradebook": "Gradebook",
     "schools": "Schools",
     "salary": "Salary"
+  },
+  "auth": {
+    "username": "Username",
+    "password": "Password",
+    "email": "Email",
+    "forgotPassword": "Forgot Password?",
+    "rememberMe": "Remember me",
+    "signIn": "Sign In",
+    "signUp": "Sign Up",
+    "signOut": "Sign Out"
+  },
+  "errors": {
+    "required": "This field is required",
+    "invalidEmail": "Invalid email address",
+    "passwordMismatch": "Passwords do not match",
+    "networkError": "Network error occurred",
+    "unauthorized": "Unauthorized access",
+    "notFound": "Not found"
+  },
+  "success": {
+    "saved": "Saved successfully",
+    "deleted": "Deleted successfully",
+    "updated": "Updated successfully",
+    "created": "Created successfully"
   }
 }

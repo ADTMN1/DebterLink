@@ -3,7 +3,7 @@ import { DashboardStatsCard } from '@/components/dashboard/stats-card';
 import { Shield, Users, School, Settings, TrendingUp, AlertCircle, BookOpen } from 'lucide-react';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
-import { useState } from 'react';
+import { useState, useMemo } from 'react';
 import { useAuthStore } from '@/store/useAuthStore';
 import { Badge } from '@/components/ui/badge';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
@@ -29,13 +29,18 @@ export default function AdminDashboard() {
   const isSuperAdmin = user?.role === 'super_admin';
   const [selectedSchool, setSelectedSchool] = useState<string>('all');
 
-  const filteredSchools = selectedSchool === 'all' 
-    ? DEMO_SCHOOLS 
-    : DEMO_SCHOOLS.filter(s => s.id === selectedSchool);
+  const filteredSchools = useMemo(() => 
+    selectedSchool === 'all' 
+      ? DEMO_SCHOOLS 
+      : DEMO_SCHOOLS.filter(s => s.id === selectedSchool),
+    [selectedSchool]
+  );
 
-  const totalStudents = filteredSchools.reduce((sum, s) => sum + s.students, 0);
-  const totalTeachers = filteredSchools.reduce((sum, s) => sum + s.teachers, 0);
-  const avgAttendance = Math.round(filteredSchools.reduce((sum, s) => sum + s.attendance, 0) / filteredSchools.length);
+  const { totalStudents, totalTeachers, avgAttendance } = useMemo(() => ({
+    totalStudents: filteredSchools.reduce((sum, s) => sum + s.students, 0),
+    totalTeachers: filteredSchools.reduce((sum, s) => sum + s.teachers, 0),
+    avgAttendance: Math.round(filteredSchools.reduce((sum, s) => sum + s.attendance, 0) / filteredSchools.length)
+  }), [filteredSchools]);
 
   return (
     <DashboardLayout>

@@ -1,10 +1,17 @@
-import { lazy, Suspense } from "react";
-import { Switch, Route, Redirect } from "wouter";
+import { lazy, Suspense, useEffect } from "react";
+import { Switch, Route, Redirect, useLocation } from "wouter";
 import { QueryClientProvider } from "@tanstack/react-query";
+import { AnimatePresence } from "framer-motion";
 import { queryClient } from "./lib/queryClient";
 import { Toaster } from "@/components/ui/sonner";
+import { Announcer } from "@/components/ui/announcer";
 import { ProtectedRoute } from "./router/protected-route";
 import { useAuthStore } from "@/store/useAuthStore";
+import { PageTransition } from "@/components/ui/page-transition";
+import { initializeGlobalSanitization } from "@/lib/sanitization-middleware";
+import { ErrorBoundary } from "@/components/error-boundary";
+import { FullPageLoader } from "@/components/ui/loading-states";
+import { useNetworkStatus } from "@/hooks/use-network-status";
 
 // Critical pages - load immediately
 import LandingPage from "@/pages/landing-page";
@@ -74,6 +81,7 @@ import { LoadingSpinner } from "@/components/loading-spinner";
 
 function Router() {
   const { user } = useAuthStore();
+  const [location] = useLocation();
 
   const getDashboard = () => {
     switch (user?.role) {
@@ -94,7 +102,8 @@ function Router() {
   };
 
   return (
-    <Switch>
+    <AnimatePresence mode="wait">
+      <Switch key={location}>
       <Route path="/login" component={LoginPage} />
       <Route path="/register" component={RegisterPage} />
 
@@ -103,7 +112,7 @@ function Router() {
 
       {/* Protected Routes with Role-Based Access */}
       <Route path="/dashboard">
-        {() => <ProtectedRoute component={getDashboard()} />}
+        {() => <PageTransition><ProtectedRoute component={getDashboard()} /></PageTransition>}
       </Route>
 
       <Route path="/profile">
@@ -139,31 +148,20 @@ function Router() {
         )}
       </Route>
 
-      <Route path="/assignments">
-        {() => (
-          <ProtectedRoute
-            component={AssignmentsPage}
-            allowedRoles={["student", "teacher"]}
-          />
-        )}
+      <Route path="/dashboard/assignments">
+        {() => <ProtectedRoute component={AssignmentsPage} allowedRoles={['student', 'teacher', 'director']} />}
       </Route>
 
-      <Route path="/gradebook">
-        {() => (
-          <ProtectedRoute
-            component={GradebookPage}
-            allowedRoles={["teacher"]}
-          />
-        )}
+      <Route path="/dashboard/grades">
+        {() => <ProtectedRoute component={StudentGrades} allowedRoles={['student', 'parent']} />}
       </Route>
 
-      <Route path="/behavior">
-        {() => (
-          <ProtectedRoute
-            component={BehaviorPage}
-            allowedRoles={["student", "parent", "teacher", "director"]}
-          />
-        )}
+      <Route path="/dashboard/gradebook">
+        {() => <ProtectedRoute component={GradebookPage} allowedRoles={['teacher', 'director']} />}
+      </Route>
+
+      <Route path="/dashboard/behavior">
+        {() => <ProtectedRoute component={BehaviorPage} allowedRoles={['student', 'parent', 'teacher', 'director']} />}
       </Route>
       <Route path="/dashboard/behavior-analytics">
         {() => (
@@ -174,60 +172,42 @@ function Router() {
         )}
       </Route>
 
-      <Route path="/calendar">
-        {() => (
-          <ProtectedRoute
-            component={CalendarPage}
-            allowedRoles={["student", "parent", "teacher", "director", "admin"]}
-          />
-        )}
-      </Route>
-
-      <Route path="/resources">
-        {() => (
-          <ProtectedRoute
-            component={ResourcesPage}
-            allowedRoles={["student", "teacher", "director"]}
-          />
-        )}
-      </Route>
-
       <Route path="/appeals">
-        {() => (
-          <ProtectedRoute
-            component={AppealsPage}
-            allowedRoles={["student", "parent", "teacher", "director"]}
-          />
-        )}
+        {() => <ProtectedRoute component={AppealsPage} allowedRoles={['student', 'parent', 'teacher', 'director']} />}
       </Route>
 
-      <Route path="/timetable">
-        {() => (
-          <ProtectedRoute
-            component={TimetablePage}
-            allowedRoles={["student", "teacher", "director"]}
-          />
-        )}
+      <Route path="/messaging">
+        {() => <ProtectedRoute component={MessagingPage} allowedRoles={['student', 'parent', 'teacher', 'director']} />}
+      </Route>
+
+      <Route path="/behavior">
+        {() => <ProtectedRoute component={BehaviorPage} allowedRoles={['student', 'parent', 'teacher', 'director']} />}
+      </Route>
+
+      <Route path="/dashboard/calendar">
+        {() => <ProtectedRoute component={CalendarPage} allowedRoles={['student', 'parent', 'teacher', 'director', 'admin']} />}
+      </Route>
+
+      <Route path="/dashboard/resources">
+        {() => <ProtectedRoute component={ResourcesPage} allowedRoles={['student', 'teacher', 'director']} />}
+      </Route>
+
+      <Route path="/dashboard/timetable">
+        {() => <ProtectedRoute component={TimetablePage} allowedRoles={['student', 'teacher', 'director']} />}
       </Route>
 
       {/* Communication Routes */}
-      <Route path="/messaging">
-        {() => (
-          <ProtectedRoute
-            component={MessagingPage}
-            allowedRoles={["student", "parent", "teacher", "director"]}
-          />
-        )}
+      <Route path="/dashboard/messages">
+        {() => <ProtectedRoute component={MessagingPage} allowedRoles={['student', 'parent', 'teacher', 'director']} />}
+      </Route>
+
+      <Route path="/dashboard/appeals">
+        {() => <ProtectedRoute component={AppealsPage} allowedRoles={['student', 'parent', 'teacher', 'director']} />}
       </Route>
 
       {/* Admin Routes */}
-      <Route path="/users">
-        {() => (
-          <ProtectedRoute
-            component={UsersPage}
-            allowedRoles={["admin", "super_admin", "director"]}
-          />
-        )}
+      <Route path="/dashboard/users">
+        {() => <ProtectedRoute component={UsersPage} allowedRoles={['admin', 'super_admin', 'director']} />}
       </Route>
 
       <Route path="/schools">
@@ -301,11 +281,19 @@ function Router() {
       </Route>
 
       <Route component={NotFound} />
-    </Switch>
+      </Switch>
+    </AnimatePresence>
   );
 }
 
 function App() {
+  useNetworkStatus(); // Monitor network status
+  
+  useEffect(() => {
+    // Initialize global input sanitization
+    initializeGlobalSanitization();
+  }, []);
+
   return (
     <QueryClientProvider client={queryClient}>
       <Suspense fallback={<LoadingSpinner />}>

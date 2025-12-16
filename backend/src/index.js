@@ -1,57 +1,106 @@
 import express from "express";
-import authRoutes from "./routes/auth.routes.js";
-import attendanceRoutes from "../src/routes/student.attendance.routes.js";
 import { authMiddleware, verifyRole } from "./middleware/auth.middleware.js";
-import assignmentRoutes from "../src/routes/assigment.route.js";
-import examROutes from "./routes/examRoutes.js";
+import { ROLES } from "../constants/roles.js";
+
+// Route imports
+import authRoutes from "./routes/auth.routes.js";
+import attendanceRoutes from "./routes/student.attendance.routes.js";
+import assignmentRoutes from "./routes/assigment.route.js";
+import examRoutes from "./routes/examRoutes.js";
 import studentRoutes from "./routes/studentRoutes.js";
 import appealRoutes from "./routes/appealRoutes.js";
 import parentRoutes from "./routes/parent.routes.js";
-import notification_router from "./routes/notification.routes.js";
+import notificationRoutes from "./routes/notification.routes.js";
 import schoolRoutes from "./routes/schoolRoutes.js";
-import classROutes from "./routes/classRoutes.js";
+import classRoutes from "./routes/classRoutes.js";
+import adminRoutes from "./routes/admin.routes.js";
+
 const router = express.Router();
 
-// Public/auth routes
+/* ======================
+   Public routes
+====================== */
 router.use("/auth", authRoutes);
 
-// // Role-based routes
-// router.use("/super-admin", authMiddleware, verifyRole(), (req, res) =>
-//   res.send("SUPER ADMIN route")
-// );
-// router.use("/director", authMiddleware, verifyRole(1), (req, res) =>
-//   res.send("DIRECTOR route")
-// );
-// router.use("/admin", authMiddleware, verifyRole(5), (req, res) =>
-//   res.send("admin route")
-// );
-// router.use("/parent", authMiddleware, verifyRole(3), (req, res) =>
-//   res.send("parent route")
-// );
-// router.use("/teacher", authMiddleware, verifyRole(2), (req, res) =>
-//   res.send("teacher route")
-// );
-// router.use("/student", authMiddleware, verifyRole(3), (req, res) =>
-//   res.send("student route")
-// );
+/* ======================
+   Super Admin routes
+====================== */
+router.use(
+  "/super-admin",
+  authMiddleware,
+  verifyRole(ROLES.SUPER_ADMIN),
+  schoolRoutes
+);
 
-// // Attendance – Teacher only
-// router.use("/attendance", authMiddleware, verifyRole(2), attendanceRoutes);
+/* ======================
+   Admin routes
+====================== */
+router.use(
+  "/admin",
+  authMiddleware,
+  verifyRole(ROLES.ADMIN),
+  adminRoutes
+);
 
-// Assignment Module Routes
-// router.use("/class", authMiddleware, verifyRole(4), classROutes);
-router.use("/class", classROutes);
-router.use("/assignment", assignmentRoutes); 
-router.use("/super-admin",    authMiddleware,  verifyRole(6),schoolRoutes);
-//// router.use("/super-admin",    schoolRoutes);
-router.use("/director",  authMiddleware,  verifyRole(1) , (req, res) => res.send("DIRECTOR route"));
-router.use("/admin",  authMiddleware,  verifyRole(5) , (req, res) => res.send("admin route"));
-router.use("/parent",  authMiddleware,  verifyRole(3) , parentRoutes);
-// router.use("/parent",   parentRoutes)
-router.use("/teacher",  authMiddleware,  verifyRole(2) , examROutes);
-// router.use("/teacher",    examROutes);
-router.use("/student",  authMiddleware,  verifyRole(4) , studentRoutes);
-router.use("/appeal", appealRoutes);
-router.use(notification_router)
+/* ======================
+   Director routes
+====================== */
+router.use(
+  "/director",
+  authMiddleware,
+  verifyRole(ROLES.DIRECTOR),
+  (req, res) => res.send("Director route")
+);
+
+/* ======================
+   Teacher routes
+====================== */
+router.use(
+  "/teacher",
+  authMiddleware,
+  verifyRole(ROLES.TEACHER),
+  examRoutes
+);
+
+router.use(
+  "/attendance",
+  authMiddleware,
+  verifyRole(ROLES.TEACHER),
+  attendanceRoutes
+);
+
+router.use(
+  "/assignment",
+  authMiddleware,
+  verifyRole(ROLES.TEACHER),
+  assignmentRoutes
+);
+
+/* ======================
+   Parent routes
+====================== */
+router.use(
+  "/parent",
+  authMiddleware,
+  verifyRole(ROLES.PARENT),
+  parentRoutes
+);
+
+/* ======================
+   Student routes
+====================== */
+router.use(
+  "/student",
+  authMiddleware,
+  verifyRole(ROLES.STUDENT),
+  studentRoutes
+);
+
+/* ======================
+   Shared / misc routes
+====================== */
+router.use("/class", authMiddleware, classRoutes);
+router.use("/appeal", authMiddleware, appealRoutes);
+router.use("/notification", authMiddleware, notificationRoutes);
 
 export default router;

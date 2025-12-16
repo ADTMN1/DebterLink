@@ -11,24 +11,40 @@ export const authMiddleware = (req, res, next) => {
     return res.status(401).json({ error: "Access token required" });
   }
 
+export const authenticate = (req, res, next) => {
   try {
     const decoded = jwt.verify(token, process.env.JWT_ACCESS_SECRET);
     req.user = decoded;
-    console.log("Decoded JWT payload:", decoded);
+
     next();
-  } catch (err) {
-    return res.status(403).json({ error: "Invalid or expired token" });
+  } catch (error) {
+    if (error.name === "TokenExpiredError") {
+      return res.status(401).json({
+        error: "Unauthorized",
+        message: "Token has expired"
+      });
+    }
+    return res.status(401).json({
+      error: "Unauthorized",
+      message: "Invalid authentication token"
+    });
   }
 };
 
-export const verifyRole = (role) => {
+
+// Role-based access control
+export const authorize = (...allowedRoles) => {
   return (req, res, next) => {
     const userRole = Number(req.user.role_id); 
     console.log("Checking role:", userRole, "Expected:", role);
 
-    if (userRole !== role) {
-      return res.status(403).json({ error: "Forbidden: Insufficient role" });
+    if (!allowedRoles.includes(req.user.role_id)) {
+      return res.status(403).json({
+        error: 'Forbidden',
+        message: 'You do not have permission to access this resource'
+      });
     }
+
     next();
   };
 };
