@@ -1,0 +1,659 @@
+{
+  "info": {
+    "_postman_id": "debter-link-complete",
+    "name": "Debter Link Complete API Test",
+    "description": "Complete API testing collection for Debter Link with all endpoints and test data",
+    "schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json"
+  },
+  "variable": [
+    {
+      "key": "baseUrl",
+      "value": "http://localhost:2000/api",
+      "type": "string"
+    },
+    {
+      "key": "superAdminEmail",
+      "value": "superadmin@debterlink.com",
+      "type": "string"
+    },
+    {
+      "key": "superAdminPassword",
+      "value": "SuperAdmin123!",
+      "type": "string"
+    },
+    {
+      "key": "super_admin_access_token",
+      "value": "",
+      "type": "string"
+    },
+    {
+      "key": "admin_access_token",
+      "value": "",
+      "type": "string"
+    },
+    {
+      "key": "teacher_access_token",
+      "value": "",
+      "type": "string"
+    },
+    {
+      "key": "student_access_token",
+      "value": "",
+      "type": "string"
+    },
+    {
+      "key": "parent_access_token",
+      "value": "",
+      "type": "string"
+    },
+    {
+      "key": "school_id",
+      "value": "",
+      "type": "string"
+    },
+    {
+      "key": "class_id",
+      "value": "",
+      "type": "string"
+    },
+    {
+      "key": "subject_id",
+      "value": "",
+      "type": "string"
+    },
+    {
+      "key": "student_id_hana",
+      "value": "",
+      "type": "string"
+    },
+    {
+      "key": "student_id_dawit",
+      "value": "",
+      "type": "string"
+    }
+  ],
+  "event": [
+    {
+      "listen": "prerequest",
+      "script": {
+        "type": "text/javascript",
+        "exec": [
+          "// Auto-set authorization header if we have tokens",
+          "if (pm.collectionVariables.get('super_admin_access_token')) {",
+          "    pm.request.headers.upsert({",
+          "        key: 'Authorization',",
+          "        value: 'Bearer ' + pm.collectionVariables.get('super_admin_access_token'),",
+          "        disabled: false",
+          "    });",
+          "}"
+        ]
+      }
+    },
+    {
+      "listen": "test",
+      "script": {
+        "type": "text/javascript",
+        "exec": [
+          "// Save tokens from login responses",
+          "if (pm.response.code === 200) {",
+          "    try {",
+          "        const response = pm.response.json();",
+          "        if (response.accessToken) {",
+          "            // Determine role based on email",
+          "            const email = pm.request.body.raw ? JSON.parse(pm.request.body.raw).email : '';",
+          "            if (email.includes('superadmin')) {",
+          "                pm.collectionVariables.set('super_admin_access_token', response.accessToken);",
+          "            } else if (email.includes('admin')) {",
+          "                pm.collectionVariables.set('admin_access_token', response.accessToken);",
+          "            } else if (email.includes('teacher')) {",
+          "                pm.collectionVariables.set('teacher_access_token', response.accessToken);",
+          "            } else if (email.includes('student')) {",
+          "                pm.collectionVariables.set('student_access_token', response.accessToken);",
+          "            } else if (email.includes('parent')) {",
+          "                pm.collectionVariables.set('parent_access_token', response.accessToken);",
+          "            }",
+          "            }",
+          "        }",
+          "        // Save IDs from responses",
+          "        if (response.data) {",
+          "            if (response.data.school_id) {",
+          "                pm.collectionVariables.set('school_id', response.data.school_id);",
+          "            }",
+          "            if (response.data.class_id) {",
+          "                pm.collectionVariables.set('class_id', response.data.class_id);",
+          "            }",
+          "            if (response.data.subject_id) {",
+          "                pm.collectionVariables.set('subject_id', response.data.subject_id);",
+          "            }",
+          "            if (response.data.user_id) {",
+          "                const email = pm.request.body.raw ? JSON.parse(pm.request.body.raw).email : '';",
+          "                if (email.includes('hana')) {",
+          "                    pm.collectionVariables.set('student_id_hana', response.data.user_id);",
+          "                } else if (email.includes('dawit')) {",
+          "                    pm.collectionVariables.set('student_id_dawit', response.data.user_id);",
+          "                }",
+          "            }",
+          "        }",
+          "    } catch (e) {",
+          "        console.log('Error processing response:', e);",
+          "    }",
+          "}"
+        ]
+      }
+    }
+  ],
+  "item": [
+    {
+      "name": "1. Health Check",
+      "event": [
+        {
+          "listen": "test",
+          "script": {
+            "type": "text/javascript",
+            "exec": [
+              "pm.test('Server is running', function () {",
+              "    pm.response.to.have.status(200);",
+              "    const response = pm.response.json();",
+              "    pm.expect(response.status).to.eql('ok');",
+              "});"
+            ]
+          }
+        }
+      ],
+      "request": {
+        "method": "GET",
+        "header": [],
+        "url": {
+          "raw": "{{baseUrl}}/../health",
+          "host": ["{{baseUrl}}", ".."],
+          "path": ["health"]
+        }
+      }
+    },
+    {
+      "name": "2. Super Admin Login",
+      "event": [
+        {
+          "listen": "test",
+          "script": {
+            "type": "text/javascript",
+            "exec": [
+              "pm.test('Super Admin login successful', function () {",
+              "    pm.response.to.have.status(200);",
+              "    const response = pm.response.json();",
+              "    pm.expect(response.status).to.be.true;",
+              "    pm.expect(response.data.role_id).to.eql(1);",
+              "    pm.expect(response.accessToken).to.exist;",
+              "    pm.expect(response.refreshToken).to.exist;",
+              "});",
+              "",
+              "// Save super admin token",
+              "if (pm.response.code === 200) {",
+              "    const response = pm.response.json();",
+              "    pm.collectionVariables.set('super_admin_access_token', response.accessToken);",
+              "    console.log('Super Admin token saved');",
+              "}"
+            ]
+          }
+        }
+      ],
+      "request": {
+        "method": "POST",
+        "header": [
+          {
+            "key": "Content-Type",
+            "value": "application/json"
+          }
+        ],
+        "body": {
+          "mode": "raw",
+          "raw": "{\n    \"email\": \"{{superAdminEmail}}\",\n    \"password\": \"{{superAdminPassword}}\"\n}"
+        },
+        "url": {
+          "raw": "{{baseUrl}}/auth/login",
+          "host": ["{{baseUrl}}"],
+          "path": ["auth", "login"]
+        }
+      }
+    },
+    {
+      "name": "3. Create School",
+      "event": [
+        {
+          "listen": "test",
+          "script": {
+            "type": "text/javascript",
+            "exec": [
+              "pm.test('School created successfully', function () {",
+              "    pm.response.to.have.status(201);",
+              "    const response = pm.response.json();",
+              "    pm.expect(response.status).to.be.true;",
+              "    pm.expect(response.data).to.have.property('school_id');",
+              "});",
+              "",
+              "// Save school ID",
+              "if (pm.response.code === 201) {",
+              "    const response = pm.response.json();",
+              "    pm.collectionVariables.set('school_id', response.data.school_id);",
+              "    console.log('School ID saved:', response.data.school_id);",
+              "}"
+            ]
+          }
+        }
+      ],
+      "request": {
+        "method": "POST",
+        "header": [
+          {
+            "key": "Content-Type",
+            "value": "application/json"
+          }
+        ],
+        "body": {
+          "mode": "raw",
+          "raw": "{\n    \"school_name\": \"Debter Test School\",\n    \"address\": \"123 Test Street, Addis Ababa, Ethiopia\",\n    \"phone\": \"+251911234567\",\n    \"email\": \"info@debtertest.edu.et\",\n    \"website\": \"https://debtertest.edu.et\"\n}"
+        },
+        "url": {
+          "raw": "{{baseUrl}}/super-admin/school",
+          "host": ["{{baseUrl}}"],
+          "path": ["super-admin", "school"]
+        }
+      }
+    },
+    {
+      "name": "4. Register Admin",
+      "event": [
+        {
+          "listen": "test",
+          "script": {
+            "type": "text/javascript",
+            "exec": [
+              "pm.test('Admin registered successfully', function () {",
+              "    pm.response.to.have.status(201);",
+              "    const response = pm.response.json();",
+              "    pm.expect(response.status).to.be.true;",
+              "    pm.expect(response.data).to.have.property('user_id');",
+              "});"
+            ]
+          }
+        }
+      ],
+      "request": {
+        "method": "POST",
+        "header": [
+          {
+            "key": "Content-Type",
+            "value": "application/json"
+          }
+        ],
+        "body": {
+          "mode": "raw",
+          "raw": "{\n    \"full_name\": \"Tesfaye Admin\",\n    \"email\": \"tesfaye.admin@debtertest.edu.et\",\n    \"phone_number\": \"+251911234568\",\n    \"role\": \"admin\",\n    \"school_id\": \"{{school_id}}\"\n}"
+        },
+        "url": {
+          "raw": "{{baseUrl}}/auth/register-user",
+          "host": ["{{baseUrl}}"],
+          "path": ["auth", "register-user"]
+        }
+      }
+    },
+    {
+      "name": "5. Admin Login",
+      "event": [
+        {
+          "listen": "test",
+          "script": {
+            "type": "text/javascript",
+            "exec": [
+              "pm.test('Admin login successful', function () {",
+              "    pm.response.to.have.status(200);",
+              "    const response = pm.response.json();",
+              "    pm.expect(response.status).to.be.true;",
+              "    pm.expect(response.data.role_id).to.eql(2);",
+              "});",
+              "",
+              "// Save admin token",
+              "if (pm.response.code === 200) {",
+              "    const response = pm.response.json();",
+              "    pm.collectionVariables.set('admin_access_token', response.accessToken);",
+              "    console.log('Admin token saved');",
+              "}"
+            ]
+          }
+        }
+      ],
+      "request": {
+        "method": "POST",
+        "header": [
+          {
+            "key": "Content-Type",
+            "value": "application/json"
+          }
+        ],
+        "body": {
+          "mode": "raw",
+          "raw": "{\n    \"email\": \"tesfaye.admin@debtertest.edu.et\",\n    \"password\": \"temporary123\"\n}"
+        },
+        "url": {
+          "raw": "{{baseUrl}}/auth/login",
+          "host": ["{{baseUrl}}"],
+          "path": ["auth", "login"]
+        }
+      }
+    },
+    {
+      "name": "6. Register Teacher",
+      "event": [
+        {
+          "listen": "test",
+          "script": {
+            "type": "text/javascript",
+            "exec": [
+              "pm.test('Teacher registered successfully', function () {",
+              "    pm.response.to.have.status(201);",
+              "    const response = pm.response.json();",
+              "    pm.expect(response.status).to.be.true;",
+              "    pm.expect(response.data).to.have.property('user_id');",
+              "});"
+            ]
+          }
+        }
+      ],
+      "request": {
+        "method": "POST",
+        "header": [
+          {
+            "key": "Content-Type",
+            "value": "application/json"
+          }
+        ],
+        "body": {
+          "mode": "raw",
+          "raw": "{\n    \"full_name\": \"Abeba Teacher\",\n    \"email\": \"abeba.teacher@debtertest.edu.et\",\n    \"phone_number\": \"+251911234570\",\n    \"role\": \"teacher\",\n    \"subject\": \"Mathematics\",\n    \"department\": \"Science\",\n    \"employee_id\": \"T001\"\n}"
+        },
+        "url": {
+          "raw": "{{baseUrl}}/auth/register-user",
+          "host": ["{{baseUrl}}"],
+          "path": ["auth", "register-user"]
+        }
+      }
+    },
+    {
+      "name": "7. Teacher Login",
+      "event": [
+        {
+          "listen": "test",
+          "script": {
+            "type": "text/javascript",
+            "exec": [
+              "pm.test('Teacher login successful', function () {",
+              "    pm.response.to.have.status(200);",
+              "    const response = pm.response.json();",
+              "    pm.expect(response.status).to.be.true;",
+              "    pm.expect(response.data.role_id).to.eql(4);",
+              "});",
+              "",
+              "// Save teacher token",
+              "if (pm.response.code === 200) {",
+              "    const response = pm.response.json();",
+              "    pm.collectionVariables.set('teacher_access_token', response.accessToken);",
+              "    console.log('Teacher token saved');",
+              "}"
+            ]
+          }
+        }
+      ],
+      "request": {
+        "method": "POST",
+        "header": [
+          {
+            "key": "Content-Type",
+            "value": "application/json"
+          }
+        ],
+        "body": {
+          "mode": "raw",
+          "raw": "{\n    \"email\": \"abeba.teacher@debtertest.edu.et\",\n    \"password\": \"temporary123\"\n}"
+        },
+        "url": {
+          "raw": "{{baseUrl}}/auth/login",
+          "host": ["{{baseUrl}}"],
+          "path": ["auth", "login"]
+        }
+      }
+    },
+    {
+      "name": "8. Create Class",
+      "event": [
+        {
+          "listen": "test",
+          "script": {
+            "type": "text/javascript",
+            "exec": [
+              "pm.test('Class created successfully', function () {",
+              "    pm.response.to.have.status(201);",
+              "    const response = pm.response.json();",
+              "    pm.expect(response.status).to.be.true;",
+              "    pm.expect(response.data).to.have.property('class_id');",
+              "});",
+              "",
+              "// Save class ID",
+              "if (pm.response.code === 201) {",
+              "    const response = pm.response.json();",
+              "    pm.collectionVariables.set('class_id', response.data.class_id);",
+              "    console.log('Class ID saved:', response.data.class_id);",
+              "}"
+            ]
+          }
+        }
+      ],
+      "request": {
+        "method": "POST",
+        "header": [
+          {
+            "key": "Content-Type",
+            "value": "application/json"
+          }
+        ],
+        "body": {
+          "mode": "raw",
+          "raw": "{\n    \"class_name\": \"Grade 10A\",\n    \"grade_level\": 10,\n    \"section\": \"A\",\n    \"academic_year\": \"2024-2025\",\n    \"school_id\": \"{{school_id}}\",\n    \"max_students\": 35\n}"
+        },
+        "url": {
+          "raw": "{{baseUrl}}/class",
+          "host": ["{{baseUrl}}"],
+          "path": ["class"]
+        }
+      }
+    },
+    {
+      "name": "9. Register Student",
+      "event": [
+        {
+          "listen": "test",
+          "script": {
+            "type": "text/javascript",
+            "exec": [
+              "pm.test('Student registered successfully', function () {",
+              "    pm.response.to.have.status(201);",
+              "    const response = pm.response.json();",
+              "    pm.expect(response.status).to.be.true;",
+              "    pm.expect(response.data).to.have.property('user_id');",
+              "});",
+              "",
+              "// Save student ID",
+              "if (pm.response.code === 201) {",
+              "    const response = pm.response.json();",
+              "    pm.collectionVariables.set('student_id_hana', response.data.user_id);",
+              "    console.log('Student ID saved:', response.data.user_id);",
+              "}"
+            ]
+          }
+        }
+      ],
+      "request": {
+        "method": "POST",
+        "header": [
+          {
+            "key": "Content-Type",
+            "value": "application/json"
+          }
+        ],
+        "body": {
+          "mode": "raw",
+          "raw": "{\n    \"full_name\": \"Hana Student\",\n    \"email\": \"hana.student@debtertest.edu.et\",\n    \"phone_number\": \"+251911234572\",\n    \"role\": \"student\",\n    \"grade_level\": 10,\n    \"class_id\": \"{{class_id}}\",\n    \"student_id\": \"S2024001\",\n    \"date_of_birth\": \"2008-05-15\",\n    \"gender\": \"female\"\n}"
+        },
+        "url": {
+          "raw": "{{baseUrl}}/auth/register-user",
+          "host": ["{{baseUrl}}"],
+          "path": ["auth", "register-user"]
+        }
+      }
+    },
+    {
+      "name": "10. Student Login",
+      "event": [
+        {
+          "listen": "test",
+          "script": {
+            "type": "text/javascript",
+            "exec": [
+              "pm.test('Student login successful', function () {",
+              "    pm.response.to.have.status(200);",
+              "    const response = pm.response.json();",
+              "    pm.expect(response.status).to.be.true;",
+              "    pm.expect(response.data.role_id).to.eql(5);",
+              "});",
+              "",
+              "// Save student token",
+              "if (pm.response.code === 200) {",
+              "    const response = pm.response.json();",
+              "    pm.collectionVariables.set('student_access_token', response.accessToken);",
+              "    console.log('Student token saved');",
+              "}"
+            ]
+          }
+        }
+      ],
+      "request": {
+        "method": "POST",
+        "header": [
+          {
+            "key": "Content-Type",
+            "value": "application/json"
+          }
+        ],
+        "body": {
+          "mode": "raw",
+          "raw": "{\n    \"email\": \"hana.student@debtertest.edu.et\",\n    \"password\": \"temporary123\"\n}"
+        },
+        "url": {
+          "raw": "{{baseUrl}}/auth/login",
+          "host": ["{{baseUrl}}"],
+          "path": ["auth", "login"]
+        }
+      }
+    },
+    {
+      "name": "11. Create Assignment",
+      "event": [
+        {
+          "listen": "test",
+          "script": {
+            "type": "text/javascript",
+            "exec": [
+              "pm.test('Assignment created successfully', function () {",
+              "    pm.response.to.have.status(201);",
+              "    const response = pm.response.json();",
+              "    pm.expect(response.status).to.be.true;",
+              "    pm.expect(response.data).to.have.property('assignment_id');",
+              "});"
+            ]
+          }
+        }
+      ],
+      "request": {
+        "method": "POST",
+        "header": [
+          {
+            "key": "Content-Type",
+            "value": "application/json"
+          }
+        ],
+        "body": {
+          "mode": "raw",
+          "raw": "{\n    \"title\": \"Mathematics Assignment 1: Algebra\",\n    \"description\": \"Complete exercises 1-20 from Chapter 3: Linear Equations and Inequalities\",\n    \"due_date\": \"2024-12-25T23:59:59Z\",\n    \"class_id\": \"{{class_id}}\",\n    \"total_marks\": 100,\n    \"assignment_type\": \"homework\",\n    \"instructions\": \"Show all your work clearly. Submit your answers in PDF format.\"\n}"
+        },
+        "url": {
+          "raw": "{{baseUrl}}/assignment",
+          "host": ["{{baseUrl}}"],
+          "path": ["assignment"]
+        }
+      }
+    },
+    {
+      "name": "12. Mark Attendance",
+      "event": [
+        {
+          "listen": "test",
+          "script": {
+            "type": "text/javascript",
+            "exec": [
+              "pm.test('Attendance marked successfully', function () {",
+              "    pm.response.to.have.status(201);",
+              "    const response = pm.response.json();",
+              "    pm.expect(response.status).to.be.true;",
+              "});"
+            ]
+          }
+        }
+      ],
+      "request": {
+        "method": "POST",
+        "header": [
+          {
+            "key": "Content-Type",
+            "value": "application/json"
+          }
+        ],
+        "body": {
+          "mode": "raw",
+          "raw": "{\n    \"class_id\": \"{{class_id}}\",\n    \"date\": \"2024-12-18\",\n    \"attendance_records\": [\n        {\n            \"student_id\": \"{{student_id_hana}}\",\n            \"status\": \"present\",\n            \"remarks\": \"On time, participated actively\"\n        }\n    ]\n}"
+        },
+        "url": {
+          "raw": "{{baseUrl}}/attendance",
+          "host": ["{{baseUrl}}"],
+          "path": ["attendance"]
+        }
+      }
+    },
+    {
+      "name": "13. View Student Grades",
+      "event": [
+        {
+          "listen": "test",
+          "script": {
+            "type": "text/javascript",
+            "exec": [
+              "pm.test('Grades retrieved successfully', function () {",
+              "    pm.response.to.have.status(200);",
+              "    const response = pm.response.json();",
+              "    pm.expect(response.status).to.be.true;",
+              "    pm.expect(response.data).to.be.an('array');",
+              "});"
+            ]
+          }
+        }
+      ],
+      "request": {
+        "method": "GET",
+        "header": [],
+        "url": {
+          "raw": "{{baseUrl}}/student/grades",
+          "host": ["{{baseUrl}}"],
+          "path": ["student", "grades"]
+        }
+      }
+    }
+  ]
+}

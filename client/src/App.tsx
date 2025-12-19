@@ -14,6 +14,7 @@ import NotFound from "@/pages/not-found";
 // Auth pages
 const RegisterPage = lazy(() => import("@/pages/auth/register"));
 const ForgotPasswordPage = lazy(() => import("@/pages/auth/forgot-password"));
+const ResetPasswordPage = lazy(() => import("@/pages/auth/reset-password"));
 
 // Dashboard pages
 const StudentDashboard = lazy(() => import("@/pages/dashboard/student-dashboard"));
@@ -69,6 +70,7 @@ function Router() {
       <Route path="/login" component={LoginPage} />
       <Route path="/register" component={RegisterPage} />
       <Route path="/forgot-password" component={ForgotPasswordPage} />
+      <Route path="/reset-password" component={ResetPasswordPage} />
       <Route path="/landing" component={LandingPage} />
 
       {/* Protected Routes with Role-Based Access */}

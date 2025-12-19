@@ -15,6 +15,7 @@ import { AdminUser } from '@shared/schema';
 import { useState } from 'react';
 import { useToast } from '@/hooks/use-toast';
 import { useAuthStore } from '@/store/useAuthStore';
+import { authService } from '@/services/authService';
 
 export default function UsersPage() {
   const queryClient = useQueryClient();
@@ -180,7 +181,7 @@ export default function UsersPage() {
     setIsEditDialogOpen(false);
   };
 
-  const handleSavePassword = () => {
+  const handleSavePassword = async () => {
     if (newPassword.length < 6) {
       toast({
         title: 'Validation Error',
@@ -190,12 +191,27 @@ export default function UsersPage() {
       return;
     }
     
-    toast({
-      title: 'Password Changed',
-      description: `Password for ${selectedUser?.name} has been updated.`,
-    });
-    console.log('Demo: Password changed for user:', selectedUser?.name);
-    setIsPasswordDialogOpen(false);
+    try {
+      const response = await authService.setPassword(selectedUser.user_id, newPassword);
+      
+      toast({
+        title: 'Password Changed',
+        description: response.message,
+      });
+      
+      setIsPasswordDialogOpen(false);
+      setNewPassword('');
+      setSelectedUser(null);
+      
+    } catch (error: unknown) {
+      console.error('Password change error:', error);
+      const errorMessage = error instanceof Error ? error.message : 'Failed to change password';
+      toast({
+        title: 'Error',
+        description: errorMessage,
+        variant: 'destructive',
+      });
+    }
   };
 
   return (
