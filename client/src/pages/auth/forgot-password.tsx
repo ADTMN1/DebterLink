@@ -18,7 +18,8 @@ import { forgotPasswordSchema, ForgotPasswordFormData } from '@/lib/validations'
 
 export default function ForgotPasswordPage() {
   const [isSubmitted, setIsSubmitted] = useState(false);
-  const isLoading = false;
+  const [isLoading, setIsLoading] = useState(false);
+  const { toast } = useToast();
 
   const form = useSanitizedForm<ForgotPasswordFormData>({
     resolver: zodResolver(forgotPasswordSchema),
@@ -49,7 +50,7 @@ export default function ForgotPasswordPage() {
             <FormField
               control={form.control}
               name="email"
-              render={({ field }) => (
+              render={({ field }: { field: any }) => (
                 <FormItem>
                   <FormLabel>Email</FormLabel>
                   <FormControl>

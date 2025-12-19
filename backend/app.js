@@ -42,7 +42,7 @@ app.use(express.urlencoded({ extended: true, limit: "10kb" }));
 
 const authLimiter = rateLimit({
   windowMs: 5 * 60 * 1000,
-  max: 5,
+  max: 20, // Increased from 5 to 20
   standardHeaders: true,
   legacyHeaders: false,
 });

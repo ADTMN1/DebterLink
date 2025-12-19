@@ -36,14 +36,36 @@ export default {
 
   // Create a new user
   createUser: async (full_name, email, password, phone_number, role_id, client) => {
-    const query = `
-      INSERT INTO users (full_name, email, password, phone_number, role_id)
-      VALUES ($1, $2, $3, $4, $5)
-      RETURNING user_id, full_name, email, role_id
-    `;
-    const values = [full_name, email, password, phone_number, role_id];
-    const result = await client.query(query, values);
-    return result.rows[0];
+    const sp = "sp_create_user";
+    const hasSp = await trySavepoint(client, sp);
+    try {
+      const query = `
+        INSERT INTO users (full_name, email, password, phone_number, role_id, password_status)
+        VALUES ($1, $2, $3, $4, $5, 'temporary')
+        RETURNING user_id, full_name, email, role_id, password_status
+      `;
+      const values = [full_name, email, password, phone_number, role_id];
+      const result = await client.query(query, values);
+      if (hasSp) await releaseSavepoint(client, sp);
+      return result.rows[0];
+    } catch (err) {
+      if (hasSp) {
+        await rollbackToSavepoint(client, sp);
+        await releaseSavepoint(client, sp);
+      }
+      // Old schema doesn't include password_status
+      if (err?.code !== "42703") throw err;
+      
+      // Fallback to old schema without password_status
+      const fallbackQuery = `
+        INSERT INTO users (full_name, email, password, phone_number, role_id)
+        VALUES ($1, $2, $3, $4, $5)
+        RETURNING user_id, full_name, email, role_id
+      `;
+      const values = [full_name, email, password, phone_number, role_id];
+      const result = await client.query(fallbackQuery, values);
+      return result.rows[0];
+    }
   },
 
   // Create Admin entry linking user to a school

@@ -35,7 +35,8 @@ CREATE TABLE users (
     full_name VARCHAR(120) NOT NULL,
     email VARCHAR(120) UNIQUE NOT NULL,
     password TEXT NOT NULL,
-    phone_number VARCHAR(20)
+    phone_number VARCHAR(20),
+    password_status VARCHAR(20) DEFAULT 'temporary' -- 'temporary' or 'permanent'
 );
 
 -- =====================
@@ -88,6 +89,7 @@ CREATE TABLE student (
 CREATE TABLE teacher (
     teacher_id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
     user_id UUID UNIQUE REFERENCES users(user_id) ON DELETE CASCADE,
+    school_id UUID REFERENCES school(school_id) ON DELETE CASCADE,
     salary NUMERIC(10,2) CHECK (salary >= 0),
     specialization VARCHAR(120),
     advisor_class_id UUID REFERENCES class(class_id) ON DELETE SET NULL
@@ -291,7 +293,25 @@ CREATE TABLE password_reset_tokens (
     user_id UUID REFERENCES users(user_id) ON DELETE CASCADE,
     token_hash TEXT NOT NULL,
     email VARCHAR(255) NOT NULL,
-    is_used BOOLEAN DEFAULT FALSE,
+    expires_at TIMESTAMP WITH TIME ZONE NOT NULL,
+    used_at TIMESTAMP WITH TIME ZONE NULL,
+    ip_address INET,
+    user_agent TEXT,
+    created_at TIMESTAMP WITH TIME ZONE DEFAULT NOW()
+);
+
+-- Indexes for password reset tokens
+CREATE INDEX idx_password_reset_tokens_hash ON password_reset_tokens(token_hash);
+CREATE INDEX idx_password_reset_tokens_user_id ON password_reset_tokens(user_id);
+CREATE INDEX idx_password_reset_tokens_expires ON password_reset_tokens(expires_at);
+
+-- =====================
+-- 25. Password Change Log (for audit)
+-- =====================
+CREATE TABLE password_change_log (
+    id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+    user_id UUID REFERENCES users(user_id) ON DELETE CASCADE,
+    change_type VARCHAR(20) NOT NULL CHECK (change_type IN ('initial_setup', 'reset', 'change')),
     ip_address INET,
     user_agent TEXT,
     created_at TIMESTAMP WITH TIME ZONE DEFAULT NOW()

@@ -38,7 +38,7 @@ export const createPasswordResetForUser = async ({ user, ip, userAgent }) => {
   });
 
   const frontendUrl = process.env.FRONTEND_URL || "http://localhost:3000";
-  const resetPath = `${frontendUrl}/reset-password?token=${raw}&id=${id}`; 
+  const resetPath = `${frontendUrl}/reset-password?token=${raw}`; 
   
   await sendResetEmail(
     user.email,
@@ -75,7 +75,9 @@ export const resetPasswordForRecord = async ({ tokenRaw, newPassword }) => {
 
   
   const db = (await import("../../../config/db.config.js")).default;
-  await db.query("UPDATE users SET password = $1 WHERE user_id = $2", [
+  
+  // Update password and set status to permanent
+  await db.query("UPDATE users SET password = $1, password_status = 'permanent' WHERE user_id = $2", [
     hashed,
     v.record.user_id,
   ]);

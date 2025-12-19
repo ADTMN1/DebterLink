@@ -109,12 +109,11 @@ import pool from "../../../config/db.config.js";
 
   const  getSchoolTeachers=async(school_id)=> {
     const query = `
-      SELECT t.* 
+      SELECT t.*, u.full_name, u.email, u.phone_number
       FROM teacher t
-      JOIN class_teacher ct ON t.teacher_id = ct.teacher_id
-      JOIN class c ON ct.class_id = c.class_id
-      WHERE c.school_id = $1
-      GROUP BY t.teacher_id;
+      JOIN users u ON t.user_id = u.user_id
+      WHERE t.school_id = $1
+      ORDER BY u.full_name;
     `;
     const result = await pool.query(query, [school_id]);
     return result.rows;

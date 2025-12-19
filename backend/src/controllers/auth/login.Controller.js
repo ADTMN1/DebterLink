@@ -19,22 +19,31 @@ export const loginController = async (req, res) => {
       return res.status(401).json({ message: "Invalid email or password" }); // consistent message
     }
 
+    // Check if user has temporary password
+    const hasTemporaryPassword = user.password_status === 'temporary';
+
     const accessToken = generateAccessToken(user);
     const refreshToken = generateRefreshToken(user);
 
-    res.status(200).json({
+    const response = {
       status: true,
-      message: "Login successful",
+      message: hasTemporaryPassword ? 
+        "Login successful. Please set your permanent password." : 
+        "Login successful",
       data: {
         id: user.user_id,
         full_name: user.full_name,
         email: user.email,
         phone_number: user.phone_number,
         role_id: user.role_id,
+        password_status: user.password_status || 'permanent',
+        requiresPasswordChange: hasTemporaryPassword,
       },
       accessToken,
       refreshToken,
-    });
+    };
+
+    res.status(200).json(response);
   } catch (error) {
     console.error("Login error:", error.message);
     res.status(500).json({ message: "Something went wrong. Please try again later." });
