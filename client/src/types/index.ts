@@ -2,11 +2,15 @@ export type Role = 'student' | 'parent' | 'teacher' | 'director' | 'admin' | 'su
 
 export interface User {
   id: string;
-  name: string;
+  full_name: string;
   email: string;
   role: Role;
   avatar?: string;
 }
+
+
+
+
 
 export interface AuthState {
   user: User | null;

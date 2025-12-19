@@ -44,6 +44,7 @@ export function AddUserDialog({
   onSubmit,
   isLoading,
 }: AddUserDialogProps) {
+  
   const form = useSanitizedForm<CreateUserFormData>({
     resolver: zodResolver(createUserSchema),
     defaultValues: {
@@ -51,7 +52,7 @@ export function AddUserDialog({
       username: "",
       email: "",
       password: "",
-      role: null,
+      role: "admin",
       status: "Active",
     },
     sanitizationMap: sanitizationMaps.user,

@@ -27,6 +27,79 @@ export const registerSchema = z.object({
   path: ["confirmPassword"],
 });
 
+/*    
+      
+      admin.phone, 
+      */
+
+
+export const registerSchoolAndAdminSchema = z.object({
+  school_name: z.string()
+    .transform(val => sanitizers.school_name(val))
+    .pipe(z.string().min(2, "School name must have at least 2 characters.").max(100, "School name must be at most 100 characters.")),
+
+  code: z.string()
+    .transform(val => sanitizers.code(val))
+    .pipe(z.string().min(3, "School code is too short.").max(20, "School code is too long.")),
+
+  school_email: z.string()
+    .transform(val => sanitizers.email(val))
+    .pipe(z.string().email("Please provide a valid email.")),
+
+  school_phone: z.string() // Fixed typo: shool_phone -> school_phone
+    .transform(val => sanitizers.phone(val))
+    .pipe(z.string().min(5, "Enter at least 5 digit phone number.").max(20, "Phone number is too long.")),
+
+  address: z.string()
+    .transform(val => sanitizers.address(val))
+    .pipe(z.string().min(1, "Address field is required.")), // Fixed .nonempty() to .min(1)
+
+  academic_year: z.string()
+    .transform(val => sanitizers.academic_year(val))
+    .pipe(z.string().min(1, "Academic Year is required.")),
+
+  status: z.enum(['Active', "Suspend", "In_Maintainance"]), // Fixed z.enum usage
+
+  website: z.string().url("Valid URL is required").optional().or(z.literal('')), // Fixed z.optional() chain
+
+  fullName: z.string()
+    .transform(val => sanitizers.fullName(val))
+    .pipe(z.string().min(2, "Full name must have at least 2 characters.").max(100, "Full name must be at most 100 characters.")),
+
+  admin_email: z.string()
+    .transform(val => sanitizers.email(val))
+    .pipe(z.string().email("Please provide a valid admin email.")),
+
+  password: z.string()
+    .min(8, 'Password must be at least 8 characters')
+    .max(100, 'Password must be less than 100 characters')
+    .regex(/^(?=.*[a-z])(?=.*[A-Z])(?=.*\d)/, 'Password must contain at least one uppercase letter, one lowercase letter, and one number').trim(),
+confirmed_password: z.string().trim(),
+  admin_phone: z.string()
+    .transform(val => sanitizers.phone(val))
+    .pipe(z.string().min(5, "Enter at least 10 digit phone number.").max(20, "Phone number is too long.")),
+
+    role:z.enum(["Admin"])
+}).superRefine(({ confirmed_password, password }, ctx) => {
+  if (confirmed_password !== password) {
+    ctx.addIssue({
+      code: "custom",
+      message: "The passwords did not match",
+      path: ["confirmed_password"],
+    });
+  }
+});
+
+
+
+export type schoolAndAdminSchema = z.infer<typeof registerSchoolAndAdminSchema>
+
+
+
+
+
+
+
 export const forgotPasswordSchema = z.object({
   email: z.string()
     .transform(val => sanitizers.email(val))
