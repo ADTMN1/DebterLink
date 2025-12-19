@@ -2,11 +2,15 @@ export type Role = 'student' | 'parent' | 'teacher' | 'director' | 'admin' | 'su
 
 export interface User {
   id: string;
-  name: string;
+  full_name: string;
   email: string;
   role: Role;
   avatar?: string;
 }
+
+
+
+
 
 export interface AuthState {
   user: User | null;
@@ -14,11 +18,12 @@ export interface AuthState {
   isLoading: boolean;
   login: (role: Role) => Promise<void>;
   logout: () => Promise<void>;
+  updateUser: (user: User) => void;
 }
 
 export interface NavigationItem {
   title: string;
   href: string;
-  icon: React.ComponentType<any>;
+  icon: React.ComponentType<{ className?: string; size?: number }>;
   roles: Role[];
 }

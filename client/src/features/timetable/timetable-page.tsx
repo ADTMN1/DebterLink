@@ -6,9 +6,10 @@ import { Label } from '@/components/ui/label';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Plus, Trash2, Save, Download, Edit, Eye, EyeOff } from 'lucide-react';
 import { toast } from 'sonner';
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useMemo, useCallback } from 'react';
 import { useAuthStore } from '@/store/useAuthStore';
 import { useTimetableStore } from '@/store/useTimetableStore';
+import { a11y } from '@/lib/a11y';
 
 const DEMO_TEACHERS = [
   { id: '1', name: 'Tigist Alemu' },
@@ -41,6 +42,11 @@ export default function TimetablePage() {
     { id: 5, time: '11:15-12:00' },
     { id: 6, time: '12:00-12:45' },
   ]);
+  const [editingPeriodId, setEditingPeriodId] = useState<number | null>(null);
+
+  const handlePeriodTimeChange = useCallback((periodId: number, newTime: string) => {
+    setPeriods(prev => prev.map(p => p.id === periodId ? { ...p, time: newTime } : p));
+  }, []);
   const [timetableData, setTimetableData] = useState<any[]>([]);
 
   // Load timetable for students/teachers
@@ -54,12 +60,12 @@ export default function TimetablePage() {
         setTimetableData([]);
       }
     }
-  }, [isStudent, isTeacher, selectedGrade, selectedSection]);
+  }, [isStudent, isTeacher, selectedGrade, selectedSection, getTimetableByGradeSection]);
 
   // Get list of posted timetables for students/teachers
   const postedTimetables = (isStudent || isTeacher) ? timetables.filter(t => t.isPosted) : [];
 
-  const handleCreateNew = () => {
+  const handleCreateNew = useCallback(() => {
     if (!selectedGrade || !selectedSection) {
       toast.error('Please select grade and section');
       return;
@@ -80,9 +86,9 @@ export default function TimetablePage() {
     setIsEditing(true);
     setEditingId(null);
     toast.success(`Creating timetable for Grade ${selectedGrade}${selectedSection}`);
-  };
+  }, [selectedGrade, selectedSection, periods]);
 
-  const handleEdit = (timetable: any) => {
+  const handleEdit = useCallback((timetable: typeof timetables[0]) => {
     setSelectedGrade(timetable.grade);
     setSelectedSection(timetable.section);
     setPeriods(timetable.periods);
@@ -90,7 +96,7 @@ export default function TimetablePage() {
     setIsEditing(true);
     setEditingId(timetable.id);
     toast.info('Editing timetable');
-  };
+  }, []);
 
   const handleSave = () => {
     if (editingId) {
@@ -131,7 +137,7 @@ export default function TimetablePage() {
     }
   };
 
-  const handleCellChange = (dayIndex: number, periodIndex: number, field: string, value: string) => {
+  const handleCellChange = useCallback((dayIndex: number, periodIndex: number, field: string, value: string) => {
     setTimetableData(prev => {
       const updated = [...prev];
       updated[dayIndex].periods[periodIndex][field] = value;
@@ -143,7 +149,7 @@ export default function TimetablePage() {
 
       return updated;
     });
-  };
+  }, []);
 
   const handleExport = () => {
     if (timetableData.length === 0) {
@@ -365,7 +371,25 @@ export default function TimetablePage() {
                       <tr key={period.id}>
                         <td className="border p-2 font-medium text-sm">
                           <div>Period {period.id}</div>
-                          <div className="text-xs text-muted-foreground">{period.time}</div>
+                          {isEditing && isDirector ? (
+                            editingPeriodId === period.id ? (
+                              <Input
+                                value={period.time}
+                                onChange={(e) => handlePeriodTimeChange(period.id, e.target.value)}
+                                onBlur={() => setEditingPeriodId(null)}
+                                className="text-xs h-6 w-24"
+                              />
+                            ) : (
+                              <div
+                                {...a11y.makeInteractive(() => setEditingPeriodId(period.id))}
+                                className="text-xs text-muted-foreground cursor-pointer hover:text-primary"
+                              >
+                                {period.time}
+                              </div>
+                            )
+                          ) : (
+                            <div className="text-xs text-muted-foreground">{period.time}</div>
+                          )}
                         </td>
                         {timetableData.map((dayData, dayIdx) => (
                           <td key={dayIdx} className="border p-2">

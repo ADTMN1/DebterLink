@@ -1,47 +1,21 @@
-import { defineConfig } from "vite";
-import react from "@vitejs/plugin-react";
-import tailwindcss from "@tailwindcss/vite";
-import path from "path";
-import { metaImagesPlugin } from "./vite-plugin-meta-images";
-import { fileURLToPath } from "url";
+import { defineConfig } from 'vite';
+import react from '@vitejs/plugin-react';
+import path from 'path';
+import { fileURLToPath } from 'url';
+import tailwindcss from '@tailwindcss/vite';
 
 const __dirname = path.dirname(fileURLToPath(import.meta.url));
 
-export default defineConfig(() => ({
-  plugins: [
-    react(),
-    tailwindcss(),
-    metaImagesPlugin(),
-  ],
+export default defineConfig({
+  plugins: [react(), tailwindcss()],
   resolve: {
     alias: {
       "@": path.resolve(__dirname, "src"),
       "@shared": path.resolve(__dirname, "shared"),
-      "@assets": path.resolve(__dirname, "attached_assets"),
+      "@assets": path.resolve(__dirname, "attached_assets"), // ensure this folder exists
     },
   },
   css: {
-    postcss: {
-      plugins: [],
-    },
+    // Vite automatically picks up postcss.config.js, you don't need to specify path
   },
-  build: {
-    outDir: path.resolve(__dirname, "dist/public"),
-    emptyOutDir: true,
-  },
-  server: {
-    host: "0.0.0.0",
-    allowedHosts: true as true,   // <-- fixed
-    fs: {
-      strict: true,
-      deny: ["**/.*"],
-    },
-    proxy: {
-      '/api': {
-        target: 'http://localhost:2000',
-        changeOrigin: true,
-        secure: false,
-      },
-    },
-  },
-}));
+});

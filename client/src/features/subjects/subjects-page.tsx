@@ -2,7 +2,12 @@ import DashboardLayout from '@/layouts/dashboard-layout';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Dialog, DialogContent, DialogFooter, DialogHeader, DialogTitle, DialogTrigger } from '@/components/ui/dialog';
-import { Input } from '@/components/ui/input';
+import { SanitizedInput } from '@/components/ui/sanitized-input';
+import { useSanitizedForm } from '@/hooks/use-sanitized-form';
+import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage } from '@/components/ui/form';
+import { createSubjectSchema, CreateSubjectFormData } from '@/lib/validations';
+import { zodResolver } from '@hookform/resolvers/zod';
+import { Loader2 } from 'lucide-react';
 import { Label } from '@/components/ui/label';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
@@ -47,7 +52,7 @@ export default function SubjectsPage() {
           <h2 className="text-3xl font-bold tracking-tight">Subject Assignments</h2>
           <Card>
             <CardContent className="py-8 text-center text-muted-foreground">
-              You don't have permission to access this page. Only directors can assign subjects to teachers.
+              You don&apos;t have permission to access this page. Only directors can assign subjects to teachers.
             </CardContent>
           </Card>
         </div>
@@ -56,11 +61,22 @@ export default function SubjectsPage() {
   }
   const [isDialogOpen, setIsDialogOpen] = useState(false);
   const [assignments, setAssignments] = useState<SubjectAssignment[]>([]);
-  const [form, setForm] = useState({
-    teacherId: '',
-    subject: '',
-    classId: '',
-    academicYear: new Date().getFullYear().toString() + '-' + (new Date().getFullYear() + 1).toString(),
+  const form = useSanitizedForm<CreateSubjectFormData>({
+    resolver: zodResolver(createSubjectSchema),
+    defaultValues: {
+      name: '',
+      code: '',
+      grade: '',
+      creditHours: 1,
+      description: '',
+      status: 'Active',
+    },
+    sanitizationMap: {
+      name: 'text',
+      code: 'code',
+      grade: 'grade',
+      description: 'description',
+    },
   });
 
   const teachers = DEMO_TEACHERS;
@@ -131,78 +147,106 @@ export default function SubjectsPage() {
               <DialogHeader>
                 <DialogTitle>Assign Subject to Teacher</DialogTitle>
               </DialogHeader>
-              <form
-                onSubmit={(e) => {
-                  e.preventDefault();
-                  handleAssignSubject();
-                }}
-              >
-                <div className="space-y-4 mt-2">
-                  <div className="space-y-2">
-                    <Label htmlFor="teacher">Teacher *</Label>
-                    <Select value={form.teacherId} onValueChange={(value) => setForm((f) => ({ ...f, teacherId: value }))}>
-                      <SelectTrigger id="teacher">
-                        <SelectValue placeholder="Select a teacher" />
-                      </SelectTrigger>
-                      <SelectContent>
-                        {teachers.map((teacher: any) => (
-                          <SelectItem key={teacher.id} value={teacher.id}>
-                            {teacher.name}
-                          </SelectItem>
-                        ))}
-                      </SelectContent>
-                    </Select>
-                  </div>
-                  <div className="space-y-2">
-                    <Label htmlFor="subject">Subject *</Label>
-                    <Input
-                      id="subject"
-                      value={form.subject}
-                      onChange={(e) => setForm((f) => ({ ...f, subject: e.target.value }))}
-                      placeholder="e.g. Physics, Mathematics, English"
-                      required
+              <Form {...form}>
+                <form onSubmit={form.handleSanitizedSubmit((data) => {
+                  const newAssignment: SubjectAssignment = {
+                    id: Date.now().toString(),
+                    teacherId: 'teacher-1',
+                    teacherName: 'Sample Teacher',
+                    subject: data.name,
+                    academicYear: new Date().getFullYear().toString() + '-' + (new Date().getFullYear() + 1).toString(),
+                  };
+                  setAssignments([...assignments, newAssignment]);
+                  setIsDialogOpen(false);
+                  form.reset();
+                  toast.success('Subject has been successfully created.');
+                })} className="space-y-4 mt-2">
+                  <FormField
+                    control={form.control}
+                    name="name"
+                    render={({ field }) => (
+                      <FormItem>
+                        <FormLabel>Subject Name</FormLabel>
+                        <FormControl>
+                          <SanitizedInput sanitizer="text" placeholder="e.g. Physics, Mathematics" {...field} />
+                        </FormControl>
+                        <FormMessage />
+                      </FormItem>
+                    )}
+                  />
+                  <FormField
+                    control={form.control}
+                    name="code"
+                    render={({ field }) => (
+                      <FormItem>
+                        <FormLabel>Subject Code</FormLabel>
+                        <FormControl>
+                          <SanitizedInput sanitizer="code" placeholder="e.g. PHY101" {...field} />
+                        </FormControl>
+                        <FormMessage />
+                      </FormItem>
+                    )}
+                  />
+                  <div className="grid grid-cols-2 gap-4">
+                    <FormField
+                      control={form.control}
+                      name="grade"
+                      render={({ field }) => (
+                        <FormItem>
+                          <FormLabel>Grade</FormLabel>
+                          <Select onValueChange={field.onChange} value={field.value}>
+                            <FormControl>
+                              <SelectTrigger>
+                                <SelectValue placeholder="Select grade" />
+                              </SelectTrigger>
+                            </FormControl>
+                            <SelectContent>
+                              <SelectItem value="9">Grade 9</SelectItem>
+                              <SelectItem value="10">Grade 10</SelectItem>
+                              <SelectItem value="11">Grade 11</SelectItem>
+                              <SelectItem value="12">Grade 12</SelectItem>
+                            </SelectContent>
+                          </Select>
+                          <FormMessage />
+                        </FormItem>
+                      )}
+                    />
+                    <FormField
+                      control={form.control}
+                      name="creditHours"
+                      render={({ field }) => (
+                        <FormItem>
+                          <FormLabel>Credit Hours</FormLabel>
+                          <FormControl>
+                            <SanitizedInput sanitizer="text" type="number" min="1" max="10" {...field} onChange={(e) => field.onChange(Number(e.target.value))} />
+                          </FormControl>
+                          <FormMessage />
+                        </FormItem>
+                      )}
                     />
                   </div>
-                  <div className="space-y-2">
-                    <Label htmlFor="class">Class (Optional)</Label>
-                    <Select value={form.classId || 'all'} onValueChange={(value) => setForm((f) => ({ ...f, classId: value === 'all' ? '' : value }))}>
-                      <SelectTrigger id="class">
-                        <SelectValue placeholder="Select a class (optional)" />
-                      </SelectTrigger>
-                      <SelectContent>
-                        <SelectItem value="all">All Classes</SelectItem>
-                        {classes.map((cls: any) => (
-                          <SelectItem key={cls.id} value={cls.id}>
-                            {cls.name}
-                          </SelectItem>
-                        ))}
-                      </SelectContent>
-                    </Select>
-                  </div>
-                  <div className="space-y-2">
-                    <Label htmlFor="academicYear">Academic Year *</Label>
-                    <Input
-                      id="academicYear"
-                      value={form.academicYear}
-                      onChange={(e) => setForm((f) => ({ ...f, academicYear: e.target.value }))}
-                      placeholder="2024-2025"
-                      required
-                    />
-                  </div>
-                </div>
-                <DialogFooter className="mt-6">
-                  <Button
-                    type="button"
-                    variant="outline"
-                    onClick={() => setIsDialogOpen(false)}
-                  >
-                    Cancel
-                  </Button>
-                  <Button type="submit">
-                    Assign Subject
-                  </Button>
-                </DialogFooter>
-              </form>
+                  <FormField
+                    control={form.control}
+                    name="description"
+                    render={({ field }) => (
+                      <FormItem>
+                        <FormLabel>Description (Optional)</FormLabel>
+                        <FormControl>
+                          <SanitizedInput sanitizer="description" placeholder="Brief description of the subject" {...field} />
+                        </FormControl>
+                        <FormMessage />
+                      </FormItem>
+                    )}
+                  />
+                  <DialogFooter className="mt-6">
+                    <Button type="button" variant="outline" onClick={() => setIsDialogOpen(false)}>Cancel</Button>
+                    <Button type="submit" disabled={form.formState.isSubmitting}>
+                      {form.formState.isSubmitting ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : null}
+                      Create Subject
+                    </Button>
+                  </DialogFooter>
+                </form>
+              </Form>
             </DialogContent>
           </Dialog>
         </div>

@@ -3,14 +3,22 @@ import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter, DialogTrigger } from '@/components/ui/dialog';
-import { Textarea } from '@/components/ui/textarea';
-import { Label } from '@/components/ui/label';
-import { Input } from '@/components/ui/input';
+import { SanitizedInput } from '@/components/ui/sanitized-input';
+import { SanitizedTextarea } from '@/components/ui/sanitized-input';
+import { useSanitizedForm } from '@/hooks/use-sanitized-form';
+import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage } from '@/components/ui/form';
+import { appealSubmissionSchema, AppealSubmissionFormData } from '@/lib/validations';
+import { zodResolver } from '@hookform/resolvers/zod';
+import { Loader2 } from 'lucide-react';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { useState } from 'react';
 import { Calendar, User, FileText, MessageSquare, Clock } from 'lucide-react';
 import { useToast } from '@/hooks/use-toast';
 import { useAuthStore } from '@/store/useAuthStore';
+import { Label } from '@/components/ui/label';
+import { Input } from '@/components/ui/input';
+import { Textarea } from '@/components/ui/textarea';
+import { Role } from '@/types';
 
 type Appeal = {
   id: string;
@@ -79,53 +87,48 @@ export default function AppealsPage() {
   const [comment, setComment] = useState('');
   const [newStatus, setNewStatus] = useState<'In Review' | 'Approved' | 'Rejected'>('In Review');
   const [statusResponse, setStatusResponse] = useState('');
-  const [newAppealForm, setNewAppealForm] = useState({
-    subject: '',
-    description: '',
+  const newAppealForm = useSanitizedForm<AppealSubmissionFormData>({
+    resolver: zodResolver(appealSubmissionSchema),
+    defaultValues: {
+      type: 'other',
+      subject: '',
+      description: '',
+      evidence: '',
+      requestedAction: '',
+    },
+    sanitizationMap: {
+      subject: 'text',
+      description: 'description',
+      evidence: 'description',
+      requestedAction: 'description',
+    },
   });
-  const [editForm, setEditForm] = useState({
-    subject: '',
-    description: '',
-  });
+
+  const [editForm, setEditForm] = useState({ subject: '', description: '' });
 
   const handleViewDetails = (appeal: Appeal) => {
     setSelectedAppeal(appeal);
     setIsDialogOpen(true);
   };
 
-  const handleCreateAppeal = () => {
-    if (!newAppealForm.subject.trim() || !newAppealForm.description.trim()) {
-      toast({
-        title: 'Validation Error',
-        description: 'Please fill in title and description.',
-        variant: 'destructive',
-      });
-      return;
-    }
-
+  const handleCreateAppeal = newAppealForm.handleSanitizedSubmit((data: AppealSubmissionFormData) => {
     const newAppeal: Appeal = {
       id: `AP-${new Date().getFullYear()}-${String(appeals.length + 1).padStart(3, '0')}`,
-      subject: newAppealForm.subject.trim(),
+      subject: data.subject,
       status: 'In Review',
       date: 'Just now',
-      description: newAppealForm.description.trim(),
+      description: data.description,
       submittedBy: user?.name || 'Unknown',
-      category: 'General',
+      category: data.type,
       priority: 'Medium',
     };
 
     setAppeals([newAppeal, ...appeals]);
     setIsNewAppealDialogOpen(false);
-    setNewAppealForm({
-      subject: '',
-      description: '',
-    });
+    newAppealForm.reset();
 
-    toast({
-      title: 'Appeal submitted',
-      description: 'Your appeal has been successfully submitted and is now under review.',
-    });
-  };
+    toast.success('Your appeal has been successfully submitted and is now under review.');
+  });
 
   const handleAddComment = () => {
     if (!selectedAppeal) return;
@@ -281,54 +284,79 @@ export default function AppealsPage() {
                  <DialogHeader>
                    <DialogTitle>Create New Appeal</DialogTitle>
                  </DialogHeader>
-                 <form
-                   onSubmit={(e) => {
-                     e.preventDefault();
-                     handleCreateAppeal();
-                   }}
-                 >
-                   <div className="space-y-4 mt-2">
-                     <div className="space-y-2">
-                       <Label htmlFor="subject">Title *</Label>
-                       <Input
-                         id="subject"
-                         value={newAppealForm.subject}
-                         onChange={(e) => setNewAppealForm((f) => ({ ...f, subject: e.target.value }))}
-                         placeholder="e.g. Grade Correction - Physics"
-                         required
-                       />
-                     </div>
-                     <div className="space-y-2">
-                       <Label htmlFor="description">Description *</Label>
-                       <Textarea
-                         id="description"
-                         value={newAppealForm.description}
-                         onChange={(e) => setNewAppealForm((f) => ({ ...f, description: e.target.value }))}
-                         placeholder="Please provide a detailed description of your appeal or request..."
-                         rows={8}
-                         required
-                       />
-                     </div>
-                   </div>
-                   <DialogFooter className="mt-6">
-                     <Button
-                       type="button"
-                       variant="outline"
-                       onClick={() => {
-                         setIsNewAppealDialogOpen(false);
-                         setNewAppealForm({
-                           subject: '',
-                           description: '',
-                         });
-                       }}
-                     >
-                       Cancel
-                     </Button>
-                     <Button type="submit">
-                       Submit Appeal
-                     </Button>
-                   </DialogFooter>
-                 </form>
+                 <Form {...newAppealForm}>
+                   <form onSubmit={handleCreateAppeal} className="space-y-4 mt-2">
+                     <FormField
+                       control={newAppealForm.control}
+                       name="type"
+                       render={({ field }) => (
+                         <FormItem>
+                           <FormLabel>Appeal Type</FormLabel>
+                           <Select onValueChange={field.onChange} value={field.value}>
+                             <FormControl>
+                               <SelectTrigger>
+                                 <SelectValue />
+                               </SelectTrigger>
+                             </FormControl>
+                             <SelectContent>
+                               <SelectItem value="grade">Grade Appeal</SelectItem>
+                               <SelectItem value="disciplinary">Disciplinary Appeal</SelectItem>
+                               <SelectItem value="attendance">Attendance Appeal</SelectItem>
+                               <SelectItem value="other">Other</SelectItem>
+                             </SelectContent>
+                           </Select>
+                           <FormMessage />
+                         </FormItem>
+                       )}
+                     />
+                     <FormField
+                       control={newAppealForm.control}
+                       name="subject"
+                       render={({ field }) => (
+                         <FormItem>
+                           <FormLabel>Subject</FormLabel>
+                           <FormControl>
+                             <SanitizedInput sanitizer="text" placeholder="e.g. Grade Correction - Physics" {...field} />
+                           </FormControl>
+                           <FormMessage />
+                         </FormItem>
+                       )}
+                     />
+                     <FormField
+                       control={newAppealForm.control}
+                       name="description"
+                       render={({ field }) => (
+                         <FormItem>
+                           <FormLabel>Description</FormLabel>
+                           <FormControl>
+                             <SanitizedTextarea sanitizer="description" placeholder="Provide detailed description..." rows={6} {...field} />
+                           </FormControl>
+                           <FormMessage />
+                         </FormItem>
+                       )}
+                     />
+                     <FormField
+                       control={newAppealForm.control}
+                       name="requestedAction"
+                       render={({ field }) => (
+                         <FormItem>
+                           <FormLabel>Requested Action</FormLabel>
+                           <FormControl>
+                             <SanitizedTextarea sanitizer="description" placeholder="What action do you want taken?" rows={3} {...field} />
+                           </FormControl>
+                           <FormMessage />
+                         </FormItem>
+                       )}
+                     />
+                     <DialogFooter className="mt-6">
+                       <Button type="button" variant="outline" onClick={() => setIsNewAppealDialogOpen(false)}>Cancel</Button>
+                       <Button type="submit" disabled={newAppealForm.formState.isSubmitting}>
+                         {newAppealForm.formState.isSubmitting ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : null}
+                         Submit Appeal
+                       </Button>
+                     </DialogFooter>
+                   </form>
+                 </Form>
                </DialogContent>
              </Dialog>
            )}
@@ -477,7 +505,8 @@ export default function AppealsPage() {
             <div className="space-y-4 mt-2">
               <div className="space-y-2">
                 <Label htmlFor="comment">Comment</Label>
-                <Textarea
+                <SanitizedTextarea
+                  sanitizer="description"
                   id="comment"
                   value={comment}
                   onChange={(e) => setComment(e.target.value)}

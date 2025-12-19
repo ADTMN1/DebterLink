@@ -1,5 +1,5 @@
 @import "tailwindcss";
-
+/* your custom variables, dark mode, and base styles */
 @custom-variant dark (&:is(.dark *));
 
 @theme inline {
@@ -115,7 +115,7 @@
   --secondary-foreground: 45 80% 80%;
   
   --muted: 240 3.7% 15.9%;
-  --muted-foreground: 240 5% 75%;
+  --muted-foreground: 240 5% 65%;
   
   --accent: 165 30% 15%;
   --accent-foreground: 0 0% 98%;

@@ -1,5 +1,7 @@
 import DashboardLayout from '@/layouts/dashboard-layout';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
+import { SanitizedInput } from '@/components/ui/sanitized-input';
+import { SanitizedTextarea } from '@/components/ui/sanitized-input';
 import { Input } from '@/components/ui/input';
 import { Button } from '@/components/ui/button';
 import { ScrollArea } from '@/components/ui/scroll-area';
@@ -32,7 +34,15 @@ export default function MessagingPage() {
               {contacts.map((contact) => (
                 <div 
                   key={contact.id}
+                  role="button"
+                  tabIndex={0}
                   onClick={() => setActiveChat(contact.id)}
+                  onKeyDown={(e) => {
+                    if (e.key === 'Enter' || e.key === ' ') {
+                      e.preventDefault();
+                      setActiveChat(contact.id);
+                    }
+                  }}
                   className={`flex items-start gap-3 p-4 cursor-pointer transition-colors hover:bg-accent/50 ${activeChat === contact.id ? 'bg-accent' : ''}`}
                 >
                   <Avatar>

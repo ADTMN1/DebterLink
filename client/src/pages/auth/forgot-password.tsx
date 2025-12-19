@@ -1,6 +1,4 @@
-import { useForm } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
-import * as z from 'zod';
 import { Button } from '@/components/ui/button';
 import {
   Form,
@@ -10,63 +8,32 @@ import {
   FormLabel,
   FormMessage,
 } from '@/components/ui/form';
-import { Input } from '@/components/ui/input';
+import { SanitizedInput } from '@/components/ui/sanitized-input';
+import { useSanitizedForm } from '@/hooks/use-sanitized-form';
 import { Link } from 'wouter';
 import AuthLayout from '@/layouts/auth-layout';
 import { Loader2, Mail, ArrowLeft } from 'lucide-react';
 import { useState } from 'react';
-import { useToast } from '@/hooks/use-toast';
-
-const formSchema = z.object({
-  email: z.string().email(),
-});
+import { forgotPasswordSchema, ForgotPasswordFormData } from '@/lib/validations';
 
 export default function ForgotPasswordPage() {
   const [isSubmitted, setIsSubmitted] = useState(false);
   const [isLoading, setIsLoading] = useState(false);
   const { toast } = useToast();
 
-  const form = useForm<z.infer<typeof formSchema>>({
-    resolver: zodResolver(formSchema),
+  const form = useSanitizedForm<ForgotPasswordFormData>({
+    resolver: zodResolver(forgotPasswordSchema),
     defaultValues: {
       email: '',
     },
+    sanitizationMap: { email: 'email' },
   });
 
-  async function onSubmit(values: z.infer<typeof formSchema>) {
-    setIsLoading(true);
-    
-    try {
-      const response = await fetch('/api/auth/forgot-password', {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-        },
-        body: JSON.stringify(values),
-      });
-
-      const data = await response.json();
-
-      if (!response.ok) {
-        throw new Error(data.message || 'Failed to send reset email');
-      }
-
-      toast({
-        title: "Success",
-        description: "If an account exists, you will receive reset instructions",
-      });
-
-      setIsSubmitted(true);
-    } catch (error) {
-      toast({
-        title: "Error",
-        description: error instanceof Error ? error.message : 'Failed to send reset email',
-        variant: "destructive",
-      });
-    } finally {
-      setIsLoading(false);
-    }
-  }
+  const onSubmit = form.handleSanitizedSubmit(async (values: ForgotPasswordFormData) => {
+    // Mock API call
+    console.log(values);
+    setIsSubmitted(true);
+  });
 
   return (
     <AuthLayout>
@@ -79,7 +46,7 @@ export default function ForgotPasswordPage() {
 
       {!isSubmitted ? (
         <Form {...form}>
-          <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-4">
+          <form onSubmit={onSubmit} className="space-y-4">
             <FormField
               control={form.control}
               name="email"
@@ -89,7 +56,7 @@ export default function ForgotPasswordPage() {
                   <FormControl>
                     <div className="relative">
                       <Mail className="absolute left-3 top-2.5 h-4 w-4 text-muted-foreground" />
-                      <Input placeholder="email@example.com" className="pl-9" {...field} />
+                      <SanitizedInput sanitizer="email" placeholder="email@example.com" className="pl-9" autoComplete="email" {...field} />
                     </div>
                   </FormControl>
                   <FormMessage />

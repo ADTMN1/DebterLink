@@ -2,15 +2,19 @@ import DashboardLayout from '@/layouts/dashboard-layout';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Dialog, DialogContent, DialogFooter, DialogHeader, DialogTitle, DialogTrigger } from '@/components/ui/dialog';
-import { Input } from '@/components/ui/input';
-import { Label } from '@/components/ui/label';
+import { SanitizedInput } from '@/components/ui/sanitized-input';
+import { useSanitizedForm, sanitizationMaps } from '@/hooks/use-sanitized-form';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
+import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage } from '@/components/ui/form';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
 import { Badge } from '@/components/ui/badge';
-import { Plus, Edit, Trash2, Users, UserPlus } from 'lucide-react';
+import { Plus, Edit, Trash2, Users, UserPlus, Loader2 } from 'lucide-react';
 import { useState } from 'react';
+
+import { zodResolver } from '@hookform/resolvers/zod';
+import { toast } from 'sonner';
 import { useAuthStore } from '@/store/useAuthStore';
-import { useToast } from '@/hooks/use-toast';
+import { createClassSchema, assignTeacherSchema, CreateClassFormData, AssignTeacherFormData } from '@/lib/validations';
 
 type Class = {
   id: string;
@@ -35,7 +39,13 @@ const DEMO_TEACHERS = [
 
 export default function ClassesPage() {
   const { user } = useAuthStore();
-  const { toast } = useToast();
+  const [isCreateDialogOpen, setIsCreateDialogOpen] = useState(false);
+  const [isAssignDialogOpen, setIsAssignDialogOpen] = useState<string | null>(null);
+  const [classes, setClasses] = useState<Class[]>([
+    { id: '1', name: 'Grade 11A', grade: '11', section: 'A', capacity: 40, currentStudents: 38, teacherName: 'Tigist Alemu', subject: 'Physics', academicYear: '2024-2025', status: 'Active' },
+    { id: '2', name: 'Grade 11B', grade: '11', section: 'B', capacity: 40, currentStudents: 35, teacherName: 'Meron Bekele', subject: 'Mathematics', academicYear: '2024-2025', status: 'Active' },
+    { id: '3', name: 'Grade 10A', grade: '10', section: 'A', capacity: 45, currentStudents: 42, academicYear: '2024-2025', status: 'Active' },
+  ]);
 
   // Only directors can access this page
   if (user?.role !== 'director') {
@@ -45,106 +55,44 @@ export default function ClassesPage() {
           <h2 className="text-3xl font-bold tracking-tight">Class Management</h2>
           <Card>
             <CardContent className="py-8 text-center text-muted-foreground">
-              You don't have permission to access this page. Only directors can manage classes.
+              You don&apos;t have permission to access this page. Only directors can manage classes.
             </CardContent>
           </Card>
         </div>
       </DashboardLayout>
     );
   }
-  const [isCreateDialogOpen, setIsCreateDialogOpen] = useState(false);
-  const [isAssignDialogOpen, setIsAssignDialogOpen] = useState<string | null>(null);
-  const [classes, setClasses] = useState<Class[]>([
-    { id: '1', name: 'Grade 11A', grade: '11', section: 'A', capacity: 40, currentStudents: 38, teacherName: 'Tigist Alemu', subject: 'Physics', academicYear: '2024-2025', status: 'Active' },
-    { id: '2', name: 'Grade 11B', grade: '11', section: 'B', capacity: 40, currentStudents: 35, teacherName: 'Meron Bekele', subject: 'Mathematics', academicYear: '2024-2025', status: 'Active' },
-    { id: '3', name: 'Grade 10A', grade: '10', section: 'A', capacity: 45, currentStudents: 42, academicYear: '2024-2025', status: 'Active' },
-  ]);
-  const [form, setForm] = useState({
-    name: '',
-    grade: '',
-    section: '',
-    capacity: '',
-    academicYear: new Date().getFullYear().toString() + '-' + (new Date().getFullYear() + 1).toString(),
-    status: 'Active' as 'Active' | 'Inactive',
+  // Create class form
+  const createForm = useSanitizedForm<CreateClassFormData>({
+    resolver: zodResolver(createClassSchema),
+    defaultValues: {
+      name: '',
+      grade: '',
+      section: '',
+      capacity: 40,
+      academicYear: new Date().getFullYear().toString() + '-' + (new Date().getFullYear() + 1).toString(),
+      status: 'Active',
+    },
+    sanitizationMap: sanitizationMaps.class,
   });
-  const [selectedTeacherId, setSelectedTeacherId] = useState('');
-  const [selectedSubject, setSelectedSubject] = useState('');
+
+  // Assign teacher form
+  const assignForm = useSanitizedForm<AssignTeacherFormData>({
+    resolver: zodResolver(assignTeacherSchema),
+    defaultValues: {
+      teacherId: '',
+      subject: '',
+    },
+    sanitizationMap: { subject: 'text' },
+  });
 
   const teachers = DEMO_TEACHERS;
   const isLoading = false;
 
-
-
-  const handleCreateClass = () => {
-    if (!form.name.trim() || !form.grade.trim() || !form.section.trim() || !form.capacity.trim()) {
-      toast({
-        title: 'Validation Error',
-        description: 'Please fill in all required fields.',
-        variant: 'destructive',
-      });
-      return;
-    }
-
-    const newClass: Class = {
-      id: Date.now().toString(),
-      name: form.name.trim(),
-      grade: form.grade.trim(),
-      section: form.section.trim(),
-      capacity: parseInt(form.capacity) || 0,
-      currentStudents: 0,
-      academicYear: form.academicYear,
-      status: form.status,
-    };
-
-    setClasses([...classes, newClass]);
-    setIsCreateDialogOpen(false);
-    setForm({
-      name: '',
-      grade: '',
-      section: '',
-      capacity: '',
-      academicYear: new Date().getFullYear().toString() + '-' + (new Date().getFullYear() + 1).toString(),
-      status: 'Active',
-    });
-    toast({
-      title: 'Class created',
-      description: 'Class has been successfully created.',
-    });
-  };
-
-  const handleAssignTeacher = (classId: string) => {
-    if (!selectedTeacherId || !selectedSubject.trim()) {
-      toast({
-        title: 'Validation Error',
-        description: 'Please select a teacher and enter a subject.',
-        variant: 'destructive',
-      });
-      return;
-    }
-    const teacher = teachers.find((t) => t.id === selectedTeacherId);
-    if (!teacher) return;
-
-    setClasses(classes.map(cls => 
-      cls.id === classId
-        ? { ...cls, teacherId: selectedTeacherId, teacherName: teacher.name, subject: selectedSubject.trim() }
-        : cls
-    ));
-    setIsAssignDialogOpen(null);
-    setSelectedTeacherId('');
-    setSelectedSubject('');
-    toast({
-      title: 'Teacher assigned',
-      description: `${teacher.name} has been assigned to teach ${selectedSubject}.`,
-    });
-  };
-
   const handleDeleteClass = (id: string, name: string) => {
     if (confirm(`Are you sure you want to delete ${name}?`)) {
       setClasses(classes.filter(cls => cls.id !== id));
-      toast({
-        title: 'Class deleted',
-        description: 'Class has been successfully deleted.',
-      });
+      toast.success('Class deleted successfully');
     }
   };
 
@@ -162,99 +110,124 @@ export default function ClassesPage() {
             <DialogContent>
               <DialogHeader>
                 <DialogTitle>Create New Class</DialogTitle>
+                <p className="text-sm text-muted-foreground">Fill in the details to create a new class</p>
               </DialogHeader>
-              <form
-                onSubmit={(e) => {
-                  e.preventDefault();
-                  handleCreateClass();
-                }}
-              >
-                <div className="space-y-4 mt-2">
+              <Form {...createForm}>
+                <form onSubmit={createForm.handleSanitizedSubmit((data) => {
+                  const newClass: Class = {
+                    id: `${Date.now()}`,
+                    name: data.name,
+                    grade: data.grade,
+                    section: data.section,
+                    capacity: data.capacity,
+                    currentStudents: 0,
+                    academicYear: data.academicYear,
+                    status: data.status,
+                  };
+                  setClasses([...classes, newClass]);
+                  setIsCreateDialogOpen(false);
+                  createForm.reset();
+                  toast.success('Class created successfully');
+                })} className="space-y-4 mt-2">
                   <div className="grid grid-cols-2 gap-4">
-                    <div className="space-y-2">
-                      <Label htmlFor="grade">Grade *</Label>
-                      <Input
-                        id="grade"
-                        value={form.grade}
-                        onChange={(e) => setForm((f) => ({ ...f, grade: e.target.value }))}
-                        placeholder="e.g. 11, 10"
-                        required
-                      />
-                    </div>
-                    <div className="space-y-2">
-                      <Label htmlFor="section">Section *</Label>
-                      <Input
-                        id="section"
-                        value={form.section}
-                        onChange={(e) => setForm((f) => ({ ...f, section: e.target.value }))}
-                        placeholder="e.g. A, B"
-                        required
-                      />
-                    </div>
-                  </div>
-                  <div className="space-y-2">
-                    <Label htmlFor="name">Class Name *</Label>
-                    <Input
-                      id="name"
-                      value={form.name}
-                      onChange={(e) => setForm((f) => ({ ...f, name: e.target.value }))}
-                      placeholder="e.g. Grade 11A"
-                      required
+                    <FormField
+                      control={createForm.control}
+                      name="grade"
+                      render={({ field }) => (
+                        <FormItem>
+                          <FormLabel>Grade</FormLabel>
+                          <FormControl>
+                            <SanitizedInput sanitizer="grade" placeholder="e.g. 11, 10" {...field} />
+                          </FormControl>
+                          <FormMessage />
+                        </FormItem>
+                      )}
+                    />
+                    <FormField
+                      control={createForm.control}
+                      name="section"
+                      render={({ field }) => (
+                        <FormItem>
+                          <FormLabel>Section</FormLabel>
+                          <FormControl>
+                            <SanitizedInput sanitizer="section" placeholder="e.g. A, B" {...field} />
+                          </FormControl>
+                          <FormMessage />
+                        </FormItem>
+                      )}
                     />
                   </div>
+                  <FormField
+                    control={createForm.control}
+                    name="name"
+                    render={({ field }) => (
+                      <FormItem>
+                        <FormLabel>Class Name</FormLabel>
+                        <FormControl>
+                          <SanitizedInput sanitizer="text" placeholder="e.g. Grade 11A" {...field} />
+                        </FormControl>
+                        <FormMessage />
+                      </FormItem>
+                    )}
+                  />
                   <div className="grid grid-cols-2 gap-4">
-                    <div className="space-y-2">
-                      <Label htmlFor="capacity">Capacity *</Label>
-                      <Input
-                        id="capacity"
-                        type="number"
-                        min="1"
-                        value={form.capacity}
-                        onChange={(e) => setForm((f) => ({ ...f, capacity: e.target.value }))}
-                        placeholder="50"
-                        required
-                      />
-                    </div>
-                    <div className="space-y-2">
-                      <Label htmlFor="academicYear">Academic Year *</Label>
-                      <Input
-                        id="academicYear"
-                        value={form.academicYear}
-                        onChange={(e) => setForm((f) => ({ ...f, academicYear: e.target.value }))}
-                        placeholder="2024-2025"
-                        required
-                      />
-                    </div>
+                    <FormField
+                      control={createForm.control}
+                      name="capacity"
+                      render={({ field }) => (
+                        <FormItem>
+                          <FormLabel>Capacity</FormLabel>
+                          <FormControl>
+                            <SanitizedInput sanitizer="text" type="number" min="1" placeholder="50" {...field} onChange={(e) => field.onChange(Number(e.target.value))} />
+                          </FormControl>
+                          <FormMessage />
+                        </FormItem>
+                      )}
+                    />
+                    <FormField
+                      control={createForm.control}
+                      name="academicYear"
+                      render={({ field }) => (
+                        <FormItem>
+                          <FormLabel>Academic Year</FormLabel>
+                          <FormControl>
+                            <SanitizedInput sanitizer="text" placeholder="2024-2025" {...field} />
+                          </FormControl>
+                          <FormMessage />
+                        </FormItem>
+                      )}
+                    />
                   </div>
-                  <div className="space-y-2">
-                    <Label htmlFor="status">Status</Label>
-                    <Select
-                      value={form.status}
-                      onValueChange={(value: 'Active' | 'Inactive') => setForm((f) => ({ ...f, status: value }))}
-                    >
-                      <SelectTrigger id="status">
-                        <SelectValue />
-                      </SelectTrigger>
-                      <SelectContent>
-                        <SelectItem value="Active">Active</SelectItem>
-                        <SelectItem value="Inactive">Inactive</SelectItem>
-                      </SelectContent>
-                    </Select>
-                  </div>
-                </div>
-                <DialogFooter className="mt-6">
-                  <Button
-                    type="button"
-                    variant="outline"
-                    onClick={() => setIsCreateDialogOpen(false)}
-                  >
-                    Cancel
-                  </Button>
-                  <Button type="submit">
-                    Create Class
-                  </Button>
-                </DialogFooter>
-              </form>
+                  <FormField
+                    control={createForm.control}
+                    name="status"
+                    render={({ field }) => (
+                      <FormItem>
+                        <FormLabel>Status</FormLabel>
+                        <Select onValueChange={field.onChange} value={field.value}>
+                          <FormControl>
+                            <SelectTrigger>
+                              <SelectValue />
+                            </SelectTrigger>
+                          </FormControl>
+                          <SelectContent>
+                            <SelectItem value="Active">Active</SelectItem>
+                            <SelectItem value="Inactive">Inactive</SelectItem>
+                          </SelectContent>
+                        </Select>
+                        <FormMessage />
+                      </FormItem>
+                    )}
+                  />
+                  <DialogFooter className="mt-6">
+                    <Button type="button" variant="outline" onClick={() => setIsCreateDialogOpen(false)}>Cancel</Button>
+                    <Button type="submit" disabled={createForm.formState.isSubmitting}>
+                      {createForm.formState.isSubmitting ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : null}
+                      Create Class
+                    </Button>
+                  </DialogFooter>
+                </form>
+              </Form>
             </DialogContent>
           </Dialog>
         </div>
@@ -267,7 +240,7 @@ export default function ClassesPage() {
             {isLoading ? (
               <div className="text-center py-8 text-muted-foreground">Loading classes...</div>
             ) : classes.length === 0 ? (
-              <div className="text-center py-8 text-muted-foreground">No classes found.</div>
+              <div className="text-center py-8 text-muted-foreground">No classes found</div>
             ) : (
               <Table>
                 <TableHeader>
@@ -327,53 +300,67 @@ export default function ClassesPage() {
                             <DialogContent>
                               <DialogHeader>
                                 <DialogTitle>Assign Teacher to {cls.name}</DialogTitle>
+                                <p className="text-sm text-muted-foreground">Select a teacher and subject for this class</p>
                               </DialogHeader>
-                              <div className="space-y-4 mt-2">
-                                <div className="space-y-2">
-                                  <Label htmlFor="teacher">Select Teacher *</Label>
-                                  <Select value={selectedTeacherId} onValueChange={setSelectedTeacherId}>
-                                    <SelectTrigger id="teacher">
-                                      <SelectValue placeholder="Select a teacher" />
-                                    </SelectTrigger>
-                                    <SelectContent>
-                                      {teachers.map((teacher: any) => (
-                                        <SelectItem key={teacher.id} value={teacher.id}>
-                                          {teacher.name}
-                                        </SelectItem>
-                                      ))}
-                                    </SelectContent>
-                                  </Select>
-                                </div>
-                                <div className="space-y-2">
-                                  <Label htmlFor="subject">Subject *</Label>
-                                  <Input
-                                    id="subject"
-                                    value={selectedSubject}
-                                    onChange={(e) => setSelectedSubject(e.target.value)}
-                                    placeholder="e.g. Physics, Mathematics"
-                                    required
+                              <Form {...assignForm}>
+                                <form onSubmit={assignForm.handleSanitizedSubmit((data) => {
+                                  const teacher = teachers.find((t) => t.id === data.teacherId);
+                                  if (!teacher) return;
+                                  setClasses(classes.map(c => 
+                                    c.id === cls.id
+                                      ? { ...c, teacherId: data.teacherId, teacherName: teacher.name, subject: data.subject }
+                                      : c
+                                  ));
+                                  setIsAssignDialogOpen(null);
+                                  assignForm.reset();
+                                  toast.success(`${teacher.name} assigned to teach ${data.subject}`);
+                                })} className="space-y-4 mt-2">
+                                  <FormField
+                                    control={assignForm.control}
+                                    name="teacherId"
+                                    render={({ field }) => (
+                                      <FormItem>
+                                        <FormLabel>Select Teacher</FormLabel>
+                                        <Select onValueChange={field.onChange} value={field.value}>
+                                          <FormControl>
+                                            <SelectTrigger>
+                                              <SelectValue placeholder="Select a teacher" />
+                                            </SelectTrigger>
+                                          </FormControl>
+                                          <SelectContent>
+                                            {teachers.map((teacher) => (
+                                              <SelectItem key={teacher.id} value={teacher.id}>
+                                                {teacher.name}
+                                              </SelectItem>
+                                            ))}
+                                          </SelectContent>
+                                        </Select>
+                                        <FormMessage />
+                                      </FormItem>
+                                    )}
                                   />
-                                </div>
-                              </div>
-                              <DialogFooter>
-                                <Button
-                                  type="button"
-                                  variant="outline"
-                                  onClick={() => {
-                                    setIsAssignDialogOpen(null);
-                                    setSelectedTeacherId('');
-                                    setSelectedSubject('');
-                                  }}
-                                >
-                                  Cancel
-                                </Button>
-                                <Button
-                                  type="button"
-                                  onClick={() => handleAssignTeacher(cls.id)}
-                                >
-                                  Assign Teacher
-                                </Button>
-                              </DialogFooter>
+                                  <FormField
+                                    control={assignForm.control}
+                                    name="subject"
+                                    render={({ field }) => (
+                                      <FormItem>
+                                        <FormLabel>Subject</FormLabel>
+                                        <FormControl>
+                                          <SanitizedInput sanitizer="text" placeholder="e.g. Physics, Mathematics" {...field} />
+                                        </FormControl>
+                                        <FormMessage />
+                                      </FormItem>
+                                    )}
+                                  />
+                                  <DialogFooter>
+                                    <Button type="button" variant="outline" onClick={() => setIsAssignDialogOpen(null)}>Cancel</Button>
+                                    <Button type="submit" disabled={assignForm.formState.isSubmitting}>
+                                      {assignForm.formState.isSubmitting ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : null}
+                                      Assign Teacher
+                                    </Button>
+                                  </DialogFooter>
+                                </form>
+                              </Form>
                             </DialogContent>
                           </Dialog>
                           <Button

@@ -1,12 +1,56 @@
 import DashboardLayout from '@/layouts/dashboard-layout';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
-import { Label } from '@/components/ui/label';
-import { Input } from '@/components/ui/input';
+import { SanitizedInput } from '@/components/ui/sanitized-input';
+import { useSanitizedForm } from '@/hooks/use-sanitized-form';
+import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage } from '@/components/ui/form';
+import { profileSchema, passwordChangeSchema, ProfileFormData, PasswordChangeFormData } from '@/lib/validations';
+import { zodResolver } from '@hookform/resolvers/zod';
+import { Loader2 } from 'lucide-react';
+import { toast } from 'sonner';
 import { Button } from '@/components/ui/button';
 import { Switch } from '@/components/ui/switch';
 import { Separator } from '@/components/ui/separator';
 
 export default function SettingsPage() {
+  const profileForm = useSanitizedForm<ProfileFormData>({
+    resolver: zodResolver(profileSchema),
+    defaultValues: {
+      name: '',
+      email: '',
+      phone: '',
+      address: '',
+    },
+    sanitizationMap: {
+      name: 'name',
+      email: 'email',
+      phone: 'phone',
+      address: 'address',
+    },
+  });
+
+  const passwordForm = useSanitizedForm<PasswordChangeFormData>({
+    resolver: zodResolver(passwordChangeSchema),
+    defaultValues: {
+      currentPassword: '',
+      newPassword: '',
+      confirmPassword: '',
+    },
+    sanitizationMap: {
+      currentPassword: 'text',
+      newPassword: 'text',
+      confirmPassword: 'text',
+    },
+  });
+
+  const onProfileSubmit = profileForm.handleSanitizedSubmit(async (data: ProfileFormData) => {
+    toast.success('Profile updated successfully!');
+  });
+
+  const onPasswordSubmit = passwordForm.handleSanitizedSubmit(async (data: PasswordChangeFormData) => {
+    toast.success('Password updated successfully!');
+    passwordForm.reset();
+  });
+
   return (
     <DashboardLayout>
       <div className="space-y-6">
@@ -21,16 +65,41 @@ export default function SettingsPage() {
             <CardHeader>
               <CardTitle>Account Settings</CardTitle>
             </CardHeader>
-            <CardContent className="space-y-4">
-              <div className="space-y-2">
-                <Label>Email</Label>
-                <Input type="email" placeholder="your.email@example.com" />
-              </div>
-              <div className="space-y-2">
-                <Label>Phone Number</Label>
-                <Input type="tel" placeholder="+251 912 345 678" />
-              </div>
-              <Button>Save Changes</Button>
+            <CardContent>
+              <Form {...profileForm}>
+                <form onSubmit={onProfileSubmit} className="space-y-4">
+                  <FormField
+                    control={profileForm.control}
+                    name="email"
+                    render={({ field }) => (
+                      <FormItem>
+                        <FormLabel>Email</FormLabel>
+                        <FormControl>
+                          <SanitizedInput sanitizer="email" type="email" placeholder="your.email@example.com" {...field} />
+                        </FormControl>
+                        <FormMessage />
+                      </FormItem>
+                    )}
+                  />
+                  <FormField
+                    control={profileForm.control}
+                    name="phone"
+                    render={({ field }) => (
+                      <FormItem>
+                        <FormLabel>Phone Number</FormLabel>
+                        <FormControl>
+                          <SanitizedInput sanitizer="phone" type="tel" placeholder="+251 912 345 678" {...field} />
+                        </FormControl>
+                        <FormMessage />
+                      </FormItem>
+                    )}
+                  />
+                  <Button type="submit" disabled={profileForm.formState.isSubmitting}>
+                    {profileForm.formState.isSubmitting ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : null}
+                    Save Changes
+                  </Button>
+                </form>
+              </Form>
             </CardContent>
           </Card>
 
@@ -95,20 +164,54 @@ export default function SettingsPage() {
             <CardHeader>
               <CardTitle>Security</CardTitle>
             </CardHeader>
-            <CardContent className="space-y-4">
-              <div className="space-y-2">
-                <Label>Current Password</Label>
-                <Input type="password" />
-              </div>
-              <div className="space-y-2">
-                <Label>New Password</Label>
-                <Input type="password" />
-              </div>
-              <div className="space-y-2">
-                <Label>Confirm New Password</Label>
-                <Input type="password" />
-              </div>
-              <Button>Update Password</Button>
+            <CardContent>
+              <Form {...passwordForm}>
+                <form onSubmit={onPasswordSubmit} className="space-y-4">
+                  <FormField
+                    control={passwordForm.control}
+                    name="currentPassword"
+                    render={({ field }) => (
+                      <FormItem>
+                        <FormLabel>Current Password</FormLabel>
+                        <FormControl>
+                          <SanitizedInput sanitizer="text" type="password" {...field} />
+                        </FormControl>
+                        <FormMessage />
+                      </FormItem>
+                    )}
+                  />
+                  <FormField
+                    control={passwordForm.control}
+                    name="newPassword"
+                    render={({ field }) => (
+                      <FormItem>
+                        <FormLabel>New Password</FormLabel>
+                        <FormControl>
+                          <SanitizedInput sanitizer="text" type="password" {...field} />
+                        </FormControl>
+                        <FormMessage />
+                      </FormItem>
+                    )}
+                  />
+                  <FormField
+                    control={passwordForm.control}
+                    name="confirmPassword"
+                    render={({ field }) => (
+                      <FormItem>
+                        <FormLabel>Confirm New Password</FormLabel>
+                        <FormControl>
+                          <SanitizedInput sanitizer="text" type="password" {...field} />
+                        </FormControl>
+                        <FormMessage />
+                      </FormItem>
+                    )}
+                  />
+                  <Button type="submit" disabled={passwordForm.formState.isSubmitting}>
+                    {passwordForm.formState.isSubmitting ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : null}
+                    Update Password
+                  </Button>
+                </form>
+              </Form>
             </CardContent>
           </Card>
         </div>
