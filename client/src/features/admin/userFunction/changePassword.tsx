@@ -1,3 +1,7 @@
+import { useSanitizedForm } from "@/hooks/use-sanitized-form";
+import { zodResolver } from "@hookform/resolvers/zod";
+import { passwordChangeSchema, PasswordChangeFormData } from "@/lib/validations";
+import { toast } from "sonner";
 import {
   Dialog,
   DialogContent,
@@ -5,44 +9,44 @@ import {
   DialogHeader,
   DialogTitle,
 } from "@/components/ui/dialog";
-import { Input } from "@/components/ui/input";
-import { Label } from "@/components/ui/label";
+import {
+  Form,
+  FormField,
+  FormItem,
+  FormLabel,
+  FormControl,
+  FormMessage,
+} from "@/components/ui/form";
+import { SanitizedInput } from "@/components/ui/sanitized-input";
 import { Button } from "@/components/ui/button";
-import { useToast } from "@/hooks/use-toast";
-import { useState, useEffect } from "react";
 
-interface ChangePasswordDialogProps {
+interface EditPasswordDialogProps {
   isOpen: boolean;
   onOpenChange: (open: boolean) => void;
-  user: any | null;
-  onSave: (newPassword: string) => void;
+  userName?: string;
 }
 
-export default function ChangePasswordDialog({
-  isOpen,
-  onOpenChange,
-  user,
-  onSave,
-}: ChangePasswordDialogProps) {
-  const { toast } = useToast();
-  const [newPassword, setNewPassword] = useState("");
+export function EditPasswordDialog({ isOpen, onOpenChange, userName }: EditPasswordDialogProps) {
+  const form = useSanitizedForm<PasswordChangeFormData>({
+    resolver: zodResolver(passwordChangeSchema),
+    defaultValues: {
+      currentPassword: "",
+      newPassword: "",
+      confirmPassword: "",
+    },
+    sanitizationMap: {
+      currentPassword: "text",
+      newPassword: "text",
+      confirmPassword: "text",
+    },
+  });
 
-  useEffect(() => {
-    if (!isOpen) setNewPassword("");
-  }, [isOpen]);
-
-  const handleSave = () => {
-    if (newPassword.length < 6) {
-      toast({
-        title: "Validation Error",
-        description: "Password must be at least 6 characters.",
-        variant: "destructive",
-      });
-      return;
-    }
-    onSave(newPassword);
+  const onSubmit = form.handleSanitizedSubmit((data) => {
+    // API logic would go here
     onOpenChange(false);
-  };
+    form.reset();
+    toast.success(`Password updated for ${userName}`);
+  });
 
   return (
     <Dialog open={isOpen} onOpenChange={onOpenChange}>
@@ -50,27 +54,52 @@ export default function ChangePasswordDialog({
         <DialogHeader>
           <DialogTitle>Change Password</DialogTitle>
         </DialogHeader>
-        <div className="space-y-4 mt-2">
-          <div className="space-y-2">
-            <Label>User</Label>
-            <Input value={user?.name || ""} disabled />
-          </div>
-          <div className="space-y-2">
-            <Label>New Password</Label>
-            <Input
-              type="password"
-              value={newPassword}
-              onChange={(e) => setNewPassword(e.target.value)}
-              placeholder="Enter new password"
+        <Form {...form}>
+          <form onSubmit={onSubmit} className="space-y-4">
+            <FormField
+              control={form.control}
+              name="currentPassword"
+              render={({ field }) => (
+                <FormItem>
+                  <FormLabel>Enter Your Old Password</FormLabel>
+                  <FormControl>
+                    <SanitizedInput sanitizer="text" type="currentPassword" {...field} />
+                  </FormControl>
+                  <FormMessage />
+                </FormItem>
+              )}
             />
-          </div>
-        </div>
-        <DialogFooter className="mt-6">
-          <Button variant="outline" onClick={() => onOpenChange(false)}>
-            Cancel
-          </Button>
-          <Button onClick={handleSave}>Change Password</Button>
-        </DialogFooter>
+            <FormField
+              control={form.control}
+              name="newPassword"
+              render={({ field }) => (
+                <FormItem>
+                  <FormLabel>New Password</FormLabel>
+                  <FormControl>
+                    <SanitizedInput sanitizer="text" type="password" {...field} />
+                  </FormControl>
+                  <FormMessage />
+                </FormItem>
+              )}
+            />
+            <FormField
+              control={form.control}
+              name="confirmPassword"
+              render={({ field }) => (
+                <FormItem>
+                  <FormLabel>Confirm Your Password</FormLabel>
+                  <FormControl>
+                    <SanitizedInput sanitizer="text" type="confirmPassword" {...field} />
+                  </FormControl>
+                  <FormMessage />
+                </FormItem>
+              )}
+            />
+            <DialogFooter>
+              <Button type="submit">Change Password</Button>
+            </DialogFooter>
+          </form>
+        </Form>
       </DialogContent>
     </Dialog>
   );

@@ -1,5 +1,5 @@
 @import "tailwindcss";
-
+/* your custom variables, dark mode, and base styles */
 @custom-variant dark (&:is(.dark *));
 
 @theme inline {
