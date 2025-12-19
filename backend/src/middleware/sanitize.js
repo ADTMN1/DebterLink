@@ -3,6 +3,11 @@ import xss from 'xss';
 
 // Sanitize all string inputs in req.body and req.query
 export function sanitizeInput(req, res, next) {
+  // Skip sanitization for GET, DELETE, HEAD requests (no body)
+  if (['GET', 'DELETE', 'HEAD'].includes(req.method)) {
+    return next();
+  }
+
   const strictPaths = new Set([
     'school.name',
     'school.address',

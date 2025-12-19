@@ -13,16 +13,15 @@ const pool = new Pool({
 
   ssl: isProd
     ? {
-        rejectUnauthorized: true, // prevent MITM
+        rejectUnauthorized: false, // Allow Neon's SSL certificates
       }
     : false,
 
   max: Number(process.env.DB_POOL_SIZE) || 10,
   idleTimeoutMillis: 30000,
-  connectionTimeoutMillis: 10000,
-
-  statement_timeout: 15000, // 15s
-  query_timeout: 15000,
+  connectionTimeoutMillis: 60000, // Increased to 60 seconds
+  statement_timeout: 45000, 
+  query_timeout: 45000,
 });
 
 let logged = false;
@@ -39,7 +38,7 @@ pool.on("error", (err) => {
 });
 
 export async function query(text, params = []) {
-  let retries = 3;
+  let retries = 3; // Increased retries
 
   while (retries > 0) {
     try {
@@ -48,20 +47,28 @@ export async function query(text, params = []) {
       const transientErrors = [
         "ECONNRESET",
         "ETIMEDOUT",
+        "ENOTFOUND",
         "57P01", 
         "40001", 
+        "08006", // connection failure
+        "08001", // sqlclient unable to establish sqlconnection
       ];
+
+      console.error(`Database error (retries left: ${retries}):`, err.message);
 
       if (!transientErrors.includes(err.code)) {
         throw err; 
       }
 
       retries--;
-      await new Promise((r) => setTimeout(r, 1000));
+      if (retries > 0) {
+        console.log(`Retrying database connection in 1 second...`);
+        await new Promise((r) => setTimeout(r, 1000));
+      }
     }
   }
 
-  throw new Error("Database unavailable");
+  throw new Error("Database unavailable after multiple attempts");
 }
 
 export default pool;

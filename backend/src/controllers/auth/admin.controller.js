@@ -3,7 +3,13 @@ import db from "../../../config/db.config.js";
 // Get all users
 export const getAllUsers = async (req, res) => {
   try {
-    const result = await db.query("SELECT user_id, full_name, email, role_id FROM users");
+    const result = await db.query(`
+      SELECT u.user_id, u.full_name, u.email, u.phone_number, u.password_status, 
+             r.role_name as role_name
+      FROM users u
+      LEFT JOIN roles r ON u.role_id = r.role_id
+      ORDER BY u.full_name ASC
+    `);
     res.status(200).json({ status: true, users: result.rows });
   } catch (err) {
     console.error("Admin getAllUsers error:", err);

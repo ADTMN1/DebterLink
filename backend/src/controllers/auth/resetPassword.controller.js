@@ -4,10 +4,10 @@ import { resetPasswordForRecord } from "../../services/authService/passwordReset
 
 export const resetPasswordController = async (req, res) => {
   try {
-    const { token, id, newPassword } = req.body;
+    const { token, newPassword } = req.body;
 
-    if (!token || !id || !newPassword) {
-      return res.status(400).json({ message: "token, id, and newPassword are required" });
+    if (!token || !newPassword) {
+      return res.status(400).json({ message: "token and newPassword are required" });
     }
 
     if (newPassword.length < 8) {
@@ -22,7 +22,6 @@ export const resetPasswordController = async (req, res) => {
 
     const result = await resetPasswordForRecord({
       tokenRaw: token,
-      userId: id,
       newPassword,
     });
 
