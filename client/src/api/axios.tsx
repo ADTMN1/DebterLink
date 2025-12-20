@@ -3,7 +3,7 @@ const apiUrl = import.meta.env.VITE_API_URL;
 console.log(apiUrl);
 
 export const api = axios.create({
-  baseURL: apiUrl,
+  baseURL: apiUrl || `http://localhost:2000/api/`,
   headers: {
     'Content-Type': 'application/json',
   },

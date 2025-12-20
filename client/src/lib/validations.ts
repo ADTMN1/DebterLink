@@ -3,9 +3,22 @@ import { sanitizers } from './sanitization';
 
 // Auth validations
 export const loginSchema = z.object({
-  username: z.string().min(1, 'Email is required'),
-  password: z.string().min(1, 'Password is required'),
+  email: z
+    .string()
+    .min(1, 'Email is required') // 1. Ensure it's not empty
+    .email('Please enter a valid email address') // 2. Validate format (e.g., must have @ and .)
+    .transform((val) => sanitizers.email(val)), // 3. Clean it (lowercase/trim)
+    
+  password: z
+    .string()
+    .min(1, 'Password is required')
+    .min(8, 'Password must be at least 8 characters'), // Professional standard
 });
+
+export type LoginFormData = z.infer<typeof loginSchema>;
+
+
+
 
 export const registerSchema = z.object({
   name: z.string()
@@ -106,7 +119,6 @@ export const forgotPasswordSchema = z.object({
     .pipe(z.string().email('Please enter a valid email address')),
 });
 
-export type LoginFormData = z.infer<typeof loginSchema>;
 export type RegisterFormData = z.infer<typeof registerSchema>;
 export type ForgotPasswordFormData = z.infer<typeof forgotPasswordSchema>;
 

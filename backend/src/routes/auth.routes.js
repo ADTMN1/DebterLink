@@ -51,7 +51,7 @@ router.post(
 // ONE register route
 router.post(
   "/register",
-  authMiddleware,        // must be logged in
+    authMiddleware,        
   sanitizeInput,
   registerValidation,    // input validation
   registerController     // role logic inside controller
