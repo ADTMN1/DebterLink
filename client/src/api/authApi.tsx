@@ -1,6 +1,6 @@
 import { RegisterInput } from "@/pages/auth/register"
 import { api } from "./axios"
-import { schoolAndAdminSchema } from "@/lib/validations"
+import { LoginFormData, schoolAndAdminSchema } from "@/lib/validations"
 
 
 export const registerApi =async(data:schoolAndAdminSchema)=>{
@@ -18,7 +18,7 @@ export const registerApi =async(data:schoolAndAdminSchema)=>{
         phone: data.school_phone,
         address: data.address,
         academic_year: data.academic_year,
-        status: data.status.toLowerCase(), // Matches "active" in your target
+        status: data.status.toLowerCase(), 
         website: data.website,
       },
       admin: {
@@ -33,9 +33,9 @@ export const registerApi =async(data:schoolAndAdminSchema)=>{
     };
     try {
         console.log("data in register", payload)
-        const response = await api.post('/auth/register',data)
-        console.log("respnse of registeration.",response)
-        return response.data
+        const response = await api.post("/auth/register", payload);
+        console.log("response of registeration.",response)
+        return response
     } catch (error) {
         console.log(error)
         return error
@@ -44,15 +44,14 @@ export const registerApi =async(data:schoolAndAdminSchema)=>{
 
 
 
-export const loginApi =async(data:RegisterInput)=>{
+export const loginApi =async(data:LoginFormData)=>{
     try {
         console.log("data in login", data)
-        //check  parse
-        const response = await api.post('/auth/login', data)
-        console.log("respnse of login.", response)
-        return response.data
+        const response = await api.post("/auth/login", data);
+        // console.log("respnse of login.", response)
+        return response
     } catch (error) {
-        console.log(error)
-        return error
+        // console.log(error)
+        throw error
     }
 }

@@ -1,5 +1,5 @@
 import express from "express";
-import { authMiddleware, verifyRole } from "./middleware/auth.middleware.js";
+import { authMiddleware, authorize } from "./middleware/auth.middleware.js";
 import { ROLES } from "../constants/roles.js";
 
 // Route imports
