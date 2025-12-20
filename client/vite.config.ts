@@ -18,4 +18,23 @@ export default defineConfig({
   css: {
     // Vite automatically picks up postcss.config.js, you don't need to specify path
   },
+  build: {
+    outDir: path.resolve(__dirname, "dist"),
+    emptyOutDir: true,
+  },
+  server: {
+    host: "0.0.0.0",
+    allowedHosts: true as true,   // <-- fixed
+    fs: {
+      strict: true,
+      deny: ["**/.*"],
+    },
+    proxy: {
+      '/api': {
+        target: 'http://localhost:2000',
+        changeOrigin: true,
+        secure: false,
+      },
+    },
+  },
 });
