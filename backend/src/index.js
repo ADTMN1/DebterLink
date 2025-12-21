@@ -1,5 +1,5 @@
 import express from "express";
-import { authMiddleware, authorize } from "./middleware/auth.middleware.js";
+import { authMiddleware, authorize, verifyRole } from "./middleware/auth.middleware.js";
 import { ROLES } from "../constants/roles.js";
 
 // Route imports
@@ -14,6 +14,7 @@ import notificationRoutes from "./routes/notification.routes.js";
 import schoolRoutes from "./routes/schoolRoutes.js";
 import classRoutes from "./routes/classRoutes.js";
 import adminRoutes from "./routes/admin.routes.js";
+import profileRoutes from "./routes/profile.routes.js";
 
 const router = express.Router();
 
@@ -21,6 +22,11 @@ const router = express.Router();
    Public routes
 ====================== */
 router.use("/auth", authRoutes);
+
+/* ======================
+   School routes
+====================== */
+router.use("/school", schoolRoutes);
 
 /* ======================
    Super Admin routes
@@ -92,7 +98,7 @@ router.use(
 router.use(
   "/student",
   authMiddleware,
-  verifyRole(ROLES.STUDENT),
+  authorize(ROLES.SUPER_ADMIN, ROLES.ADMIN),
   studentRoutes
 );
 
@@ -102,5 +108,6 @@ router.use(
 router.use("/class", authMiddleware, classRoutes);
 router.use("/appeal", authMiddleware, appealRoutes);
 router.use("/notification", authMiddleware, notificationRoutes);
+router.use("/profile", profileRoutes);
 
 export default router;

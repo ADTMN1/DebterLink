@@ -13,46 +13,47 @@ import {
 
 // Auth + Role Enforcement
 import { authMiddleware, verifyRole } from "../middleware/auth.middleware.js";
+import { ROLES } from "../../constants/roles.js";
 
 const router = Router();
 
 // ===============================
 //  TEACHER-ONLY ROUTES
 // ===============================
-router.post("/create", authMiddleware, verifyRole(2), createAssignment);
+router.post("/create", authMiddleware, verifyRole(ROLES.TEACHER), createAssignment);
 router.get(
   "/submissions/:assignment_id",
   authMiddleware,
-  verifyRole(2),
+  verifyRole(ROLES.TEACHER),
   listSubmissions
 );
 router.post(
   "/grade/:submission_id",
   authMiddleware,
-  verifyRole(2),
+  verifyRole(ROLES.TEACHER),
   gradeSubmission
 );
 router.put(
   "/update/:assignment_id",
   authMiddleware,
-  verifyRole(2),
+  verifyRole(ROLES.TEACHER),
   updateAssignment
 );
 router.delete(
   "/delete/:assignment_id",
   authMiddleware,
-  verifyRole(2),
+  verifyRole(ROLES.TEACHER),
   deleteAssignment
 );
 
 // ===============================
 //  STUDENT-ONLY ROUTES
 // ===============================
-router.post("/submit", authMiddleware, verifyRole(3), submitAssignment);
+router.post("/submit", authMiddleware, verifyRole(ROLES.STUDENT), submitAssignment);
 router.get(
   "/my/submissions",
   authMiddleware,
-  verifyRole(3),
+  verifyRole(ROLES.STUDENT),
   getStudentSubmissions
 );
 

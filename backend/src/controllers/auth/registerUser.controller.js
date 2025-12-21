@@ -157,10 +157,25 @@ export const registerUserController = async (req, res) => {
         );
         break;
       case ROLES.PARENT:
-        roleQuery = client.query(
-          "INSERT INTO parent (user_id, school_id) VALUES ($1, $2)",
-          [newUser.user_id, school.school_id]
+        const { child_student_ids } = req.body;
+        
+        if (!child_student_ids || !Array.isArray(child_student_ids) || child_student_ids.length === 0) {
+          await client.query("ROLLBACK");
+          return res.status(400).json({
+            error: "Validation failed",
+            message: "At least one child student ID is required for parent registration"
+          });
+        }
+        
+        // Create parent-child relationships for each child
+        const parentInsertPromises = child_student_ids.map(childId => 
+          client.query(
+            "INSERT INTO parent (user_id, child_student_id, school_id) VALUES ($1, $2, $3)",
+            [newUser.user_id, childId, school.school_id]
+          )
         );
+        
+        roleQuery = Promise.all(parentInsertPromises);
         break;
     }
 

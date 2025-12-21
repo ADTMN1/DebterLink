@@ -8,12 +8,17 @@ import { sendWelcomeEmail } from "../../Utils/helper.js";
 import crypto from "crypto";
 
 export const registerController = async (req, res) => {
+  let responseSent = false;
+  
   // Add request timeout
   const timeout = setTimeout(() => {
-    res.status(408).json({ 
-      error: "Request Timeout", 
-      message: "Registration request timed out" 
-    });
+    if (!responseSent) {
+      responseSent = true;
+      res.status(408).json({ 
+        error: "Request Timeout", 
+        message: "Registration request timed out" 
+      });
+    }
   }, 50000); // 50 second timeout
 
   const client = await db.connect();
@@ -23,6 +28,7 @@ export const registerController = async (req, res) => {
     const errors = validationResult(req);
     if (!errors.isEmpty()) {
       clearTimeout(timeout);
+      responseSent = true;
       return res.status(400).json({ 
         error: "Validation failed", 
         details: errors.array() 
@@ -127,28 +133,32 @@ export const registerController = async (req, res) => {
 
 } catch (error) {
   clearTimeout(timeout);
-  await client.query("ROLLBACK");
-  console.error("Registration error:", error);
-  
-  if (error.code === '23505') { // Unique violation
-    return res.status(409).json({ 
-      error: "Conflict", 
-      message: "A record with this information already exists" 
+  if (!responseSent) {
+    responseSent = true;
+    await client.query("ROLLBACK");
+    console.error("Registration error:", error);
+    
+    if (error.code === '23505') { // Unique violation
+      return res.status(409).json({ 
+        error: "Conflict", 
+        message: "A record with this information already exists" 
+      });
+    }
+    
+    if (error.message.includes('timeout') || error.message.includes('ENOTFOUND')) {
+      return res.status(503).json({ 
+        error: "Service Unavailable", 
+        message: "Database connection timeout. Please try again later." 
+      });
+    }
+    
+    return res.status(500).json({ 
+      error: "Internal Server Error", 
+      message: "An unexpected error occurred during registration" 
     });
   }
-  
-  if (error.message.includes('timeout') || error.message.includes('ENOTFOUND')) {
-    return res.status(503).json({ 
-      error: "Service Unavailable", 
-      message: "Database connection timeout. Please try again later." 
-    });
-  }
-  
-  return res.status(500).json({ 
-    error: "Internal Server Error", 
-    message: "An unexpected error occurred during registration" 
-  });
 } finally {
   client.release();
+  clearTimeout(timeout);
 }
 };

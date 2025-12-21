@@ -171,6 +171,7 @@ const getSchoolClasses = async (req, res) => {
   return res.json(classes);
 };
 
+
 const getSchoolTeachers = async (req, res) => {
   const { school_id } = req.params;
   const teachers = await SchoolService.getSchoolTeachers(school_id);

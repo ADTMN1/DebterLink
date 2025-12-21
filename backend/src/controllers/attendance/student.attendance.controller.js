@@ -8,6 +8,23 @@ import attendanceService from "../../services/attendanceService/attendance.servi
 
 export const markAttendance = async (req, res) => {
   try {
+    // Validate student exists before creating attendance
+    const { records } = req.body;
+    if (!records || !Array.isArray(records)) {
+      return res.status(400).json({ message: "Invalid records format" });
+    }
+
+    // Check if all students exist
+    const studentIds = records.map(r => r.student_id);
+    const studentCheck = await attendanceService.validateStudents(studentIds);
+    
+    if (!studentCheck.allExist) {
+      return res.status(400).json({ 
+        message: "Invalid student IDs", 
+        missing: studentCheck.missing 
+      });
+    }
+
     const result = await attendanceService.createAttendance(req.body);
     return res.status(201).json({
       message: "Attendance marked successfully",
@@ -17,6 +34,9 @@ export const markAttendance = async (req, res) => {
     if (err.message.includes("duplicate key")) {
       console.log("Request body:", req.body);
       return res.status(409).json({ message: "Attendance already exists" });
+    }
+    if (err.message.includes("foreign key constraint")) {
+      return res.status(400).json({ message: "Invalid student_id or class_id" });
     }
     return res.status(500).json({ message: err.message || "Server error" });
   }
