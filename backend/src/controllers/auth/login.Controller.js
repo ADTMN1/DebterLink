@@ -5,7 +5,7 @@ import { findUserByEmail } from "../../services/authService/login.query.js";
 export const loginController = async (req, res) => {
   try {
     const { email, password } = req.body;
-
+console.log(req.body)
     if (!email || !password) {
       return res.status(400).json({ message: "Email and password are required" });
     }
@@ -45,7 +45,7 @@ export const loginController = async (req, res) => {
 
     res.status(200).json(response);
   } catch (error) {
-    console.error("Login error:", error.message);
+    console.error("Login error:", error);
     res.status(500).json({ message: "Something went wrong. Please try again later." });
   }
 };
