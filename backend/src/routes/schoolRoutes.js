@@ -1,15 +1,28 @@
 import express from "express";
+import { authMiddleware, verifyRole } from "../middleware/auth.middleware.js";
+import { ROLES } from "../../constants/roles.js";
+import { checkSchoolAccess, superAdminOnly } from "../middleware/schoolAccess.js";
 import SchoolController from "../controllers/school/school.controller.js";
 
 const schoolRoutes = express.Router();
 
-schoolRoutes.post("/create-school", SchoolController.createSchool);       // Create school
-schoolRoutes.patch("/edit_school/:school_id", SchoolController.updateSchool); // Update school
-schoolRoutes.get("/get_schools", SchoolController.getAllSchools);      // Get all schools
-schoolRoutes.get("/get_school/:school_id", SchoolController.getSchool); // Get single school
-schoolRoutes.delete("/delete_school/:school_id", SchoolController.deleteSchool); // Delete school
+// Apply authentication to all routes
+schoolRoutes.use(authMiddleware);
 
-schoolRoutes.get("/:school_id/classes", SchoolController.getSchoolClasses); 
-schoolRoutes.get("/:school_id/teachers", SchoolController.getSchoolTeachers);
-schoolRoutes.get("/:school_id/students", SchoolController.getSchoolStudents); 
+// Super Admin only: Get all schools (system-wide view)
+schoolRoutes.get("/get_schools", superAdminOnly, SchoolController.getAllSchools);
+
+// Super Admin only: Delete any school
+schoolRoutes.delete("/delete_school/:school_id", superAdminOnly, SchoolController.deleteSchool);
+
+// School Admin and Super Admin: Update school info
+schoolRoutes.patch("/edit_school/:school_id", checkSchoolAccess, SchoolController.updateSchool);
+
+// All authenticated users with school access: Get single school
+schoolRoutes.get("/get_school/:school_id", checkSchoolAccess, SchoolController.getSchool);
+
+// All authenticated users with school access: Get school relationships
+schoolRoutes.get("/:school_id/classes", checkSchoolAccess, SchoolController.getSchoolClasses);
+schoolRoutes.get("/:school_id/teachers", checkSchoolAccess, SchoolController.getSchoolTeachers);
+schoolRoutes.get("/:school_id/students", checkSchoolAccess, SchoolController.getSchoolStudents); 
 export default schoolRoutes;

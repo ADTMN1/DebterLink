@@ -217,6 +217,34 @@ export const bulkUpsert = async (records = []) => {
 };
 
 
+ /**
+ * Validate that all student IDs exist in the database
+ */
+export const validateStudents = async (studentIds) => {
+  try {
+    if (!Array.isArray(studentIds) || studentIds.length === 0) {
+      return { allExist: false, missing: [] };
+    }
+
+    const query = `
+      SELECT student_id 
+      FROM student 
+      WHERE student_id = ANY($1)
+    `;
+    
+    const result = await db.query(query, [studentIds]);
+    const existingIds = result.rows.map(row => row.student_id);
+    const missingIds = studentIds.filter(id => !existingIds.includes(id));
+    
+    return {
+      allExist: missingIds.length === 0,
+      missing: missingIds
+    };
+  } catch (error) {
+    throw new Error(`DB Error during student validation: ${error.message}`);
+  }
+};
+
  export default {
    createAttendance,
    updateAttendance,
@@ -224,4 +252,5 @@ export const bulkUpsert = async (records = []) => {
    getOne,
    list,
    bulkUpsert,
+   validateStudents,
  };

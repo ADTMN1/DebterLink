@@ -101,7 +101,7 @@ import pool from "../../../config/db.config.js";
     const query = `
       SELECT * FROM class
       WHERE school_id = $1
-      ORDER BY grade, name;
+      ORDER BY class_name, section;
     `;
     const result = await pool.query(query, [school_id]);
     return result.rows;
@@ -123,8 +123,7 @@ import pool from "../../../config/db.config.js";
     const query = `
       SELECT s.* 
       FROM student s
-      JOIN class_student cs ON s.student_id = cs.student_id
-      JOIN class c ON cs.class_id = c.class_id
+      JOIN class c ON s.class_id = c.class_id
       WHERE c.school_id = $1;
     `;
     const result = await pool.query(query, [school_id]);

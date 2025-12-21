@@ -2,7 +2,8 @@
 
 import { Router } from "express";
 const router = Router();
-import { authMiddleware, verifyRole } from "../middleware/auth.middleware.js";
+import { authMiddleware, verifyRole, authorize } from "../middleware/auth.middleware.js";
+import { ROLES } from "../../constants/roles.js";
 
 // ── IMPORT ALL SCHEMAS ───────────────────────────────────────────────
 import {
@@ -45,7 +46,7 @@ const validate =
     }
 
     if (source === "body") req.body = value;
-    if (source === "query") req.query = value;
+    if (source === "query") Object.assign(req.query, value);
 
     next();
   };
@@ -73,7 +74,7 @@ const validateAttendanceId = (req, res, next) => {
 router.post(
   "/mark",
   authMiddleware,
-  verifyRole(2), //  Teacher role
+  verifyRole(ROLES.TEACHER), // Teacher role (4)
   validate(markAttendanceSchema),
   markAttendance
 );
@@ -81,22 +82,39 @@ router.post(
 router.patch(
   "/update/:attendance_id",
   authMiddleware,
-  verifyRole(2), // Teacher role
+  verifyRole(ROLES.TEACHER), // Teacher role (4)
   validateAttendanceId,
   validate(updateAttendanceSchema),
   updateAttendance
 );
 
-// Public/student accessible routes
-router.get("/summary", validate(summarySchema, "query"), getDailySummary);
-router.get("/list", validate(listAttendanceSchema, "query"), list);
-router.get("/:attendance_id", validateAttendanceId, getOne);
+// Protected routes - Teacher or Student only
+router.get("/summary", 
+    authMiddleware,
+    authorize(ROLES.TEACHER, ROLES.STUDENT), // Teacher (4) or Student (5)
+    validate(summarySchema, "query"), 
+    getDailySummary
+);
+
+router.get("/list", 
+    authMiddleware,
+    authorize(ROLES.TEACHER, ROLES.STUDENT), // Teacher (4) or Student (5)
+    validate(listAttendanceSchema, "query"), 
+    list
+);
+
+router.get("/:attendance_id", 
+    authMiddleware,
+    authorize(ROLES.TEACHER, ROLES.STUDENT), // Teacher (4) or Student (5)
+    validateAttendanceId, 
+    getOne
+);
 
 // Bulk sync (teacher-only)
 router.post(
   "/sync",
   authMiddleware,
-  verifyRole(2), //  Teacher role
+  verifyRole(ROLES.TEACHER), // Teacher role (4)
   validate(bulkSyncSchema),
   bulkSync
 );

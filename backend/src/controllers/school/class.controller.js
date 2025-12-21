@@ -4,28 +4,45 @@ import ClassService from "../../services/schoolService.js/classService.js";
 
 const createClass = async (req, res) => {
   try {
-const { class_name,class_teacher_id ,grade, school_id,academic_year,section } = req.body;
-if (!class_name   || !grade || !school_id ||!academic_year  ||! section) {
-  return res.status(StatusCodes.BAD_REQUEST).json({
-     status: false,
-      msg: "Missing required fields" });
-}
+    const { class_name, class_teacher_id, grade, school_id, academic_year, section } = req.body;
+    
+    // Get school_id from user context if not provided in body
+    const final_school_id = school_id || req.user?.school_id;
+    
+    if (!class_name || !grade || !final_school_id || !academic_year || !section) {
+      return res.status(StatusCodes.BAD_REQUEST).json({
+        status: false,
+        msg: "Missing required fields: class_name, grade, school_id, academic_year, section"
+      });
+    }
 
-    const schoolClass = await ClassService.createClass({class_name,class_teacher_id,grade,school_id,academic_year,section});
-    if(!schoolClass) return res.status(StatusCodes.INTERNAL_SERVER_ERROR).json({ 
-      status: false,
-       msg: "Failed to create class" 
-      })
+    const schoolClass = await ClassService.createClass({
+      class_name, 
+      class_teacher_id, 
+      grade, 
+      school_id: final_school_id,
+      academic_year, 
+      section
+    });
+    
+    if (!schoolClass) {
+      return res.status(StatusCodes.INTERNAL_SERVER_ERROR).json({ 
+        status: false,
+        msg: "Failed to create class" 
+      });
+    }
+    
     return res.status(StatusCodes.CREATED).json({
        status: true, 
-       msg:"class is created Successfully",
-       school_class : schoolClass
-      });
+       msg: "Class created successfully",
+       data: schoolClass
+    });
   } catch (err) {
     console.error(err);
     return res.status(StatusCodes.INTERNAL_SERVER_ERROR).json({ 
       status: false,
-       msg: "Internal Server Error." });
+       msg: "Internal Server Error" 
+    });
   }
 };
 
@@ -329,6 +346,331 @@ const getClassStudents = async (req, res) => {
 
 
 
+// -------------------- Advanced Class Management Methods --------------------
+const bulkCreateClasses = async (req, res) => {
+  try {
+    const { classes, academic_year } = req.body;
+    // Get school_id from the user's assigned school (from checkSchoolAccess middleware)
+    const school_id = req.user.school_id || req.body.school_id;
+    
+    if (!school_id || !classes || !Array.isArray(classes)) {
+      return res.status(StatusCodes.BAD_REQUEST).json({
+        status: false,
+        msg: "School ID and classes array are required"
+      });
+    }
+    
+    const results = await ClassService.bulkCreateClasses(school_id, classes, academic_year);
+    return res.status(StatusCodes.CREATED).json({
+      status: true,
+      msg: `${results.length} classes created successfully`,
+      data: results
+    });
+  } catch (err) {
+    console.error(err);
+    return res.status(StatusCodes.INTERNAL_SERVER_ERROR).json({
+      status: false,
+      msg: "Internal Server Error"
+    });
+  }
+};
+
+const bulkUpdateClasses = async (req, res) => {
+  try {
+    const { classes } = req.body;
+    if (!classes || !Array.isArray(classes)) {
+      return res.status(StatusCodes.BAD_REQUEST).json({
+        status: false,
+        msg: "Classes array is required"
+      });
+    }
+    
+    const results = await ClassService.bulkUpdateClasses(classes);
+    return res.status(StatusCodes.OK).json({
+      status: true,
+      msg: `${results.length} classes updated successfully`,
+      data: results
+    });
+  } catch (err) {
+    console.error(err);
+    return res.status(StatusCodes.INTERNAL_SERVER_ERROR).json({
+      status: false,
+      msg: "Internal Server Error"
+    });
+  }
+};
+
+const bulkDeleteClasses = async (req, res) => {
+  try {
+    const { class_ids } = req.body;
+    if (!class_ids || !Array.isArray(class_ids)) {
+      return res.status(StatusCodes.BAD_REQUEST).json({
+        status: false,
+        msg: "Class IDs array is required"
+      });
+    }
+    
+    const results = await ClassService.bulkDeleteClasses(class_ids);
+    return res.status(StatusCodes.OK).json({
+      status: true,
+      msg: `${results.length} classes deleted successfully`,
+      data: results
+    });
+  } catch (err) {
+    console.error(err);
+    return res.status(StatusCodes.INTERNAL_SERVER_ERROR).json({
+      status: false,
+      msg: "Internal Server Error"
+    });
+  }
+};
+
+const archiveClass = async (req, res) => {
+  try {
+    const { class_id } = req.params;
+    const { reason } = req.body;
+    
+    const result = await ClassService.archiveClass(class_id, reason);
+    return res.status(StatusCodes.OK).json({
+      status: true,
+      msg: "Class archived successfully",
+      data: result
+    });
+  } catch (err) {
+    console.error(err);
+    return res.status(StatusCodes.INTERNAL_SERVER_ERROR).json({
+      status: false,
+      msg: "Internal Server Error"
+    });
+  }
+};
+
+const restoreClass = async (req, res) => {
+  try {
+    const { class_id } = req.params;
+    
+    const result = await ClassService.restoreClass(class_id);
+    return res.status(StatusCodes.OK).json({
+      status: true,
+      msg: "Class restored successfully",
+      data: result
+    });
+  } catch (err) {
+    console.error(err);
+    return res.status(StatusCodes.INTERNAL_SERVER_ERROR).json({
+      status: false,
+      msg: "Internal Server Error"
+    });
+  }
+};
+
+const getArchivedClasses = async (req, res) => {
+  try {
+    const { school_id } = req.params;
+    
+    const classes = await ClassService.getArchivedClasses(school_id);
+    return res.status(StatusCodes.OK).json({
+      status: true,
+      msg: "Archived classes fetched successfully",
+      data: classes
+    });
+  } catch (err) {
+    console.error(err);
+    return res.status(StatusCodes.INTERNAL_SERVER_ERROR).json({
+      status: false,
+      msg: "Internal Server Error"
+    });
+  }
+};
+
+const duplicateClass = async (req, res) => {
+  try {
+    const { class_id } = req.params;
+    const { new_class_name, section } = req.body;
+    
+    const result = await ClassService.duplicateClass(class_id, new_class_name, section);
+    return res.status(StatusCodes.CREATED).json({
+      status: true,
+      msg: "Class duplicated successfully",
+      data: result
+    });
+  } catch (err) {
+    console.error(err);
+    return res.status(StatusCodes.INTERNAL_SERVER_ERROR).json({
+      status: false,
+      msg: "Internal Server Error"
+    });
+  }
+};
+
+const getClassStatistics = async (req, res) => {
+  try {
+    const { school_id } = req.params;
+    
+    const stats = await ClassService.getClassStatistics(school_id);
+    return res.status(StatusCodes.OK).json({
+      status: true,
+      msg: "Class statistics fetched successfully",
+      data: stats
+    });
+  } catch (err) {
+    console.error(err);
+    return res.status(StatusCodes.INTERNAL_SERVER_ERROR).json({
+      status: false,
+      msg: "Internal Server Error"
+    });
+  }
+};
+
+const getClassCapacity = async (req, res) => {
+  try {
+    const { class_id } = req.params;
+    
+    const capacity = await ClassService.getClassCapacity(class_id);
+    return res.status(StatusCodes.OK).json({
+      status: true,
+      msg: "Class capacity fetched successfully",
+      data: capacity
+    });
+  } catch (err) {
+    console.error(err);
+    return res.status(StatusCodes.INTERNAL_SERVER_ERROR).json({
+      status: false,
+      msg: "Internal Server Error"
+    });
+  }
+};
+
+const promoteStudents = async (req, res) => {
+  try {
+    const { school_id } = req.params;
+    const { from_grade, to_grade, academic_year } = req.body;
+    
+    const result = await ClassService.promoteStudents(school_id, from_grade, to_grade, academic_year);
+    return res.status(StatusCodes.OK).json({
+      status: true,
+      msg: `${result.promoted_count} students promoted successfully`,
+      data: result
+    });
+  } catch (err) {
+    console.error(err);
+    return res.status(StatusCodes.INTERNAL_SERVER_ERROR).json({
+      status: false,
+      msg: "Internal Server Error"
+    });
+  }
+};
+
+const generateTimetable = async (req, res) => {
+  try {
+    const { class_id } = req.params;
+    const { subjects } = req.body;
+    
+    const timetable = await ClassService.generateTimetable(class_id, subjects);
+    return res.status(StatusCodes.CREATED).json({
+      status: true,
+      msg: "Timetable generated successfully",
+      data: timetable
+    });
+  } catch (err) {
+    console.error(err);
+    return res.status(StatusCodes.INTERNAL_SERVER_ERROR).json({
+      status: false,
+      msg: "Internal Server Error"
+    });
+  }
+};
+
+const importClasses = async (req, res) => {
+  try {
+    const { school_id } = req.params;
+    // Handle file upload or CSV data
+    const result = await ClassService.importClasses(school_id, req.body);
+    return res.status(StatusCodes.CREATED).json({
+      status: true,
+      msg: `${result.imported_count} classes imported successfully`,
+      data: result
+    });
+  } catch (err) {
+    console.error(err);
+    return res.status(StatusCodes.INTERNAL_SERVER_ERROR).json({
+      status: false,
+      msg: "Internal Server Error"
+    });
+  }
+};
+
+const exportClasses = async (req, res) => {
+  try {
+    const { school_id } = req.params;
+    const { format } = req.query; // csv or excel
+    
+    const exportData = await ClassService.exportClasses(school_id, format);
+    return res.status(StatusCodes.OK).json({
+      status: true,
+      msg: "Classes exported successfully",
+      data: exportData
+    });
+  } catch (err) {
+    console.error(err);
+    return res.status(StatusCodes.INTERNAL_SERVER_ERROR).json({
+      status: false,
+      msg: "Internal Server Error"
+    });
+  }
+};
+
+// -------------------- Teacher Specific Methods --------------------
+const getTeacherClasses = async (req, res) => {
+  try {
+    const teacher_id = await ClassService.getTeacherIdByUserId(req.user.user_id);
+    if (!teacher_id) {
+      return res.status(404).json({
+        status: false,
+        msg: "Teacher not found"
+      });
+    }
+    
+    const classes = await ClassService.getTeacherClasses(teacher_id);
+    return res.status(StatusCodes.OK).json({
+      status: true,
+      msg: "Teacher classes fetched successfully",
+      data: classes
+    });
+  } catch (err) {
+    console.error(err);
+    return res.status(StatusCodes.INTERNAL_SERVER_ERROR).json({
+      status: false,
+      msg: "Internal Server Error"
+    });
+  }
+};
+
+const getTeacherStudents = async (req, res) => {
+  try {
+    const teacher_id = await ClassService.getTeacherIdByUserId(req.user.user_id);
+    if (!teacher_id) {
+      return res.status(404).json({
+        status: false,
+        msg: "Teacher not found"
+      });
+    }
+    
+    const students = await ClassService.getTeacherStudents(teacher_id);
+    return res.status(StatusCodes.OK).json({
+      status: true,
+      msg: "Teacher students fetched successfully",
+      data: students
+    });
+  } catch (err) {
+    console.error(err);
+    return res.status(StatusCodes.INTERNAL_SERVER_ERROR).json({
+      status: false,
+      msg: "Internal Server Error"
+    });
+  }
+};
+
 export default {
   createClass,
   updateClass,
@@ -342,6 +684,22 @@ export default {
   getClassTeachers,
   assignStudent,
   removeStudent,
-  
-  getClassStudents
+  getClassStudents,
+  // Advanced methods
+  bulkCreateClasses,
+  bulkUpdateClasses,
+  bulkDeleteClasses,
+  archiveClass,
+  restoreClass,
+  getArchivedClasses,
+  duplicateClass,
+  getClassStatistics,
+  getClassCapacity,
+  promoteStudents,
+  generateTimetable,
+  importClasses,
+  exportClasses,
+  // Teacher methods
+  getTeacherClasses,
+  getTeacherStudents
 };
