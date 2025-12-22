@@ -56,21 +56,13 @@ export function AddSchoolDialog({ onAdd }: AddSchoolProps) {
 const onsubmit = async (data: schoolAndAdminSchema) => {
 
   try {
-    const response = await registerApi(data);
-
-    if (response.success) {
-      console.log("Registration Successful:", response.message);
-      reset();
+    const res = await registerApi(data);
+console.log(res);
     
-      setOpen(false);
-    } else {
-      console.error("Server Logic Error:", response.error);
-      alert(response?.error?.message);
-      setError(response?.error?.message);
-    }
-  } catch (err) {
+  } catch (err:any) {
     // 5. Handle Network/Critical errors
-    console.error("Critical Connection Error:", err);
+    console.error("Critical Connection Error:", err?.response?.data);
+    setError(err?.response?.data?.message || "An unexpected error occurred");
   }
 };
 
@@ -99,7 +91,6 @@ const onsubmit = async (data: schoolAndAdminSchema) => {
           <DialogHeader className="mb-4">
             <DialogTitle>Register New School</DialogTitle>
           </DialogHeader>
-
           {/* School Details Section - 2 Column Grid */}
           <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mb-6">
             <div className="md:col-span-2 space-y-2">
@@ -199,13 +190,13 @@ const onsubmit = async (data: schoolAndAdminSchema) => {
 
             <div className="space-y-2">
               <Label>Password</Label>
-              <Input {...register("password")} type="password"  />
+              <Input {...register("password")} type="password" />
               {errors.password && <p className="text-red-400 text-xs">{errors.password.message}</p>}
             </div>
 
             <div className="space-y-2">
               <Label>Password</Label>
-              <Input {...register("confirmed_password")} type="password"  />
+              <Input {...register("confirmed_password")} type="password" />
               {errors.confirmed_password && (
                 <p className="text-red-500 text-xs">{errors.confirmed_password.message}</p>
               )}
@@ -224,6 +215,8 @@ const onsubmit = async (data: schoolAndAdminSchema) => {
           </div>
 
           <DialogFooter className="mt-6">
+            {error && <p className="text-red-500 text-xl">{error}</p>}
+
             <Button variant="outline" type="button" onClick={() => setOpen(false)}>
               Cancel
             </Button>

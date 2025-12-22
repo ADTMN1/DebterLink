@@ -202,8 +202,8 @@ export function Navbar() {
             <DropdownMenuTrigger asChild>
               <Button variant="ghost" className="relative h-8 w-8 rounded-full" aria-label="User menu">
                 <Avatar className="h-8 w-8 border">
-                  <AvatarImage src={user?.avatar} alt={user?.name} />
-                  <AvatarFallback className="text-xs">{user?.name.charAt(0)}</AvatarFallback>
+                  <AvatarImage src={user?.avatar} alt={user?.email} />
+                  <AvatarFallback className="text-xs">{user?.email.charAt(0)}</AvatarFallback>
                 </Avatar>
               </Button>
             </DropdownMenuTrigger>

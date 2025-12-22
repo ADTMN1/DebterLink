@@ -68,7 +68,7 @@ export async function query(text, params = []) {
     }
   }
 
-  throw new Error("Database unavailable after multiple attempts");
+  throw new Error("Database unavailable after multiple attempts.");
 }
 
 export default pool;

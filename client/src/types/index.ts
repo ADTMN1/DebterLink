@@ -1,4 +1,5 @@
-export type Role = 'student' | 'parent' | 'teacher' | 'director' | 'admin' | 'super_admin';
+export type Role = 'student' | 'parent' | 'teacher' | 'director' | 'admin' | 'super_admin' ;
+
 
 export interface User {
   id: string;
@@ -7,7 +8,11 @@ export interface User {
   role: Role;
   avatar?: string;
 }
-
+export const isAdmin = (role: Role | undefined): boolean => {
+  if (!role) return false;
+  // This check covers both the string 'admin' and the number 1
+  return role === 'admin' || role === 1;
+};
 
 
 

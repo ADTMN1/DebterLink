@@ -11,59 +11,13 @@ const mockUsers = [
   { email: 'superadmin@debterlink.com', password: 'superadmin123', role: 'super_admin' as Role, name: 'Super Admin' },
 ];
 
-// export const useAuthStore1 = create<AuthState>()(
-//   persist(
-//     (set) => ({
-//       user: null,
-//       isAuthenticated: false,
-//       isLoading: false,
-//       login: async (email: string, password: string) => {
-//         set({ isLoading: true });
-//         await new Promise(resolve => setTimeout(resolve, 1000));
-        
-//         const trimmedEmail = email.trim();
-//         const trimmedPassword = password.trim();
-        
-//         const user = mockUsers.find(u => u.email === trimmedEmail && u.password === trimmedPassword);
-        
-//         if (user) {
-//           set({ 
-//             user: {
-//               id: '1',
-//               name: user.name,
-//               email: user.email,
-//               role: user.role,
-//               avatar: `https://api.dicebear.com/7.x/avataaars/svg?seed=${user.role}`
-//             }, 
-//             isAuthenticated: true, 
-//             isLoading: false 
-//           });
-//         } else {
-//           set({ isLoading: false });
-//           throw new Error('Invalid email or password');
-//         }
-//       },
-//       logout: async () => {
-//         set({ isLoading: true });
-//         await new Promise(resolve => setTimeout(resolve, 500));
-//         set({ user: null, isAuthenticated: false, isLoading: false });
-//       },
-//       updateUser: (updatedUser: User) => {
-//         set({ user: updatedUser });
-//       },
-//     }),
-//     {
-//       name: 'auth-storage',
-//     }
-//   )
-// );
 
 interface AuthState {
   user: any | null;
   refreshToken: string | null;
-  token: string | null;
+  access_token: string | null;
   isAuthenticated: boolean;
-  setAuth: (user: any, refreshToken: string,token:string) => void;
+  setAuth: (user: any, refreshToken: string,access_token:string) => void;
   logout: () => void;
   updateUser: (updatedUser: any) => void;
 }
@@ -73,15 +27,15 @@ export const useAuthStore = create<AuthState>()(
     (set) => ({
       user: null,
       refreshToken: null,
-      token: null,
+      access_token: null,
       isAuthenticated: false,
 
       // This matches your LoginPage: setAuth(res.data.data, res.data.refreshToken)
-      setAuth: (user, refreshToken,token) => {
+      setAuth: (user, refreshToken,access_token) => {
         set({ 
           user, 
           refreshToken,
-          token, 
+          access_token, 
           isAuthenticated: true 
         });
       },

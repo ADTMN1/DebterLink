@@ -5,7 +5,6 @@ import { LoginFormData, schoolAndAdminSchema } from "@/lib/validations"
 
 export const registerApi =async(data:schoolAndAdminSchema)=>{
 
-    console.log("before destructerd " , data)
     const parts = data.fullName.trim().split(/\s+/); 
 
   const first_name = parts[0];
@@ -37,8 +36,8 @@ export const registerApi =async(data:schoolAndAdminSchema)=>{
         console.log("response of registeration.",response)
         return response
     } catch (error) {
-        console.log(error)
-        return error
+        // console.log(error)
+        throw error
     }
 }
 
@@ -46,7 +45,6 @@ export const registerApi =async(data:schoolAndAdminSchema)=>{
 
 export const loginApi =async(data:LoginFormData)=>{
     try {
-        console.log("data in login", data)
         const response = await api.post("/auth/login", data);
         // console.log("respnse of login.", response)
         return response

@@ -59,124 +59,124 @@ export const Sidebar = memo(function Sidebar() {
   // Menu items config
   const menuItems = [
     {
-      title: t('common.dashboard'),
-      href: '/dashboard',
+      title: t("common.dashboard"),
+      href: "/dashboard",
       icon: LayoutDashboard,
-      roles: ['student', 'parent', 'teacher', 'admin', 'super_admin'] as Role[]
+      roles: ["student", "parent", "teacher", "admin", "super_admin"] as Role[],
     },
     {
-      title: t('menu.attendance'),
-      href: '/dashboard/attendance',
+      title: t("menu.attendance"),
+      href: "/dashboard/attendance",
       icon: ClipboardCheck,
-      roles: ['student', 'parent', 'teacher', 'director'] as Role[]
+      roles: ["student", "parent", "teacher", "director"] as Role[],
     },
     {
-      title: t('menu.assignments'),
-      href: '/dashboard/assignments',
+      title: t("menu.assignments"),
+      href: "/dashboard/assignments",
       icon: BookOpen,
-      roles: ['student', 'teacher', 'director'] as Role[]
+      roles: ["student", "teacher", "director"] as Role[],
     },
     {
-      title: 'Grades & Results',
-      href: '/grades',
+      title: "Grades & Results",
+      href: "/grades",
       icon: Award,
-      roles: ['student', 'parent'] as Role[]
+      roles: ["student", "parent"] as Role[],
     },
     {
-      title: t('menu.timetable'),
-      href: '/dashboard/timetable',
+      title: t("menu.timetable"),
+      href: "/dashboard/timetable",
       icon: Clock,
-      roles: ['student', 'teacher', 'director'] as Role[]
+      roles: ["student", "teacher", "director"] as Role[],
     },
     {
-      title: 'Behavior Analytics',
-      href: '/dashboard/behavior-analytics',
+      title: "Behavior Analytics",
+      href: "/dashboard/behavior-analytics",
       icon: BarChart3,
-      roles: ['director'] as Role[]
+      roles: ["director"] as Role[],
     },
     {
-      title: 'Exam Results',
-      href: '/dashboard/results',
+      title: "Exam Results",
+      href: "/dashboard/results",
       icon: ClipboardList,
-      roles: ['director'] as Role[]
+      roles: ["director"] as Role[],
     },
     {
-      title: t('menu.messaging'),
-      href: '/messaging',
+      title: t("menu.messaging"),
+      href: "/messaging",
       icon: MessageSquare,
-      roles: ['student', 'parent', 'teacher', 'director'] as Role[]
+      roles: ["student", "parent", "teacher", "director"] as Role[],
     },
     {
-      title: t('menu.resources'),
-      href: '/dashboard/resources',
+      title: t("menu.resources"),
+      href: "/dashboard/resources",
       icon: Library,
-      roles: ['student', 'teacher', 'director'] as Role[]
+      roles: ["student", "teacher", "director"] as Role[],
     },
     {
-      title: t('menu.appeals'),
-      href: '/appeals',
+      title: t("menu.appeals"),
+      href: "/appeals",
       icon: AlertCircle,
-      roles: ['student', 'parent', 'teacher', 'director'] as Role[]
+      roles: ["student", "parent", "teacher", "director"] as Role[],
     },
     {
-      title: t('menu.calendar'),
-      href: '/dashboard/calendar',
+      title: t("menu.calendar"),
+      href: "/dashboard/calendar",
       icon: Calendar,
-      roles: ['student', 'parent', 'teacher', 'director', 'admin'] as Role[]
+      roles: ["student", "parent", "teacher", "director", "admin"] as Role[],
     },
     {
-      title: t('menu.behavior'),
-      href: '/behavior',
+      title: t("menu.behavior"),
+      href: "/behavior",
       icon: ThumbsUp,
-      roles: ['student', 'parent', 'teacher', 'director'] as Role[]
+      roles: ["student", "parent", "teacher", "director"] as Role[],
     },
     {
-      title: t('menu.gradebook'),
-      href: '/dashboard/gradebook',
+      title: t("menu.gradebook"),
+      href: "/dashboard/gradebook",
       icon: FileEdit,
-      roles: ['teacher'] as Role[]
+      roles: ["teacher"] as Role[],
     },
     {
-      title: t('menu.schools'),
-      href: '/schools',
+      title: t("menu.schools"),
+      href: "/schools",
       icon: School,
-      roles: ['super_admin'] as Role[]
+      roles: ["super_admin"] as Role[],
     },
     {
-      title: t('menu.salary'),
-      href: '/salary',
+      title: t("menu.salary"),
+      href: "/salary",
       icon: DollarSign,
-      roles: ['teacher', 'director'] as Role[]
+      roles: ["teacher", "director"] as Role[],
     },
     {
-      title: t('menu.users'),
-      href: '/dashboard/users',
+      title: t("menu.users"),
+      href: "/dashboard/users",
       icon: Users,
-      roles: ['admin', 'super_admin', 'director'] as Role[]
+      roles: ["admin", "super_admin", "director"] as Role[],
     },
     {
-      title: 'Classes',
-      href: '/classes',
+      title: "Classes",
+      href: "/classes",
       icon: UsersRound,
-      roles: ['director'] as Role[]
+      roles: ["director"] as Role[],
     },
     {
-      title: t('menu.reports'),
-      href: '/reports',
+      title: t("menu.reports"),
+      href: "/reports",
       icon: FileBarChart,
-      roles: ['director', 'admin', 'super_admin'] as Role[]
+      roles: ["director", "admin", "super_admin"] as Role[],
     },
     {
-      title: 'Audit',
-      href: '/audit',
+      title: "Audit",
+      href: "/audit",
       icon: Shield,
-      roles: ['admin', 'super_admin'] as Role[]
+      roles: ["admin", "super_admin"] as Role[],
     },
     {
-      title: 'Backup',
-      href: '/backup',
+      title: "Backup",
+      href: "/backup",
       icon: Database,
-      roles: ['super_admin'] as Role[]
+      roles: ["super_admin"] as Role[],
     },
   ];
 
@@ -202,7 +202,7 @@ export const Sidebar = memo(function Sidebar() {
   };
 
   return (
-    <motion.aside 
+    <motion.aside
       animate={{ width: sidebarOpen ? 256 : 80 }}
       transition={{ duration: 0.3, ease: "easeInOut" }}
       className="fixed left-0 top-0 z-40 h-screen border-r bg-card"
@@ -210,21 +210,26 @@ export const Sidebar = memo(function Sidebar() {
       {/* Logo Section - 80px height */}
       <div className="flex h-20 items-center justify-between border-b px-4">
         <Logo collapsed={!sidebarOpen} />
-        <Button 
-          variant="ghost" 
-          size="icon" 
-          onClick={toggleSidebar} 
+        <Button
+          variant="ghost"
+          size="icon"
+          onClick={toggleSidebar}
           className="hidden md:flex"
-          aria-label={sidebarOpen ? 'Collapse sidebar' : 'Expand sidebar'}
+          aria-label={sidebarOpen ? "Collapse sidebar" : "Expand sidebar"}
         >
-          <ChevronLeft className={cn("h-4 w-4 transition-transform duration-300", !sidebarOpen && "rotate-180")} />
+          <ChevronLeft
+            className={cn(
+              "h-4 w-4 transition-transform duration-300",
+              !sidebarOpen && "rotate-180"
+            )}
+          />
         </Button>
       </div>
 
       {/* Role Badge */}
       <AnimatePresence>
         {sidebarOpen && (
-          <motion.div 
+          <motion.div
             initial={{ opacity: 0, height: 0 }}
             animate={{ opacity: 1, height: "auto" }}
             exit={{ opacity: 0, height: 0 }}
@@ -259,7 +264,7 @@ export const Sidebar = memo(function Sidebar() {
                   <item.icon className={cn("h-5 w-5 flex-shrink-0", isActive && "text-primary")} />
                   <AnimatePresence>
                     {sidebarOpen && (
-                      <motion.span 
+                      <motion.span
                         initial={{ opacity: 0, width: 0 }}
                         animate={{ opacity: 1, width: "auto" }}
                         exit={{ opacity: 0, width: 0 }}
@@ -281,7 +286,7 @@ export const Sidebar = memo(function Sidebar() {
       <div className="absolute bottom-0 w-full border-t bg-card p-4 space-y-2">
         <AnimatePresence>
           {sidebarOpen && user && (
-            <motion.div 
+            <motion.div
               initial={{ opacity: 0, y: 10 }}
               animate={{ opacity: 1, y: 0 }}
               exit={{ opacity: 0, y: 10 }}
@@ -289,23 +294,26 @@ export const Sidebar = memo(function Sidebar() {
               className="flex items-center gap-3 px-2 py-2 rounded-lg hover:bg-accent transition-colors"
             >
               <Avatar className="h-8 w-8 border">
-                <AvatarImage src={user.avatar} alt={user.name} />
-                <AvatarFallback className="text-xs">{user.name.charAt(0)}</AvatarFallback>
+                <AvatarImage src={user.avatar} alt={user.email} />
+                <AvatarFallback className="text-xs">{user.email.charAt(0)}</AvatarFallback>
               </Avatar>
               <div className="flex-1 min-w-0">
-                <p className="text-sm font-medium truncate">{user.name}</p>
+                <p className="text-sm font-medium truncate">{user.email}</p>
                 <p className="text-xs text-muted-foreground truncate">{user.email}</p>
               </div>
             </motion.div>
           )}
         </AnimatePresence>
-        <Button 
-          variant="ghost" 
-          className={cn("w-full justify-start gap-3 text-destructive hover:bg-destructive/10 hover:text-destructive", !sidebarOpen && "justify-center px-2")}
+        <Button
+          variant="ghost"
+          className={cn(
+            "w-full justify-start gap-3 text-destructive hover:bg-destructive/10 hover:text-destructive",
+            !sidebarOpen && "justify-center px-2"
+          )}
           onClick={() => logout()}
         >
           <LogOut className="h-5 w-5" />
-          {sidebarOpen && <span>{t('common.logout')}</span>}
+          {sidebarOpen && <span>{t("common.logout")}</span>}
         </Button>
       </div>
     </motion.aside>
