@@ -83,7 +83,6 @@ import { LoadingSpinner } from "@/components/loading-spinner";
 function Router() {
   const { user } = useAuthStore();
   const [location] = useLocation();
-
   const getDashboard = () => {
     switch (user?.role) {
       case "student":
@@ -95,7 +94,7 @@ function Router() {
       case "director":
         return DirectorDashboard;
       case "admin":
-      case "super_admin":
+      case 1:
         return AdminDashboard;
       default:
         return StudentDashboard;
@@ -216,7 +215,7 @@ function Router() {
         {() => (
           <ProtectedRoute
             component={SchoolsPage}
-            allowedRoles={["super_admin"]}
+            allowedRoles={['super_admin']}
           />
         )}
       </Route>

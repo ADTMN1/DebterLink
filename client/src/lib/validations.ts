@@ -12,7 +12,6 @@ export const loginSchema = z.object({
   password: z
     .string()
     .min(1, 'Password is required')
-    .min(8, 'Password must be at least 8 characters'), // Professional standard
 });
 
 export type LoginFormData = z.infer<typeof loginSchema>;
@@ -28,7 +27,7 @@ export const registerSchema = z.object({
     .transform(val => sanitizers.email(val))
     .pipe(z.string().email('Please enter a valid email address').max(255, 'Email must be less than 255 characters')),
   username: z.string()
-    .transform(val => sanitizers.username(val))
+    .transform(val => sanitizers.fullName(val))
     .pipe(z.string().min(3, 'Username must be at least 3 characters').max(50, 'Username must be less than 50 characters')),
   password: z.string()
     .min(8, 'Password must be at least 8 characters')

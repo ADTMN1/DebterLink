@@ -9,22 +9,20 @@ interface ProtectedRouteProps {
   children?: ReactNode;
   allowedRoles?: Role[];
 }
-
 export function ProtectedRoute({ component: Component, allowedRoles, ...rest }: ProtectedRouteProps) {
   const { user, isAuthenticated, isLoading } = useAuthStore();
   const [location, setLocation] = useLocation();
-
   useEffect(() => {
     if (!isLoading && !isAuthenticated) {
       // Redirect to login if not authenticated
       setLocation('/login');
     }
   }, [isAuthenticated, isLoading, setLocation]);
-
+console.log(user.role);
   useEffect(() => {
-    if (!isLoading && isAuthenticated && allowedRoles && !allowedRoles.includes(user?.role as Role)) {
+    if (!isLoading && isAuthenticated && allowedRoles && !allowedRoles.includes(user.role)) {
       // Redirect to dashboard if user doesn't have permission
-      setLocation('/dashboard');
+      setLocation("/dashboard");
     }
   }, [isAuthenticated, isLoading, user?.role, allowedRoles, setLocation]);
 

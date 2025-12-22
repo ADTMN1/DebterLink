@@ -9,17 +9,21 @@ import { zodResolver } from "@hookform/resolvers/zod";
 import { useSanitizedForm } from "@/hooks";
 import { loginApi } from "@/api/authApi";
 import { useState } from "react";
+import { useLocation } from "wouter";
+import { Role } from "@/types";
 interface LoginResponse {
   data: {
     status: boolean;
     message: string;
     accessToken: string;
     refreshToken: string;
-    data: any; // Or your User type
+    data: any;
+    updatedUser:any;
   };
 }
 export default function LoginPage() {
   const { t } = useTranslation();
+  const [, setLocation  ] = useLocation()
   const { toast } = useToast();
   const [error, setError] = useState("");
   // Accessing your store to save auth state
@@ -27,12 +31,9 @@ export default function LoginPage() {
   const USER= useAuthStore((state) => state.user);
   const isAuthenticated = useAuthStore((state) => state.isAuthenticated);
   const refreshToken= useAuthStore((state) => state.refreshToken);
-  const token= useAuthStore((state) => state.token);
+  const token= useAuthStore((state) => state.access_token);
   
-// console.log("USER:",USER.email);
-// console.log("isAuthenticated:", isAuthenticated);
-// console.log("refreshToken:",refreshToken);
-// console.log("token:", token);
+;
 
   const {
     register,
@@ -51,14 +52,32 @@ export default function LoginPage() {
     try {
       const response = await loginApi(data);
       const res = response as LoginResponse;
-      if (res?.data?.status) {
+      if (res?.data?.status && res.data.data) {
+let userData = res.data.data;
+
+
+ const roleMap: Record<number, Role> = {
+   1: "super_admin",
+   2: "admin",
+   3: "teacher",
+   4: "director",
+   5: "parent",
+   6: "student",
+ };
+
+ const updatedUser = {
+   ...userData,
+   role: roleMap[userData.role_id] ||'student',
+ };
         setError("")
-        setAuth(res.data.data, res.data.accessToken,res.data.refreshToken);
-////NAVIGATE TO DASHBOARD WILL BE DEFINED HERE
+        setAuth(updatedUser, res.data.accessToken, res.data.refreshToken);
+       
         toast({
           title: "Success",
           description: res.data.message || "Welcome back!",
         });
+
+        setLocation("/dashboard");
       }
 
     } catch (error: any) {
@@ -66,7 +85,6 @@ export default function LoginPage() {
 
       const errorMessage = error.response?.data?.message || error.message || "Login failed";
 
-      console.log("Extracted Error Message:", errorMessage);
 
       setError(errorMessage);
 
@@ -84,7 +102,11 @@ export default function LoginPage() {
         <h2 className="text-2xl font-bold tracking-tight">{t("common.welcome")}</h2>
         <p className="text-muted-foreground text-sm">Sign in to your DebterLink account</p>
       </div>
-
+      {error && (
+        <div className="flex items-center justify-center bg-red-100 border border-red-500 rounded-lg p-2 mb-4">
+          <p className="text-red-500 text-xl">{error}</p>
+        </div>
+      )}{" "}
       <form onSubmit={handleSubmit(handleOnSubmit)} className="space-y-4">
         {/* EMAIL */}
         <div className="space-y-1">
@@ -126,28 +148,9 @@ export default function LoginPage() {
           )}
         </Button>
       </form>
-
       <div className="mt-4 text-center text-sm">
         {/* Fixed: react-router-dom uses 'to' prop, not 'href' */}
-        {error && (
-          <div className="flex items-center bg-red-100 border border-red-500 rounded-lg p-4 mb-4">
-            <svg
-              className="w-6 h-6 text-red-500 mr-2"
-              fill="none"
-              stroke="currentColor"
-              viewBox="0 0 24 24"
-              xmlns="http://www.w3.org/2000/svg"
-            >
-              <path
-                strokeLinecap="round"
-                strokeLinejoin="round"
-                strokeWidth={2}
-                d="M12 8v4m0 4h.01M12 2a10 10 0 100 20 10 10 0 000-20z"
-              />
-            </svg>
-            <p className="text-red-500 text-xl">{error}</p>
-          </div>
-        )}{" "}
+
         <a
           href="/forgot-password"
           className="text-muted-foreground hover:text-primary underline-offset-4 hover:underline"
@@ -155,7 +158,6 @@ export default function LoginPage() {
           Forgot password?
         </a>
       </div>
-
       <div className="mt-6 text-center text-xs text-muted-foreground border-t pt-4">
         <p>Note: Only administrators can create new user accounts</p>
       </div>
