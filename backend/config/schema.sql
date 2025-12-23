@@ -232,7 +232,22 @@ CREATE TABLE assignment (
 );
 
 -- =====================
--- 20. Messages
+-- 20. Assignment Submission
+-- =====================
+CREATE TABLE assignment_submission (
+    submission_id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+    assignment_id UUID REFERENCES assignment(assignment_id) ON DELETE CASCADE,
+    student_id UUID REFERENCES student(student_id) ON DELETE CASCADE,
+    file_url TEXT NOT NULL,
+    remarks TEXT,
+    submission_date TIMESTAMP DEFAULT NOW(),
+    score INT CHECK (score >= 0),
+    feedback TEXT,
+    status VARCHAR(20) DEFAULT 'submitted' CHECK (status IN ('submitted', 'graded', 'returned'))
+);
+
+-- =====================
+-- 21. Messages
 -- =====================
 CREATE TABLE messages (
     message_id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
@@ -318,10 +333,12 @@ CREATE TABLE password_change_log (
 );
 
 -- =====================
--- 25. Index Recommendations (optional but advised)
+-- 26. Index Recommendations (optional but advised)
 -- =====================
 CREATE INDEX idx_student_class ON student(class_id);
 CREATE INDEX idx_teacher_user ON teacher(user_id);
 CREATE INDEX idx_assignment_class ON assignment(class_id);
+CREATE INDEX idx_assignment_submission_assignment ON assignment_submission(assignment_id);
+CREATE INDEX idx_assignment_submission_student ON assignment_submission(student_id);
 CREATE INDEX idx_grade_student ON grade(student_id);
 CREATE INDEX idx_messages_receiver ON messages(receiver_id);

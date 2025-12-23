@@ -102,6 +102,33 @@ initSocket(server);
 /* ======================
    Server Start
 ====================== */
-server.listen(PORT, () => {
-  console.log(`🚀 Server running on port ${PORT}`);
-});
+function tryListen(port, attempts = 0, maxAttempts = 10) {
+  server.removeAllListeners("error");
+
+  server.once("error", (err) => {
+    if (err && err.code === "EADDRINUSE") {
+      if (attempts < maxAttempts) {
+        const nextPort = port + 1;
+        console.warn(
+          `Port ${port} is in use, attempting to listen on port ${nextPort} (attempt ${attempts + 1}/${maxAttempts})`
+        );
+        // try next port
+        tryListen(nextPort, attempts + 1, maxAttempts);
+      } else {
+        console.error(
+          `Failed to bind to a port after ${maxAttempts} attempts. Please free a port or set a different PORT in your environment.`
+        );
+        process.exit(1);
+      }
+    } else {
+      console.error("Server error:", err);
+      process.exit(1);
+    }
+  });
+
+  server.listen(port, () => {
+    console.log(`🚀 Server running on port ${port}`);
+  });
+}
+
+tryListen(Number(PORT));

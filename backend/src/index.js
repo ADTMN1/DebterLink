@@ -78,7 +78,6 @@ router.use(
 router.use(
   "/assignment",
   authMiddleware,
-  verifyRole(ROLES.TEACHER),
   assignmentRoutes
 );
 
