@@ -13,7 +13,9 @@ export const refreshController = async (req, res) => {
     }
     
     const user = await new Promise((resolve, reject) => {
-      jwt.verify(
+      // console.log("tokena",refreshToken)
+      // console.log("secreet key",process.env.REFRESH_TOKEN_SECRET)
+     jwt.verify(
         refreshToken,
         process.env.REFRESH_TOKEN_SECRET, 
         (err, decoded) => {
@@ -23,19 +25,9 @@ export const refreshController = async (req, res) => {
       );
     });
 console.log('decoded user')
-    const accessToken = generateAccessToken({
-      user_id: user.user_id,
-      email: user.email,
-      full_name: user.full_name,
-      role_id: user.role_id,
-    });
+    const accessToken = generateAccessToken(user);
     
-    const newRefreshToken = generateRefreshToken({
-      user_id: user.user_id,
-      email: user.email,
-      full_name: user.full_name,
-      role_id: user.role_id
-    });
+    const newRefreshToken = generateRefreshToken(user);
 
     return res.status(200).json({
       message: "Tokens refreshed successfully",
