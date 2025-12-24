@@ -25,10 +25,18 @@ const PORT = process.env.PORT || 2000;
 app.use(helmet());
 
 // CORS
+// Explicitly allow frontend origin and development origins
+const corsOrigin = process.env.CLIENT_ORIGIN ? 
+  process.env.CLIENT_ORIGIN.split(",") : 
+  ["http://localhost:5000", "http://127.0.0.1:5000", "http://localhost:5001", "http://127.0.0.1:5001", "http://localhost:3000"];
 app.use(
   cors({
-    origin: process.env.CLIENT_ORIGIN?.split(",") || [],
+    origin: corsOrigin,
     credentials: true,
+    methods: ['GET', 'POST', 'PUT', 'DELETE', 'OPTIONS'],
+    allowedHeaders: ['Content-Type', 'Authorization', 'X-Requested-With'],
+    preflightContinue: false,
+    optionsSuccessStatus: 204
   })
 );
 

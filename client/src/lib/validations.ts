@@ -71,9 +71,18 @@ export const registerSchoolAndAdminSchema = z.object({
     .transform(val => sanitizers.academic_year(val))
     .pipe(z.string().min(1, "Academic Year is required.")),
 
-  status: z.enum(['Active', "Suspend", "In_Maintainance"]), // Fixed z.enum usage
+  status: z.enum(['Active', 'Suspend', 'In_Maintainance'], {
+  errorMap: (issue, ctx) => {
+    if (issue.code === 'invalid_enum_value') {
+      return { message: 'Please select a valid status' };
+    }
+    return { message: ctx.defaultError };
+  }
+}),
 
-  website: z.string().url("Valid URL is required").optional().or(z.literal('')), // Fixed z.optional() chain
+  website: z.string().optional().refine((val) => !val || val === '' || /^https?:\/\/.+/.test(val), {
+    message: "Website must be a valid URL or empty"
+  }),
 
   fullName: z.string()
     .transform(val => sanitizers.fullName(val))
@@ -86,7 +95,7 @@ export const registerSchoolAndAdminSchema = z.object({
   password: z.string()
     .min(8, 'Password must be at least 8 characters')
     .max(100, 'Password must be less than 100 characters')
-    .regex(/^(?=.*[a-z])(?=.*[A-Z])(?=.*\d)/, 'Password must contain at least one uppercase letter, one lowercase letter, and one number').trim(),
+    .regex(/^(?=.*[a-z])(?=.*[A-Z])(?=.*\d)(?=.*[@$!%*?&])/, 'Password must contain at least one uppercase letter, one lowercase letter, one number, and one special character (@$!%*?&)').trim(),
 confirmed_password: z.string().trim(),
   admin_phone: z.string()
     .transform(val => sanitizers.phone(val))

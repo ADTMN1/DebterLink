@@ -12,32 +12,33 @@ export const refreshController = async (req, res) => {
       return res.status(400).json({ message: "Refresh token missing" });
     }
 
-    
     const user = await new Promise((resolve, reject) => {
       jwt.verify(
         refreshToken,
-        process.env.JWT_REFRESH_SECRET, 
+        process.env.REFRESH_TOKEN_SECRET, 
         (err, decoded) => {
-          if (err) reject(err);
-          else resolve(decoded);
+          if (err) {
+            reject(err);
+          } else {
+            resolve(decoded);
+          }
         }
       );
     });
 
    
     const accessToken = generateAccessToken({
-
-      id: user.id,
+      user_id: user.user_id,
       email: user.email,
       full_name: user.full_name,
-      user_role: user.user_role,
+      role_id: user.role_id
     });
 
     const newRefreshToken = generateRefreshToken({
-      id: user.id,
+      user_id: user.user_id,
       email: user.email,
       full_name: user.full_name,
-      user_role: user.user_role,
+      role_id: user.role_id
     });
 
     return res.status(200).json({

@@ -26,6 +26,7 @@ export const registerController = async (req, res) => {
   try {
     // Input validation
     const errors = validationResult(req);
+    
     if (!errors.isEmpty()) {
       clearTimeout(timeout);
       responseSent = true;
@@ -45,6 +46,7 @@ export const registerController = async (req, res) => {
         message: "Only super admin can create schools and admins"
       });
     }
+    
     // Start transaction
     await client.query("BEGIN");
 
@@ -136,7 +138,6 @@ export const registerController = async (req, res) => {
   if (!responseSent) {
     responseSent = true;
     await client.query("ROLLBACK");
-    console.error("Registration error:", error);
     
     if (error.code === '23505') { // Unique violation
       return res.status(409).json({ 

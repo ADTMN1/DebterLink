@@ -11,7 +11,7 @@ import {
   DialogTitle,
   DialogTrigger,
 } from "@/components/ui/dialog";
-import { School as SchoolType } from "@shared/schema";
+// import { School as SchoolType } from "@shared/schema"; // Remove non-existent import
 import { useSanitizedForm } from "@/hooks";
 import {registerSchoolAndAdminSchema, schoolAndAdminSchema} from '../../../lib/validations'
 import { zodResolver } from "@hookform/resolvers/zod";
@@ -19,18 +19,21 @@ import { P } from "node_modules/framer-motion/dist/types.d-DagZKalS";
 import { registerApi } from "@/api/authApi";
 import { Toast } from "@/components/ui/toast";
 import { ToastAction } from "@radix-ui/react-toast";
+import { useAuthStore } from "@/store/useAuthStore";
 interface AddSchoolProps {
-  onAdd: (school: Omit<SchoolType, "id">) => void;
+  // onAdd: (school: Omit<SchoolType, "id">) => void; // Remove unused interface
 }
 
-export function AddSchoolDialog({ onAdd }: AddSchoolProps) {
+export function AddSchoolDialog() { 
   const [open, setOpen] = useState(false);
-     const [error ,setError] = useState('') 
+  const [error, setError] = useState('');
+  const [isSubmitting, setIsSubmitting] = useState(false); 
+  const { user, isAuthenticated, token } = useAuthStore(); 
   const {
     register,
     handleSubmit,
     reset,
-    formState: { errors, isSubmitting },
+    formState: { errors },
   } = useSanitizedForm<schoolAndAdminSchema>({
     resolver: zodResolver(registerSchoolAndAdminSchema),
     defaultValues: {
@@ -54,23 +57,48 @@ export function AddSchoolDialog({ onAdd }: AddSchoolProps) {
   
   console.log("Current Errors:", errors);
 const onsubmit = async (data: schoolAndAdminSchema) => {
-
+  setIsSubmitting(true);
+  
   try {
     const response = await registerApi(data);
 
-    if (response.success) {
-      console.log("Registration Successful:", response.message);
+    if (response.data.success) {
+      console.log("Registration Successful:", response.data.message);
       reset();
-    
       setOpen(false);
+      alert("School and admin registered successfully!");
     } else {
-      console.error("Server Logic Error:", response.error);
-      alert(response?.error?.message);
-      setError(response?.error?.message);
+      console.error("Server Logic Error:", response.data);
+      alert(response.data?.error?.message || 'Registration failed');
+      setError(response.data?.error?.message || 'Registration failed');
     }
-  } catch (err) {
-    // 5. Handle Network/Critical errors
+  } catch (err: any) {
     console.error("Critical Connection Error:", err);
+    
+    let errorMessage = 'Registration failed';
+    
+    if (err?.response?.data?.message) {
+      errorMessage = err.response.data.message;
+    } else if (err?.response?.data?.error) {
+      errorMessage = err.response.data.error;
+    } else if (err?.message) {
+      errorMessage = err.message;
+    }
+    
+    if (errorMessage.includes('Conflict') || errorMessage.includes('already exists')) {
+      errorMessage = 'This email is already registered. Please use a different email.';
+    } else if (errorMessage.includes('Validation failed')) {
+      errorMessage = 'Please check all required fields and try again.';
+    } else if (errorMessage.includes('Network') || errorMessage.includes('timeout')) {
+      errorMessage = 'Network connection issue. Please check your connection and try again.';
+    } else if (errorMessage.includes('401') || errorMessage.includes('Unauthorized')) {
+      errorMessage = 'Session expired. Please login again and retry.';
+    } else if (errorMessage.includes('409')) {
+      errorMessage = 'Registration conflict. The email may already be registered.';
+    }
+    
+    alert(errorMessage);
+    setError(errorMessage);
   }
 };
 
@@ -227,7 +255,16 @@ const onsubmit = async (data: schoolAndAdminSchema) => {
             <Button variant="outline" type="button" onClick={() => setOpen(false)}>
               Cancel
             </Button>
-            <Button type="submit">Save School</Button>
+            <Button type="submit" disabled={isSubmitting}>
+  {isSubmitting ? (
+    <>
+      <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-white mr-2"></div>
+      Registering...
+    </>
+  ) : (
+    'Save School'
+  )}
+</Button>
           </DialogFooter>
         </form>
       </DialogContent>

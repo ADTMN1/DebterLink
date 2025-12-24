@@ -9,19 +9,19 @@ import { zodResolver } from "@hookform/resolvers/zod";
 import { useSanitizedForm } from "@/hooks";
 import { loginApi } from "@/api/authApi";
 import { useState } from "react";
+import { useLocation } from "wouter";
 interface LoginResponse {
-  data: {
-    status: boolean;
-    message: string;
-    accessToken: string;
-    refreshToken: string;
-    data: any; // Or your User type
-  };
+  status: boolean;
+  message: string;
+  accessToken: string;
+  refreshToken: string;
+  data: any; // User data
 }
 export default function LoginPage() {
   const { t } = useTranslation();
   const { toast } = useToast();
   const [error, setError] = useState("");
+  const [, navigate] = useLocation();
   // Accessing your store to save auth state
   const setAuth = useAuthStore((state) => state.setAuth);
   const USER= useAuthStore((state) => state.user);
@@ -50,14 +50,15 @@ export default function LoginPage() {
   const handleOnSubmit = async (data: LoginFormData) => {
     try {
       const response = await loginApi(data);
-      const res = response as LoginResponse;
-      if (res?.data?.status) {
+      const res = response.data as LoginResponse;
+      if (res?.status) {
         setError("")
-        setAuth(res.data.data, res.data.accessToken,res.data.refreshToken);
-////NAVIGATE TO DASHBOARD WILL BE DEFINED HERE
+        setAuth(res.data, res.refreshToken, res.accessToken);
+        // Navigate to dashboard after successful login
+        navigate("/dashboard");
         toast({
           title: "Success",
-          description: res.data.message || "Welcome back!",
+          description: res.message || "Welcome back!",
         });
       }
 

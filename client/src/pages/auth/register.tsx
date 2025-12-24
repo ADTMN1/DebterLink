@@ -224,7 +224,6 @@
 // }
 import { useState } from "react";
 import { useForm } from "react-hook-form";
-import { zodResolver } from "@hookform/resolvers/zod";
 import * as z from "zod";
 
 import { Button } from "@/components/ui/button";
@@ -237,6 +236,7 @@ import {
   FormMessage,
 } from "@/components/ui/form";
 import { Input } from "@/components/ui/input";
+import { Label } from "@/components/ui/label";
 import AuthLayout from "@/layouts/auth-layout";
 
 import {
@@ -252,6 +252,9 @@ import { Navigate, useNavigate } from "react-router-dom";
 
 import { useAuthStore } from "@/store/useAuthStore";
 import { registerApi } from "@/api/authApi";
+import { registerSchoolAndAdminSchema, schoolAndAdminSchema } from "@/lib/validations";
+import { zodResolver } from "@hookform/resolvers/zod";
+import { useSanitizedForm } from "@/hooks";
 
 // -----------------------------
 // ZOD SCHEMA
@@ -281,17 +284,47 @@ export default function RegisterPage() {
   const [loading, setLoading] = useState(false);
 
   // 🔐 Route protection
-  if (!user || (user.role !== "admin" && user.role !== "super_admin")) {
+  if (!user || user.role_id !== 1) {  // Only super admin (role_id: 1)
     return <Navigate to="/login" replace />;
   }
 
-  const { form, handleSubmit } = useAuthForm('register');
-  const { validateAsync, asyncErrors, validating } = useAsyncValidation();
-
-  const onSubmit = handleSubmit(async (values) => {
-    // Mock registration
-    setLocation('/login');
+  const {
+    register,
+    handleSubmit,
+    reset,
+    setValue,
+    formState: { errors, isSubmitting },
+  } = useSanitizedForm<schoolAndAdminSchema>({
+    resolver: zodResolver(registerSchoolAndAdminSchema),
+    defaultValues: {
+      school_name: "",
+      code: "",
+      school_email: "",
+      school_phone: "",
+      address: "",
+      academic_year: "",
+      status: "Active",
+      website: "",
+      fullName: "",
+      admin_email: "",
+      password: "",
+      confirmed_password: "",
+    },
   });
+
+  const submitHandler = async (data: schoolAndAdminSchema) => {
+    setLoading(true);
+    try {
+      await registerApi(data);
+      navigate('/login');
+    } catch (error) {
+      console.error('Registration failed:', error);
+      const errorMessage = error instanceof Error ? error.message : 'Registration failed. Please try again.';
+      alert(errorMessage);
+    } finally {
+      setLoading(false);
+    }
+  };
 
   // -----------------------------
   // JSX
@@ -299,190 +332,123 @@ export default function RegisterPage() {
   return (
     <AuthLayout>
       <div className="mb-6">
-        <h2 className="text-2xl font-bold tracking-tight">Create Account</h2>
-        <p className="text-muted-foreground text-sm">Join DebterLink today</p>
+        <h2 className="text-2xl font-bold tracking-tight">Register School & Admin</h2>
+        <p className="text-muted-foreground text-sm">Create a new school and admin account</p>
       </div>
 
-      <Form {...form}>
-        <form onSubmit={onSubmit} className="space-y-4">
-          <FormField
-            control={form.control}
-            name="name"
-            render={({ field }) => (
-              <FormItem>
-                <FormLabel>Full Name</FormLabel>
-                <FormControl>
-                  <div className="relative">
-                    <User className="absolute left-3 top-2.5 h-4 w-4 text-muted-foreground" />
-                    <SanitizedInput sanitizer="name" placeholder="Abebe Kebede" className="pl-9" autoComplete="name" {...field} />
-                  </div>
-                </FormControl>
-                <FormMessage />
-              </FormItem>
-            )}
-          />
+      <form onSubmit={handleSubmit(submitHandler)} className="space-y-6">
+        {/* School Information */}
+        <div className="space-y-4">
+          <h3 className="text-lg font-medium">School Information</h3>
+          
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+            <div className="space-y-2">
+              <Label htmlFor="school_name">School Name</Label>
+              <Input {...register("school_name")} placeholder="Bole High School" />
+              {errors.school_name && <p className="text-red-500 text-xs">{errors.school_name.message}</p>}
+            </div>
 
-          {/* EMAIL */}
-          <FormField
-            control={form.control}
-            name="email"
-            render={({ field }) => (
-              <FormItem>
-                <FormLabel>Email</FormLabel>
-                <FormControl>
-                  <div className="relative">
-                    <Mail className="absolute left-3 top-2.5 h-4 w-4 text-muted-foreground" />
-                    <SanitizedInput 
-                      sanitizer="email" 
-                      placeholder="email@example.com" 
-                      className="pl-9" 
-                      autoComplete="email"
-                      {...field}
-                      onBlur={(e) => {
-                        field.onBlur();
-                        validateAsync('email', e.target.value, asyncValidators.checkEmailAvailable);
-                      }}
-                    />
-                  </div>
-                </FormControl>
-                {validating.email && <div className="text-sm text-muted-foreground">Checking availability...</div>}
-                {asyncErrors.email && <div className="text-sm text-destructive">{asyncErrors.email}</div>}
-                <FormMessage />
-              </FormItem>
-            )}
-          />
+            <div className="space-y-2">
+              <Label htmlFor="code">School Code</Label>
+              <Input {...register("code")} placeholder="BH-001" />
+              {errors.code && <p className="text-red-500 text-xs">{errors.code.message}</p>}
+            </div>
 
-          {/* ROLE */}
-          <FormField
-            control={form.control}
-            name="username"
-            render={({ field }) => (
-              <FormItem>
-                <FormLabel>Username</FormLabel>
-                <FormControl>
-                  <div className="relative">
-                    <User className="absolute left-3 top-2.5 h-4 w-4 text-muted-foreground" />
-                    <SanitizedInput 
-                      sanitizer="username" 
-                      placeholder="Enter username" 
-                      className="pl-9" 
-                      autoComplete="username"
-                      {...field}
-                      onBlur={(e) => {
-                        field.onBlur();
-                        validateAsync('username', e.target.value, asyncValidators.checkUsernameAvailable);
-                      }}
-                    />
-                  </div>
-                </FormControl>
-                {validating.username && <div className="text-sm text-muted-foreground">Checking availability...</div>}
-                {asyncErrors.username && <div className="text-sm text-destructive">{asyncErrors.username}</div>}
-                <FormMessage />
-              </FormItem>
-            )}
-          />
-<h1>Hi guys you have to listen to me by the way</h1>
-          {/* PASSWORDS */}
-          <div className="grid gap-4 md:grid-cols-2">
-            <FormField
-              control={form.control}
-              name="password"
-              render={({ field }) => (
-                <FormItem>
-                  <FormLabel>Password</FormLabel>
-                  <FormControl>
-                    <div className="relative">
-                      <Lock className="absolute left-3 top-2.5 h-4 w-4 text-muted-foreground" />
-                      <SanitizedInput sanitizer="text" type="password" placeholder="••••••" className="pl-9" autoComplete="new-password" {...field} />
-                    </div>
-                  </FormControl>
-                  <FormMessage />
-                </FormItem>
-              )}
-            />
+            <div className="space-y-2">
+              <Label htmlFor="school_email">School Email</Label>
+              <Input {...register("school_email")} type="email" placeholder="school@example.com" />
+              {errors.school_email && <p className="text-red-500 text-xs">{errors.school_email.message}</p>}
+            </div>
 
-            <FormField
-              control={form.control}
-              name="confirmPassword"
-              render={({ field }) => (
-                <FormItem>
-                  <FormLabel>Confirm</FormLabel>
-                  <FormControl>
-                    <div className="relative">
-                      <Lock className="absolute left-3 top-2.5 h-4 w-4 text-muted-foreground" />
-                      <SanitizedInput sanitizer="text" type="password" placeholder="••••••" className="pl-9" autoComplete="new-password" {...field} />
-                    </div>
-                  </FormControl>
-                  <FormMessage />
-                </FormItem>
-              )}
-            />
+            <div className="space-y-2">
+              <Label htmlFor="school_phone">School Phone</Label>
+              <Input {...register("school_phone")} placeholder="+251911234567" />
+              {errors.school_phone && <p className="text-red-500 text-xs">{errors.school_phone.message}</p>}
+            </div>
+
+            <div className="space-y-2">
+              <Label htmlFor="academic_year">Academic Year</Label>
+              <Input {...register("academic_year")} placeholder="2024/2025" />
+              {errors.academic_year && <p className="text-red-500 text-xs">{errors.academic_year.message}</p>}
+            </div>
+
+            <div className="space-y-2">
+              <Label htmlFor="status">Status</Label>
+              <Select onValueChange={(value: "Active" | "Suspend" | "In_Maintainance") => setValue("status", value)} defaultValue="Active">
+                <SelectTrigger>
+                  <SelectValue placeholder="Select status" />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="Active">Active</SelectItem>
+                  <SelectItem value="Suspend">Suspend</SelectItem>
+                  <SelectItem value="In_Maintainance">In Maintenance</SelectItem>
+                </SelectContent>
+              </Select>
+              {errors.status && <p className="text-red-500 text-xs">{errors.status.message}</p>}
+            </div>
           </div>
-          <div className="grid gap-4 md:grid-cols-2">
-            <FormField
-              control={form.control}
-              name="password"
-              render={({ field }) => (
-                <FormItem>
-                  <FormLabel>Password</FormLabel>
-                  <FormControl>
-                    <div className="relative">
-                      <Lock className="absolute left-3 top-2.5 h-4 w-4 text-muted-foreground" />
-                      <Input
-                        type="password"
-                        placeholder="••••••"
-                        className="pl-9"
-                        {...field}
-                      />
-                    </div>
-                  </FormControl>
-                  <FormMessage />
-                </FormItem>
-              )}
-            />
 
-            <FormField
-              control={form.control}
-              name="confirmPassword"
-              render={({ field }) => (
-                <FormItem>
-                  <FormLabel>Confirm</FormLabel>
-                  <FormControl>
-                    <div className="relative">
-                      <Lock className="absolute left-3 top-2.5 h-4 w-4 text-muted-foreground" />
-                      <Input
-                        type="password"
-                        placeholder="••••••"
-                        className="pl-9"
-                        {...field}
-                      />
-                    </div>
-                  </FormControl>
-                  <FormMessage />
-                </FormItem>
-              )}
-            />
+          <div className="space-y-2">
+            <Label htmlFor="address">Address</Label>
+            <Input {...register("address")} placeholder="Bole, Addis Ababa" />
+            {errors.address && <p className="text-red-500 text-xs">{errors.address.message}</p>}
           </div>
-          {/* SUBMIT */}
-          <Button type="submit" className="w-full" disabled={loading}>
-            {loading ? (
-              <>
-                <Loader2 className="mr-2 h-4 w-4 animate-spin" />
-                Creating account...
-              </>
-            ) : (
-              "Register"
-            )}
-          </Button>
-        </form>
-      </Form>
 
-      <div className="mt-6 text-center text-sm">
-        <span className="text-muted-foreground">Already have an account? </span>
-        <a href="/login" className="text-primary hover:underline">
-          Login
-        </a>
-      </div>
+          <div className="space-y-2">
+            <Label htmlFor="website">Website (Optional)</Label>
+            <Input {...register("website")} placeholder="https://school-website.com" />
+            {errors.website && <p className="text-red-500 text-xs">{errors.website.message}</p>}
+          </div>
+        </div>
+
+        {/* Admin Information */}
+        <div className="space-y-4">
+          <h3 className="text-lg font-medium">Admin Information</h3>
+          
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+            <div className="space-y-2">
+              <Label htmlFor="fullName">Admin Full Name</Label>
+              <Input {...register("fullName")} placeholder="Abebe Kebede" />
+              {errors.fullName && <p className="text-red-500 text-xs">{errors.fullName.message}</p>}
+            </div>
+
+            <div className="space-y-2">
+              <Label htmlFor="admin_email">Admin Email</Label>
+              <Input {...register("admin_email")} type="email" placeholder="admin@example.com" />
+              {errors.admin_email && <p className="text-red-500 text-xs">{errors.admin_email.message}</p>}
+            </div>
+
+            <div className="space-y-2">
+              <Label htmlFor="password">Password</Label>
+              <Input {...register("password")} type="password" placeholder="Enter password" />
+              {errors.password && <p className="text-red-500 text-xs">{errors.password.message}</p>}
+            </div>
+
+            <div className="space-y-2">
+              <Label htmlFor="confirmed_password">Confirm Password</Label>
+              <Input {...register("confirmed_password")} type="password" placeholder="Confirm password" />
+              {errors.confirmed_password && <p className="text-red-500 text-xs">{errors.confirmed_password.message}</p>}
+            </div>
+          </div>
+        </div>
+
+        {/* Submit Button */}
+        <Button 
+          type="submit" 
+          disabled={isSubmitting || loading}
+          className="w-full"
+        >
+          {isSubmitting || loading ? (
+            <>
+              <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+              Creating school and admin...
+            </>
+          ) : (
+            "Register School & Admin"
+          )}
+        </Button>
+      </form>
     </AuthLayout>
   );
-}
+};
+            

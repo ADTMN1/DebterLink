@@ -54,7 +54,7 @@ export const Sidebar = memo(function Sidebar() {
   const { t } = useTranslation();
   const [location] = useLocation();
 
-  const role = user?.role || 'student';
+  const role = (user?.role || 'student') as Role;
 
   // Menu items config
   const menuItems = [
@@ -289,11 +289,11 @@ export const Sidebar = memo(function Sidebar() {
               className="flex items-center gap-3 px-2 py-2 rounded-lg hover:bg-accent transition-colors"
             >
               <Avatar className="h-8 w-8 border">
-                <AvatarImage src={user.avatar} alt={user.name} />
-                <AvatarFallback className="text-xs">{user.name.charAt(0)}</AvatarFallback>
+                <AvatarImage src={user.avatar} alt={user.name || 'User'} />
+                <AvatarFallback className="text-xs">{(user.name || 'U').charAt(0).toUpperCase()}</AvatarFallback>
               </Avatar>
               <div className="flex-1 min-w-0">
-                <p className="text-sm font-medium truncate">{user.name}</p>
+                <p className="text-sm font-medium truncate">{user.name || 'User'}</p>
                 <p className="text-xs text-muted-foreground truncate">{user.email}</p>
               </div>
             </motion.div>

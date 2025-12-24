@@ -23,7 +23,7 @@ const seedSuperadmin = async () => {
     // 1️⃣ Get the role_id for super_admin
     const roleRes = await pool.query(
       'SELECT role_id FROM roles WHERE role_name = $1',
-      ['super_admin']
+      ['Super Admin']
     );
 
     if (roleRes.rows.length === 0) {

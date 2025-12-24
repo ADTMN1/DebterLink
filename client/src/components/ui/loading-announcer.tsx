@@ -1,4 +1,4 @@
-import * as React from "react";
+cimport * as React from "react";
 
 interface LoadingAnnouncerProps {
   isLoading: boolean;

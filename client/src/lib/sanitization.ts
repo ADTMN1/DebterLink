@@ -47,6 +47,10 @@ export const sanitizers = {
   address: (input: string): string => {
     return input.trim().replace(/[<>"']/g, '').replace(/\s+/g, ' ').substring(0, 200);
   },
+
+  username: (input: string): string => {
+    return input.trim().toLowerCase().replace(/[^a-z0-9_]/g, '').substring(0, 50);
+  },
 };
 
 // 2. Enhanced Zod Helpers

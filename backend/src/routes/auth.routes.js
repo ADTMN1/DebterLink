@@ -78,10 +78,10 @@ router.post(
    Protected routes
 ===================== */
 
-// Register route - NO auth limiter for testing
+// Register route - Requires authentication
 router.post(
   "/register",
-    authMiddleware,        
+  authMiddleware,
   sanitizeInput,
   registerValidation,    // input validation
   registerController     // role logic inside controller

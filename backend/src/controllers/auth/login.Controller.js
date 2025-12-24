@@ -1,17 +1,17 @@
 import { comparePassword } from "../../Utils/hash.js";
 import { generateAccessToken, generateRefreshToken } from "../../Utils/generateTokens.js";
 import { findUserByEmail } from "../../services/authService/login.query.js";
+import { ROLES } from "../../../constants/roles.js";
 
 export const loginController = async (req, res) => {
   try {
     const { email, password } = req.body;
-console.log(req.body)
+
     if (!email || !password) {
       return res.status(400).json({ message: "Email and password are required" });
     }
 
     const cleanEmail = email.trim().toLowerCase(); // sanitize email
-
     const user = await findUserByEmail(cleanEmail);
 
     const isValid = user && await comparePassword(password, user.password);
@@ -22,8 +22,18 @@ console.log(req.body)
     // Check if user has temporary password
     const hasTemporaryPassword = user.password_status === 'temporary';
 
-    const accessToken = generateAccessToken(user);
-    const refreshToken = generateRefreshToken(user);
+    const accessToken = generateAccessToken({
+      user_id: user.user_id,
+      email: user.email,
+      full_name: user.full_name,
+      role_id: user.role_id
+    });
+    const refreshToken = generateRefreshToken({
+      user_id: user.user_id,
+      email: user.email,
+      full_name: user.full_name,
+      role_id: user.role_id
+    });
 
     const response = {
       status: true,
@@ -36,6 +46,7 @@ console.log(req.body)
         email: user.email,
         phone_number: user.phone_number,
         role_id: user.role_id,
+        role: Object.keys(ROLES).find(key => ROLES[key] === user.role_id)?.toLowerCase() || 'student',
         password_status: user.password_status || 'permanent',
         requiresPasswordChange: hasTemporaryPassword,
       },

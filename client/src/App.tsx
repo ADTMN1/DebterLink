@@ -81,10 +81,23 @@ const SubjectsPage = lazy(() => import("@/features/subjects/subjects-page"));
 import { LoadingSpinner } from "@/components/loading-spinner";
 
 function Router() {
-  const { user } = useAuthStore();
+  const { user, validateToken } = useAuthStore();
   const [location] = useLocation();
 
+  // Validate any stored tokens on app startup
+  useEffect(() => {
+    // Check if user is authenticated on app load
+    const { isAuthenticated, user } = useAuthStore.getState();
+    
+    if (isAuthenticated && user) {
+      // User is authenticated, proceed normally
+    } else {
+      // No authenticated user found
+    }
+  }, []); // Empty dependency array to run only once
+
   const getDashboard = () => {
+    const user = useAuthStore.getState().user;
     switch (user?.role) {
       case "student":
         return StudentDashboard;

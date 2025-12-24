@@ -1,4 +1,5 @@
 import { safeLocalStorage } from '@/lib/safe-storage';
+import { useAuthStore } from '@/store/useAuthStore';
 
 // API Base Configuration
 const API_BASE_URL = import.meta.env.VITE_API_BASE_URL || 'http://localhost:3000/api';
@@ -15,7 +16,8 @@ class ApiClient {
     endpoint: string,
     options: RequestInit = {}
   ): Promise<T> {
-    const token = safeLocalStorage.getItem('token');
+    // Get token from zustand store instead of localStorage
+    const token = useAuthStore.getState().token;
     
     const config: RequestInit = {
       ...options,
