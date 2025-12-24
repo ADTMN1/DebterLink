@@ -18,22 +18,22 @@ interface LoginResponse {
     accessToken: string;
     refreshToken: string;
     data: any;
-    updatedUser:any;
+    updatedUser: any;
   };
 }
 export default function LoginPage() {
   const { t } = useTranslation();
-  const [, setLocation  ] = useLocation()
+  const [, setLocation] = useLocation();
   const { toast } = useToast();
   const [error, setError] = useState("");
   // Accessing your store to save auth state
   const setAuth = useAuthStore((state) => state.setAuth);
-  const USER= useAuthStore((state) => state.user);
+  const USER = useAuthStore((state) => state.user);
   const isAuthenticated = useAuthStore((state) => state.isAuthenticated);
-  const refreshToken= useAuthStore((state) => state.refreshToken);
-  const token= useAuthStore((state) => state.access_token);
-  
-;
+  const refreshToken = useAuthStore((state) => state.refreshToken);
+  const token = useAuthStore((state) => state.accessToken);
+
+  // ;
 
   const {
     register,
@@ -47,31 +47,31 @@ export default function LoginPage() {
     },
   });
 
- 
   const handleOnSubmit = async (data: LoginFormData) => {
     try {
       const response = await loginApi(data);
       const res = response as LoginResponse;
       if (res?.data?.status && res.data.data) {
-let userData = res.data.data;
+        let userData = res.data.data;
 
+        const roleMap: Record<number, Role> = {
+          1: "super_admin",
+          2: "admin",
+          3: "teacher",
+          4: "director",
+          5: "parent",
+          6: "student",
+        };
 
- const roleMap: Record<number, Role> = {
-   1: "super_admin",
-   2: "admin",
-   3: "teacher",
-   4: "director",
-   5: "parent",
-   6: "student",
- };
+        const updatedUser = {
+          ...userData,
+          role: roleMap[userData.role_id] || "student",
+        };
+        setError("");
+           console.log("Access  Token at front", res.data.accessToken);
+           console.log("Refresh  Token at front", res.data.refreshToken);
+        setAuth(updatedUser, res.data.refreshToken, res.data.accessToken);
 
- const updatedUser = {
-   ...userData,
-   role: roleMap[userData.role_id] ||'student',
- };
-        setError("")
-        setAuth(updatedUser, res.data.accessToken, res.data.refreshToken);
-       
         toast({
           title: "Success",
           description: res.data.message || "Welcome back!",
@@ -79,12 +79,10 @@ let userData = res.data.data;
 
         setLocation("/dashboard");
       }
-
     } catch (error: any) {
       console.error("Login Error: Failure Point", error);
 
       const errorMessage = error.response?.data?.message || error.message || "Login failed";
-
 
       setError(errorMessage);
 

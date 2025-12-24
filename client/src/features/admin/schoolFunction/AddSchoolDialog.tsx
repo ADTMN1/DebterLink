@@ -19,6 +19,7 @@ import { P } from "node_modules/framer-motion/dist/types.d-DagZKalS";
 import { registerApi } from "@/api/authApi";
 import { Toast } from "@/components/ui/toast";
 import { ToastAction } from "@radix-ui/react-toast";
+import { toast } from "sonner";
 interface AddSchoolProps {
   onAdd: (school: Omit<SchoolType, "id">) => void;
 }
@@ -57,8 +58,13 @@ const onsubmit = async (data: schoolAndAdminSchema) => {
 
   try {
     const res = await registerApi(data);
-console.log(res);
-    
+         console.log(res);
+         if (res.data.success) {
+           toast.success(res.data.message);
+         } else {
+           toast.error("Something went wrong");
+         }
+       
   } catch (err:any) {
     // 5. Handle Network/Critical errors
     console.error("Critical Connection Error:", err?.response?.data);

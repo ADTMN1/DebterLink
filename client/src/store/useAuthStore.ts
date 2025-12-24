@@ -15,7 +15,7 @@ const mockUsers = [
 interface AuthState {
   user: any | null;
   refreshToken: string | null;
-  access_token: string | null;
+  accessToken: string | null;
   isAuthenticated: boolean;
   setAuth: (user: any, refreshToken: string,access_token:string) => void;
   logout: () => void;
@@ -27,15 +27,15 @@ export const useAuthStore = create<AuthState>()(
     (set) => ({
       user: null,
       refreshToken: null,
-      access_token: null,
+      accessToken: null,
       isAuthenticated: false,
 
       // This matches your LoginPage: setAuth(res.data.data, res.data.refreshToken)
-      setAuth: (user, refreshToken,access_token) => {
+      setAuth: (user, refreshToken,accessToken) => {
         set({ 
           user, 
           refreshToken,
-          access_token, 
+          accessToken, 
           isAuthenticated: true 
         });
       },

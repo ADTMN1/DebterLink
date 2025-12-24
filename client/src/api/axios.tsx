@@ -18,17 +18,20 @@ const getAuthData = () => {
   // console.log(authStorage);
   if (authStorage) {
     const parsed = JSON.parse(authStorage);
-    return parsed.state; // returns { user, access_token, refreshToken, ... }
+    return parsed.state; // returns { user, accessToken, refreshToken, ... }
   }
   return null;
-};
 
+};
+//
 api.interceptors.request.use(
   (config) => {
     const data = getAuthData();
-    // console.log("data",data);
-    if (data?.access_token && config.headers) {
-      config.headers.Authorization = `Bearer ${data.access_token}`;
+    // console.log("Access  Token at at axios front", data.accessToken);
+    // console.log("Refresh  Token at at axios front", data.refreshToken);
+    if (data?.accessToken && config.headers) {
+      config.headers.Authorization = `Bearer ${data.accessToken}`;
+      // console.log("token Sent ", config.headers.Authorization);
     }
     return config;
   },
@@ -43,7 +46,8 @@ api.interceptors.response.use(
     // Handle 401 and ensure we don't loop
     if (error.response?.status === 401 && !originalRequest._retry) {
       if (window.location.pathname.includes("/login")) {
-
+localStorage.clear();
+location.reload();
         return Promise.reject(error);
       }
 
@@ -54,25 +58,28 @@ api.interceptors.response.use(
         if (!data?.refreshToken) throw new Error("No refresh token");
 
         // Perform the refresh call to your backend
-        const res = await axios.post(`${apiUrl}/auth/refresh`, {
+
+        const res = await axios.post(`${apiUrl}/auth/refresh`,
+
+           {
           refreshToken: data.refreshToken,
         });
-
+                          console.log("Refreshed Token.", res);
+ 
         // Your backend returns: { accessToken, refreshToken, message }
-        const { accessToken, refreshToken: newRefreshToken } = res.data;
+        const { refreshToken, accessToken } = res.data;
 
         if (!accessToken) throw new Error("Refresh failed");
 
         // Update the store using the same 'user' we already have
-        useAuthStore.getState().setAuth(data.user, newRefreshToken, accessToken);
+        useAuthStore.getState().setAuth(data.user, refreshToken, accessToken);
 
         // Update header and retry
         originalRequest.headers.Authorization = `Bearer ${accessToken}`;
         return api(originalRequest);
       } catch (refreshError) {
         console.error("Refresh Logic Failed:", refreshError);
-        // useAuthStore.getState().logout();
-        // window.location.replace("/login");
+      
         return Promise.reject(refreshError);
       }
     }
